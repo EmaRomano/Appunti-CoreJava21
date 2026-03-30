@@ -1,0 +1,428 @@
+% !TeX root = ../main.tex
+\chapter{Fondamenta}
+
+\section{Editing, Compilazione ed Esecuzione}
+
+Il processo di sviluppo in Java si fonda sulla distinzione tra codice sorgente e codice eseguibile, mediata dalla Java Virtual Machine (JVM).
+
+Si definiscono tre stadi sequenziali per la messa in funzione di un software:
+\begin{enumerate}
+    \item \textbf{Editing}: Scrittura del codice sorgente in un file di testo con estensione \texttt{.java}.
+    \item \textbf{Compilazione}: Traduzione del sorgente in \textit{bytecode} (formato intermedio indipendente dall'architettura) tramite il comando \texttt{javac}. L'output è un file \texttt{.class}.
+    \item \textbf{Esecuzione}: Caricamento e interpretazione del bytecode da parte della JVM tramite il comando \texttt{java}.
+\end{enumerate}
+
+\begin{observation}
+La padronanza della riga di comando è essenziale per operare in ambienti server (sprovvisti di interfaccia grafica), per la gestione manuale del \textit{Classpath} e per comprendere i meccanismi di risoluzione delle dipendenze che gli IDE tendono ad automatizzare e occultare.
+\end{observation}
+
+A partire da Java 11, è stata introdotta la funzionalità definita dalla JEP 330, che permette di eseguire un programma contenuto in un singolo file sorgente senza la creazione esplicita di un file \texttt{.class}.
+
+\begin{lstlisting}[caption={Esecuzione rapida senza compilazione manuale}]
+# Sintassi valida da Java 11+
+java NomeFile.java
+\end{lstlisting}
+
+In questo caso, il bytecode viene generato esclusivamente in memoria e rimosso al termine dell'esecuzione, rendendo Java efficace anche per la scrittura di script rapidi e prototipazione.
+
+
+\section{Cenni alla JShell: L'approccio REPL}
+
+Introdotto con Java 9, lo strumento \textbf{jshell} fornisce un ambiente interattivo per l'esplorazione del linguaggio.
+
+JShell è un sistema \textit{Read-Eval-Print Loop}. A differenza del ciclo standard (\textit{edit-compile-run}), il REPL legge l'input dell'utente, valuta l'espressione, stampa il risultato e attende l'istruzione successiva.
+
+\subsubsection*{Caratteristiche principali}
+\begin{itemize}
+    \item \textbf{Assenza di Boilerplate}: Non è necessario definire classi o il metodo \texttt{main} per eseguire istruzioni.
+    \item \textbf{Variabili Implicite}: Le espressioni valutate senza assegnazione vengono memorizzate in variabili generate automaticamente (es. \texttt{\$1}, \texttt{\$2}).
+    \item \textbf{Comandi di Controllo}: I comandi che iniziano con lo slash (es. \texttt{/list}, \texttt{/vars}, \texttt{/exit}) permettono di gestire lo stato della sessione.
+\end{itemize}
+
+\begin{observation}
+L'utilità di JShell risiede nella riduzione dell'attrito cognitivo durante l'apprendimento. Permette di isolare il comportamento di specifiche API o costrutti sintattici (come il comportamento dei tipi primitivi in condizioni di overflow) senza la distrazione della struttura formale del progetto.
+\end{observation}
+
+\begin{lstlisting}[caption={Esempio di sessione interattiva}]
+jshell> 2 + 2
+$1 ==> 4
+
+jshell> int x = $1 * 3
+x ==> 12
+
+jshell> /vars
+|    int $1 = 4
+|    int x = 12
+\end{lstlisting}
+
+\section{Tipi Primitivi}
+
+\subsection{Il tipo char e Unicode}
+
+A differenza del linguaggio C, dove il tipo \texttt{char} occupa solitamente 1 byte (ASCII), in Java il tipo \texttt{char} occupa \textbf{2 byte} (16 bit) e segue lo standard \textbf{UTF-16}.
+
+\begin{observation}[L'illusione dei 16 bit]
+Originariamente, Java era stato progettato con l'idea che 65.536 caratteri fossero sufficienti. Poiché lo standard Unicode è cresciuto oltre questo limite, Java ha dovuto adottare le \textbf{Surrogate Pairs}: alcuni simboli (emoji, caratteri esotici) vengono rappresentati usando \textbf{due} \texttt{char} consecutivi (4 byte totali).
+\end{observation}
+
+\subsubsection*{Differenza chiave: Code Point vs Code Unit}
+\begin{itemize}
+    \item \textbf{Code Point}: Il valore numerico effettivo assegnato a un simbolo nello standard Unicode (es. U+1F4E9).
+    \item \textbf{Code Unit}: L'unità di memoria minima in Java (16 bit).
+\end{itemize}
+
+\begin{lstlisting}[caption={Esempio di conteggio con caratteri supplementari}]
+// Usiamo la codifica esadecimale per l'emoji del puzzle 
+// (che in UTF-16 richiede due unita': \uD83E e \uDDE9)
+String s = "\uD83E\uDDE9"; 
+
+System.out.println(s.length()); // Restituisce 2, non 1!
+\end{lstlisting}
+
+In definitiva, la funzione \texttt{length()} non restituisce il numero di simboli grafici "umani", ma il numero di \textbf{code units} (unità da 16 bit) necessarie a rappresentarli:
+\begin{itemize}
+    \item \textbf{Caso Standard}: Per i caratteri comuni (Basic Multilingual Plane), 1 simbolo = 1 \texttt{char} (2 byte). In questo caso, la lunghezza coincide con il numero di caratteri.
+    \item \textbf{Caso Esotico}: Per i caratteri supplementari (come le emoji o simboli matematici rari), 1 simbolo = 2 \texttt{char} (4 byte). In questo caso, la lunghezza risulta \textbf{doppia} rispetto al numero di simboli reali.
+\end{itemize}
+
+\begin{important}
+Nonostante le stringhe siano logicamente sequenze di char a 2 byte (UTF-16), le versioni moderne di Java (a partire da Java 9 in poi) le memorizzano come sequenze di singoli byte se il contenuto lo permette, risparmiando spazio senza cambiare il comportamento del codice.
+\end{important}
+
+\subsection{Il tipo boolean}
+
+Il tipo \texttt{boolean} esprime i valori di verità dell'algebra di Boole: \texttt{true} e \texttt{false}.
+
+\begin{observation}[Rappresentazione in memoria]
+Nonostante logicamente basti 1 bit, la dimensione effettiva non è definita rigorosamente dalla specifica JVM. Nella pratica:
+\begin{itemize}
+    \item Una variabile singola occupa solitamente \textbf{1 byte} per motivi di allineamento della memoria e velocità di accesso della CPU.
+    \item Non esiste alcuna conversione (casting) tra tipi numerici e il tipo \texttt{boolean}, a differenza di quanto avviene in linguaggio C.
+\end{itemize}
+\end{observation}
+
+\begin{lstlisting}[caption={Rigidità del tipo boolean}]
+// Errore in Java (ma valido in C)
+// int x = 1; if (x) { ... } 
+
+// Forma corretta in Java
+int x = 1;
+if (x != 0) { 
+    System.out.println("Vero");
+}
+\end{lstlisting}
+
+\subsection{Quadro generale dei tipi primitivi}
+
+La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le caratteristiche tecniche e le limitazioni algebriche discusse.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Tipo} & \textbf{Memoria} & \textbf{Intervallo / Specifica} & \textbf{Note di Rilievo} \\ \midrule
+\texttt{byte} & 1 byte & $[-2^{7}, 2^{7}-1]$ & Uso limitato (stream di dati). \\
+\texttt{short} & 2 byte & $[-2^{15}, 2^{15}-1]$ & Ormai raramente utilizzato. \\
+\texttt{int} & 4 byte & $[-2^{31}, 2^{31}-1]$ & Tipo standard per gli interi. \\
+\texttt{long} & 8 byte & $[-2^{63}, 2^{63}-1]$ & Richiede suffisso \texttt{L} (es. \texttt{42L}). \\ \midrule
+\texttt{float} & 4 byte & IEEE 754 (6-7 cifre dec.) & Richiede suffisso \texttt{F} (es. \texttt{3.14F}). \\
+\texttt{double} & 8 byte & IEEE 754 (15 cifre dec.) & Default per decimali; approssimato. \\ \midrule
+\texttt{char} & 2 byte & Unità di codice UTF-16 & 16-bit; gestisce \textit{surrogate pairs}. \\
+\texttt{boolean} & $\sim$1 byte & $\{\text{true, false}\}$ & Nessuna conversione da/verso \texttt{int}. \\ \bottomrule
+\end{tabular}
+\caption{Quadro sinottico dei tipi primitivi in Java.}
+\end{table}
+
+\begin{important}
+\textbf{Promemoria:}
+\begin{itemize}
+    \item \textbf{Aritmetica Modulare}: L'overflow degli interi è silenzioso e ciclico ($max + 1 = min$).
+    \item \textbf{Precisione Binaria}: Non usare mai \texttt{double} o \texttt{float} per calcoli monetari o di precisione assoluta (usare \texttt{BigDecimal}).
+    \item \textbf{Immutabilità Logica}: I tipi primitivi passano sempre per \textbf{valore}, mai per riferimento.
+\end{itemize}
+\end{important}
+
+\section{Stringhe}
+
+In linguaggi come Python è fondamentale la distinzione tra tipi mutabili e immutabili, resa piuttosto evidente dal fatto che oggetti mutabili hanno spesso un equivalente immutabile (si pensi alla coppia \texttt{list}/\texttt{tuple}). In Java questo aspetto è meno immediato sintatticamente, ma altrettanto cruciale.
+
+In particolare, gli oggetti \texttt{String} sono \textbf{immutabili}: una volta creati, il loro stato non può essere alterato. Ogni tentativo di modifica produce, di fatto, un nuovo oggetto con un riferimento diverso in memoria.
+
+Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il profilo delle performance (si pensi a cicli iterativi che concatenano stringhe). In realtà, si tratta di una scelta strategica per bilanciare sicurezza, gestione della memoria e velocità. Ecco i quattro motivi principali:
+
+\begin{enumerate}
+    \item \textbf{Il String Pool (Efficienza di Memoria)} \\
+    Le stringhe sono tra i dati più frequenti in un'applicazione. Grazie all'immutabilità, Java può utilizzare lo \textit{String Pool}: una zona di memoria dove viene conservata una sola copia di ogni stringa letterale.
+    Se definiamo \texttt{String a = "Ciao"} e \texttt{String b = "Ciao"}, entrambe le variabili punteranno allo \textbf{stesso identico oggetto}. Se le stringhe fossero mutabili, la modifica di \texttt{a} altererebbe inavvertitamente anche \texttt{b}. L'immutabilità permette quindi un enorme risparmio di RAM.
+
+    \item \textbf{Sicurezza (Il motivo critico)} \\
+    Le stringhe gestiscono dati sensibili come:
+    \begin{itemize}
+        \item Percorsi di file (es. \texttt{C:\textbackslash dati\textbackslash segreti.txt});
+        \item Credenziali di database (URL, username, password);
+        \item Parametri di rete (Indirizzi IP e porte).
+    \end{itemize}
+    Se una stringa fosse mutabile, un thread malevolo potrebbe cambiare il contenuto del percorso di un file un istante dopo che il sistema di sicurezza ha autorizzato l'accesso, ma un istante prima dell'apertura effettiva. Questo bug è noto come \textbf{Time-of-Check to Time-of-Use (TOCTOU)}.
+
+    \item \textbf{Caching dell'Hashcode (Performance)} \\
+    Poiché il contenuto di una \texttt{String} non cambia mai, Java ne calcola l'hashcode una sola volta e lo memorizza in \textit{cache}. Questo rende le stringhe estremamente veloci quando usate come chiavi nelle \texttt{HashMap} o nei \texttt{HashSet}. Se la stringa fosse mutabile, l'hash andrebbe ricalcolato ad ogni operazione di ricerca o inserimento.
+
+    \item \textbf{Thread Safety} \\
+    In contesti multi-core, gli oggetti immutabili sono \textit{thread-safe} per definizione. Non è necessario implementare blocchi o meccanismi di sincronizzazione complessi (che rallentano l'esecuzione) per evitare che due thread modifichino la stessa stringa contemporaneamente, corrompendo i dati.
+\end{enumerate}
+
+\begin{observation}
+Nei casi in cui l'immutabilità comporti una reale inefficienza (come la costruzione di stringhe complesse in cicli intensivi), Java mette a disposizione la classe \texttt{StringBuilder}, che permette manipolazioni mutabili e che analizzeremo in seguito.
+\end{observation}
+
+\subsection{L'Immutabilità in Java: Oltre le Stringhe}
+
+È un errore comune pensare che l'immutabilità riguardi esclusivamente la classe \texttt{String}. In realtà, Java adotta questo pattern per molte altre classi fondamentali, garantendo coerenza dei dati e facilità di debug. Un oggetto è definito immutabile se il suo stato non può essere alterato dopo la costruzione.
+
+Oltre alle stringhe, i principali tipi immutabili in Java includono:
+
+\begin{itemize}
+    \item \textbf{Classi Wrapper dei Primitivi}: Tutte le classi che "incapsulano" i tipi primitivi (\texttt{Integer}, \texttt{Long}, \texttt{Double}, \texttt{Float}, \texttt{Short}, \texttt{Byte}, \texttt{Character}, \texttt{Boolean}) sono immutabili. Se hai un \texttt{Integer} con valore 10, non puoi "sovrascrivere" quel 10; ogni operazione aritmetica produrrà un nuovo oggetto \texttt{Integer}.
+    
+    \item \textbf{Numeri a Precisione Arbitraria}: Le classi \texttt{BigInteger} e \texttt{BigDecimal} (utilizzate per calcoli matematici e finanziari di alta precisione) sono immutabili. Questo è cruciale perché garantisce che i valori calcolati non vengano alterati accidentalmente da altri moduli del programma.
+
+    \item \textbf{Nuova API Date e Time (java.time)}: A partire da Java 8, le classi per la gestione di date e orari (come \texttt{LocalDate}, \texttt{LocalTime}, \texttt{ZonedDateTime}) sono state rese immutabili. Questo ha risolto i gravi problemi di sicurezza e thread-safety della vecchia classe \texttt{java.util.Date}, che essendo mutabile era soggetta a manipolazioni impreviste.
+\end{itemize}
+
+
+\begin{observation}
+L'immutabilità funge da \textbf{invariante logica}: in un sistema complesso, sapere che certi oggetti non cambieranno mai il proprio stato permette al all'informatico di ragionare sul codice con la stessa certezza con cui si ragiona su una costante in una formula.
+\end{observation}
+
+\section{Input e output su console}
+
+\subsection{Scanner}
+Per leggere l'input dalla console (standard input), Java mette a disposizione la classe \texttt{Scanner}, definita nel pacchetto \texttt{java.util}. 
+
+Per utilizzare lo \texttt{Scanner}, bisogna creare un'istanza collegata allo stream \texttt{System.in}:
+
+\begin{lstlisting}[caption={Inizializzazione dello Scanner}]
+import java.util.Scanner;
+
+Scanner in = new Scanner(System.in);
+\end{lstlisting}
+
+I metodi principali per acquisire dati sono:
+\begin{itemize}
+    \item \texttt{nextLine()}: legge un'intera riga di testo (inclusi gli spazi).
+    \item \texttt{next()}: legge una singola parola (si ferma al primo spazio bianco).
+    \item \texttt{nextInt()}, \texttt{nextDouble()}: leggono rispettivamente un intero o un numero decimale.
+\end{itemize}
+
+\begin{observation}
+A differenza del C, dove la gestione dell'input con \texttt{scanf} può essere complessa e rischiosa per la sicurezza (buffer overflow), la classe \texttt{Scanner} gestisce internamente l'allocazione della memoria, rendendo l'acquisizione dei dati più astratta e sicura.
+\end{observation}
+
+\subsection{Output su Console}
+
+In Java, l'output standard viene gestito principalmente attraverso l'oggetto \texttt{System.out}. Esistono tre metodi fondamentali per inviare dati alla console:
+
+\begin{itemize}
+    \item \texttt{print()}: Stampa il contenuto senza aggiungere un ritorno a capo alla fine.
+    \item \texttt{println()}: Stampa il contenuto e aggiunge automaticamente un carattere di \textit{newline} (\texttt{\textbackslash n}). È il metodo più utilizzato per il debug rapido.
+    \item \texttt{printf()}: Introdotto per la compatibilità con lo stile del linguaggio C, permette la stampa di testo formattato tramite l'uso di \textit{placeholder} (specificatori di formato).
+\end{itemize}
+
+\subsubsection*{Lo specificatore printf}
+
+La sintassi di \texttt{printf} segue lo schema: \texttt{System.out.printf(formato, argomenti)}. Ecco i simboli più comuni:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Simbolo} & \textbf{Tipo di dato} \\ \midrule
+\texttt{\%d} & Intero decimale \\
+\texttt{\%s} & Stringa \\
+\texttt{\%f} & Numero a virgola mobile \\
+\texttt{\%n} & Ritorno a capo (piattaforma-indipendente) \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{lstlisting}[caption={Esempio di output formattato}]
+double quota = 1000.0 / 3.0;
+// Stampa con 2 cifre decimali e un totale di 8 spazi di larghezza
+System.out.printf("%8.2f", quota); 
+\end{lstlisting}
+
+\begin{observation}
+Mentre in C potevi accidentalmente passare un argomento del tipo sbagliato a \texttt{printf} causando crash o comportamenti indefiniti, in Java il compilatore e la JVM effettuano controlli più rigorosi, lanciando un'eccezione (\texttt{IllegalFormatException}) se il tipo dell'argomento non corrisponde allo specificatore.
+\end{observation}
+
+\begin{important}
+    \textbf{Curiosità:} Se hai bisogno di formattare una stringa senza stamparla immediatamente, puoi usare \texttt{String.format("...", args)}, che restituisce una nuova stringa formattata seguendo le stesse regole di \texttt{printf}.
+\end{important}
+
+\section{Lettura e Scrittura su File}
+
+Per operare con i file, Java estende l'uso della classe \texttt{Scanner} per la lettura e introduce la classe \texttt{PrintWriter} per la scrittura. Entrambe richiedono la gestione dei percorsi tramite la classe \texttt{Path}.
+
+\subsection{Lettura da File}
+
+Per leggere un file, non è sufficiente passare una stringa con il nome del file allo \texttt{Scanner}. È necessario creare un oggetto \texttt{Path}.
+
+\begin{lstlisting}[caption={Lettura corretta di un file}]
+import java.nio.file.Path;
+import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
+
+// Creazione del percorso e apertura dello scanner
+Scanner in = new Scanner(Path.of("miofile.txt"), StandardCharsets.UTF_8);
+\end{lstlisting}
+
+\begin{warning}
+Se scrivi \texttt{Scanner in = new Scanner("miofile.txt")}, lo \texttt{Scanner} non aprirà il file, ma leggerà la stringa stessa come se fosse il contenuto dei dati. L'uso di \texttt{Path.of} è obbligatorio per puntare al file fisico.
+\end{warning}
+
+\subsection{Scrittura su File}
+
+Per scrivere testo su un file, si utilizza la classe \texttt{PrintWriter}. Se il file non esiste, verrà creato; se esiste, il contenuto verrà sovrascritto.
+
+\begin{lstlisting}[caption={Scrittura su file}]
+import java.io.PrintWriter;
+
+PrintWriter out = new PrintWriter("output.txt", StandardCharsets.UTF_8);
+out.println("Risultato del calcolo: " + risultato);
+out.close(); // Fondamentale per svuotare il buffer e salvare
+\end{lstlisting}
+
+\subsection{Gestione dei Percorsi e Eccezioni}
+
+Quando si lavora con i file, bisogna considerare due aspetti critici:
+
+\begin{itemize}
+    \item \textbf{Percorsi}: Puoi usare percorsi relativi o assoluti (es. \texttt{C:\textbackslash\textbackslash Users\textbackslash\textbackslash test.txt}). Ricorda che nei percorsi Windows inseriti nel codice Java il backslash va raddoppiato.
+    \item \textbf{Eccezioni}: L'accesso ai file può fallire (file mancante, permessi negati). Per ora, Java ti obbliga a dichiarare che il metodo \texttt{main} può generare un errore aggiungendo \texttt{throws IOException} alla firma del metodo.
+\end{itemize}
+
+
+
+\begin{important}
+    \textbf{Evoluzione del Charset (JEP 400):} Sebbene a partire da Java 18 l'encoding predefinito sia diventato ufficialmente \texttt{UTF\_8}, è comunque consigliabile specificare \texttt{StandardCharsets.UTF\_8} (spesso considerato ridondante) in modo esplicito. Questo garantisce la portabilità del codice su versioni precedenti di Java e rende l'intento del programmatore inequivocabile, evitando che il comportamento del software dipenda implicitamente dalle impostazioni della JVM.
+\end{important}
+
+\section{Il Costrutto Switch}
+
+Lo \texttt{switch} permette di selezionare un ramo di esecuzione basandosi sul valore di un'espressione. Java 21 ha trasformato radicalmente questo costrutto.
+
+\subsection{Lo Switch Tradizionale (Statement)}
+La forma classica (stile C) utilizza i due punti (\texttt{:}) e richiede il \texttt{break} per evitare il \textit{fall-through}.
+
+\begin{lstlisting}[caption={Switch tradizionale}]
+switch (scelta) {
+    case 1:
+        System.out.println("Uno");
+        break; 
+    case 2:
+        System.out.println("Due");
+        break;
+    default:
+        System.out.println("Altro");
+}
+\end{lstlisting}
+
+\subsection{La Sintassi a Freccia (Modern Switch Statement)}
+Introdotta per risolvere l'intrinseca fragilità del \texttt{break}, questa sintassi utilizza l'operatore \texttt{->}. In questa forma, lo \texttt{switch} è ancora uno \textbf{statement} (esegue un'azione ma non restituisce un valore).
+
+\begin{itemize}
+    \item \textbf{Niente break}: Viene eseguito solo il codice a destra della freccia. Non c'è rischio di cadere nel caso successivo.
+    \item \textbf{Casi multipli}: Si possono raggruppare più valori con la virgola: \texttt{case 1, 2, 3 -> ...}.
+\end{itemize}
+
+\begin{lstlisting}[caption={Switch moderno con freccia}]
+switch (scelta) {
+    case 1 -> System.out.println("Uno");
+    case 2 -> System.out.println("Due");
+    case 3, 4 -> {
+        // Se serve piu di una riga, si usano le graffe
+        System.out.println("Tre o Quattro");
+    }
+    default -> System.out.println("Altro");
+}
+\end{lstlisting}
+
+
+
+\subsection{Switch Expressions}
+Quando lo \texttt{switch} viene usato per assegnare un valore a una variabile, diventa una \textbf{expression}. In questo caso, il costrutto \textbf{deve} essere esaustivo (coprire tutti i casi o avere un \texttt{default}).
+
+\begin{lstlisting}[caption={Switch come espressione}]
+String etichetta = switch (scelta) {
+    case 1 -> "Uno";
+    case 2 -> "Due";
+    default -> "Altro";
+}; // Nota il punto e virgola finale, obbligatorio nelle espressioni
+\end{lstlisting}
+
+\subsubsection{L'istruzione yield}
+Se un ramo della \textit{switch expression} richiede un blocco logico complesso, si usa \texttt{yield} per "emettere" il valore finale del blocco.
+
+\begin{lstlisting}[caption={Uso di yield}]
+int calcolo = switch (modo) {
+    case 1 -> 10;
+    default -> {
+        int temp = eseguiCalcolo();
+        yield temp * 2;
+    }
+};
+\end{lstlisting}
+
+\subsection{Evoluzioni Avanzate: Pattern Matching e Null}
+Solo una volta compresa la sintassi a freccia, possiamo sfruttare la potenza di Java 21 per testare i \textbf{tipi} degli oggetti e gestire i valori \texttt{null}.
+
+\begin{lstlisting}[caption={Pattern Matching e gestione null}]
+switch (obj) {
+    case null     -> System.out.println("Nessun oggetto");
+    case Integer i -> System.out.println("Intero: " + i);
+    case String s  -> System.out.println("Stringa: " + s);
+    default        -> System.out.println("Tipo non supportato");
+}
+\end{lstlisting}
+
+\begin{observation}
+    Sebbene esistano diverse combinazioni sintattiche per lo \texttt{switch} (incrociando l'uso di \texttt{:} o \texttt{->} con la natura di \textit{statement} o \textit{expression}), la buona pratica in Java moderno è orientata verso la massima sicurezza. Si tende a utilizzare quasi esclusivamente la \textbf{sintassi a freccia} (\texttt{->}) per eliminare alla radice il rischio di \textit{fall-through} e a preferire, laddove possibile, le \textbf{switch expressions} per rendere il codice più dichiarativo e meno incline a errori di stato.
+\end{observation}
+
+\section{Arrays}
+
+In Java, gli array sono oggetti che memorizzano una collezione di valori dello stesso tipo. A differenza del C, la gestione della memoria è sicura: l'accesso fuori dai limiti (\textit{bounds}) causa un'eccezione immediata invece di corrompere la memoria circostante.
+
+Esistono due modi per creare un array. Nota che una volta creato, la lunghezza è fissa.
+
+\begin{lstlisting}[caption={Dichiarazione di array}]
+int[] numeri = new int[10]; // Array vuoto di 10 elementi (tutti a 0)
+int[] inizializzato = { 1, 2, 3, 4, 5 }; // Inizializzazione anonima
+\end{lstlisting}
+
+\begin{observation}
+    La variabile \texttt{numeri} è solo un \textbf{riferimento} all'array nello heap. Se scrivi \texttt{int[] b = numeri}, non stai copiando i dati, ma stai creando un secondo nome per lo stesso identico array.
+\end{observation}
+
+Per copiare realmente i valori di un array in uno nuovo (per poterlo modificare senza toccare l'originale), si usa il metodo \texttt{Arrays.copyOf}.
+
+\begin{lstlisting}[caption={Copia e Sort}]
+import java.util.Arrays;
+
+int[] copia = Arrays.copyOf(numeri, numeri.length);
+Arrays.sort(copia); // Ordina l'array in loco usando l'algoritmo Dual-Pivot Quicksort
+\end{lstlisting}
+
+\subsection{Array Multidimensionali e "Ragged Arrays"}
+In Java non esistono vere matrici rettangolari, ma solo "array di array". Questo permette di creare matrici irregolari (\textit{ragged}), dove ogni riga ha una lunghezza diversa.
+
+\begin{lstlisting}[caption={Array irregolare}]
+int[][] ragged = new int[3][];
+ragged[0] = new int[1];
+ragged[1] = new int[5];
+ragged[2] = new int[3];
+\end{lstlisting}
+
+\begin{important}
+    \textbf{Visualizzazione rapida:} \\ Per stampare un array monodimensionale usa \texttt{Arrays.toString(a)}. \\ Per matrici o array multidimensionali, usa \texttt{Arrays.deepToString(a)}.
+\end{important}

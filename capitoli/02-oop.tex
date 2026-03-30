@@ -1,0 +1,345 @@
+% !TeX root = ../main.tex
+\chapter{Classi e oggetti}
+
+\section{I Costruttori}
+
+Un costruttore è un metodo speciale che viene invocato esclusivamente tramite l'operatore \texttt{new}. Esso rappresenta il blocco di codice che viene eseguito nel momento esatto in cui un nuovo oggetto di una classe viene istanziato.
+
+\begin{itemize}
+    \item \textbf{Scopo:} L'obiettivo primario di un costruttore è impostare lo stato iniziale dell'oggetto, ovvero inizializzare i suoi campi di istanza affinché l'oggetto nasca in uno stato valido.
+    \item \textbf{Nome e Ritorno:} Per convenzione del linguaggio, il costruttore deve avere lo stesso identico nome della classe e \textbf{non deve specificare alcun tipo di ritorno} (nemmeno \texttt{void}).
+\end{itemize}
+
+\begin{lstlisting}[caption={Esempio di costruttore base}]
+public class Employee {
+   private String name;
+   private double salary;
+
+   // Costruttore
+   public Employee(String n, double s) {
+      name = n;
+      salary = s;
+   }
+}
+\end{lstlisting}
+
+
+
+\begin{observation}
+    È importante ricordare che un costruttore non può essere invocato su un oggetto già esistente per "re-inizializzarlo". Viene eseguito una sola volta per ogni istanza, all'atto della creazione.
+\end{observation}
+
+Spesso, per rendere il codice più leggibile, si tende a dare ai parametri del costruttore lo stesso nome dei campi di istanza della classe. In questi casi, il nome del parametro "nasconde" (\textit{shadowing}) il campo di istanza. Per risolvere l'ambiguità e indicare esplicitamente che ci si riferisce alla variabile dell'oggetto e non al parametro locale, si utilizza la parola chiave \texttt{this}.
+
+In Java, \texttt{this} è un riferimento all'oggetto corrente su cui il metodo o il costruttore è stato invocato. Scrivere \texttt{this.nomeCampo} indica in modo univoco al compilatore di accedere alla variabile memorizzata nello \textit{heap} per quell'istanza specifica.
+
+\begin{lstlisting}[caption={Uso di this nel costruttore}]
+public class Employee {
+    private String name;
+    private double salary;
+
+    public Employee(String name, double salary) {
+        // this.name si riferisce al campo istanza
+        // name si riferisce al parametro del costruttore
+        this.name = name;
+        this.salary = salary;
+    }
+}
+\end{lstlisting}
+
+\subsection{Ulteriori note su \texttt{this}}
+Oltre alla necessità tecnica di risolvere conflitti di nomi, molti programmatori utilizzano \texttt{this} all'interno dei metodi e dei costruttori anche laddove non sarebbe strettamente necessario (ovvero quando i nomi dei parametri sono diversi da quelli dei campi).
+
+Questa pratica ha un valore puramente \textbf{visivo e documentale}: anteporre \texttt{this.} permette di distinguere immediatamente, a colpo d'occhio, quali variabili appartengono allo stato permanente dell'oggetto e quali sono invece variabili locali o parametri temporanei. In progetti di grandi dimensioni, questa convenzione aiuta a ridurre il carico cognitivo di chi legge il codice e riduce drasticamente il rischio di errori accidentali durante la manutenzione dello stesso.
+
+
+In Java, il riferimento \texttt{this} punta sempre all'oggetto corrente (il cosiddetto \textit{parametro implicito}). Il suo utilizzo si divide in tre casi principali:
+\begin{itemize}
+    \item \textbf{\texttt{this.nomeCampo}}: fondamentale, come si è visto poco sopra, per risolvere lo \textit{shadowing}, ovvero quando un parametro del metodo o del costruttore ha lo stesso nome di un campo della classe.
+    \item \textbf{\texttt{this.nomeMetodo(parametri)}}: utilizzato per invocare un altro metodo sulla stessa istanza.
+    \item \textbf{\texttt{this(parametri)}}: Questa forma speciale permette a un costruttore di richiamarne un altro all'interno della stessa classe. Come vedremo in paragrafi a seguire, è la tecnica principe per gestire l' \textbf{overloading dei costruttori} senza duplicare il codice di inizializzazione. \textit{Nota bene: deve essere obbligatoriamente la prima istruzione del costruttore.}
+\end{itemize}
+
+\section{Overloading e Firma dei Metodi}
+L'overloading consente di definire più costruttori o metodi con lo stesso nome, purché abbiano parametri differenti.
+\begin{itemize}
+    \item \textbf{Firma (Signature):} È l'identità del metodo, composta da \textbf{nome + tipi dei parametri}.
+    \item \textbf{Esclusione del Ritorno:} Il tipo di ritorno \textbf{non} fa parte della firma. Non è possibile avere due metodi con parametri identici ma tipi di ritorno diversi.
+\end{itemize}
+
+In questo esempio, la classe \texttt{Employee} gestisce tre campi: \texttt{name}, \texttt{salary} e \texttt{hireDay}. Utilizziamo l'overloading per offrire diversi gradi di flessibilità nella creazione dell'oggetto, delegando sempre l'inizializzazione al costruttore più completo.
+
+\begin{lstlisting}[caption={Overloading a cascata nella classe Employee}]
+public class Employee {
+    private String name;
+    private double salary;
+    private LocalDate hireDay;
+
+    // 1. Costruttore "Master" (3 parametri)
+    // E' l'unico che contiene la logica di assegnazione effettiva.
+    public Employee(String name, double salary, LocalDate hireDay) {
+        this.name = name;
+        this.salary = salary;
+        this.hireDay = hireDay;
+    }
+
+    // 2. Costruttore con 2 parametri
+    // Imposta la data di assunzione a "oggi" per default.
+    public Employee(String name, double salary) {
+        this(name, salary, LocalDate.now());
+    }
+
+    // 3. Costruttore con 1 parametro
+    // Imposta lo stipendio a 0 e la data a "oggi" per default.
+    public Employee(String name) {
+        this(name, 0, LocalDate.now());
+    }
+
+    // 4. Costruttore vuoto (no-arg)
+    // Imposta valori generici di default.
+    public Employee() {
+        this("Sconosciuto", 0, LocalDate.now());
+    }
+}
+\end{lstlisting}
+
+
+
+\begin{observation}
+    \textbf{Il vantaggio della manutenzione.} 
+    Se in futuro si volesse aggiungere un controllo di validità (ad esempio, impedire che lo stipendio sia negativo), basterebbe inserire la logica nel \textbf{costruttore master}. Tutti gli altri costruttori ne beneficerebbero automaticamente, garantendo la coerenza dello stato dell'oggetto indipendentemente da come viene creato.
+\end{observation}
+
+\begin{important}
+    Ricorda che la chiamata \texttt{this(...)} deve essere tassativamente la \textbf{prima riga} del costruttore. Non puoi eseguire alcun calcolo o istruzione prima di delegare la costruzione all'altro costruttore.
+\end{important}
+
+\section{Costruzione degli Oggetti}
+
+Java offre diversi meccanismi per inizializzare lo stato di un oggetto. Per evitare confusione, è utile osservare il processo come una sequenza di regole logiche.
+
+
+\subsection{Inizializzazione e Valori di Default}
+A differenza delle variabili locali (che devono essere inizializzate esplicitamente), i campi di istanza vengono sempre azzerati automaticamente se non specificato diversamente:
+\begin{itemize}
+    \item Numeri (int, double, ecc.): \texttt{0}.
+    \item Booleani: \texttt{false}.
+    \item Riferimenti a oggetti: \texttt{null}.
+\end{itemize}
+
+\begin{caution}
+    \textbf{Il costruttore predefinito "gratis".}
+    Java fornisce implicitamente un costruttore senza argomenti (\textit{no-arg constructor}) solo se nella classe non è stato definito \textbf{nessun} costruttore. Se ne definisci anche solo uno con parametri, quello predefinito scompare; se ti serve ancora, devi scriverlo esplicitamente.
+\end{caution}
+
+\subsection{Blocchi di Inizializzazione}
+
+Oltre all'assegnazione diretta (nelle dichiarazioni dei campi di istanza) e ai costruttori, Java mette a disposizione un terzo meccanismo per inizializzare i campi: i \textbf{blocchi di inizializzazione}. Si tratta di segmenti di codice racchiusi tra parentesi graffe inseriti direttamente nel corpo della classe.
+
+Esistono due tipi di blocchi, con scopi e tempi di esecuzione differenti:
+
+\begin{itemize}
+    \item \textbf{Blocchi di istanza:} Vengono eseguiti ogni volta che viene creata una nuova istanza della classe, subito dopo l'inizializzazione dei campi ai valori predefiniti e prima del corpo del costruttore.
+    \item \textbf{Blocchi statici (\texttt{static \{ ... \}}):} Vengono eseguiti una sola volta, nel momento in cui la classe viene caricata in memoria dalla JVM. Sono ideali per configurazioni complesse di variabili statiche (ad esempio, caricare dati da un file o inizializzare un generatore di numeri casuali).
+\end{itemize}
+
+\begin{observation}
+    Sebbene potenti, i blocchi di inizializzazione di istanza sono raramente necessari e possono rendere il codice meno leggibile. La pratica consigliata è quella di inserire la logica di inizializzazione direttamente nei costruttori o di usare la concatenazione tramite \texttt{this(...)}.
+\end{observation}
+
+\subsection{L'Ordine di Esecuzione}
+Quando viene invocato l'operatore \texttt{new}, Java segue un ordine tassativo:
+\begin{enumerate}
+    \item Tutti i campi sono azzerati (valori di default).
+    \item Vengono eseguiti gli eventuali inizializzatori espliciti (es. \texttt{private int id = 1;}) e gli eventuali blocchi di inizializzazione (\texttt{\{...\}}) nell'ordine in cui appaiono nel file.
+    \item Viene infine eseguito il corpo del costruttore selezionato.
+\end{enumerate}
+
+\section{L'inferenza del tipo: la parola chiave \texttt{var}}
+
+A partire da Java 10, il linguaggio ha introdotto la parola chiave \texttt{var}, un meccanismo noto come \textit{local variable type inference}. Per un programmatore abituato al rigore del C, questo potrebbe sembrare un passaggio verso la tipizzazione dinamica, ma la realtà è differente: Java rimane un linguaggio a tipizzazione statica.
+
+Il senso del \texttt{var} è eliminare la ridondanza visiva. Spesso, in Java, il nome del tipo appare sia nella dichiarazione che nell'inizializzazione (es. \texttt{Employee e = new Employee()}). Poiché il compilatore è in grado di dedurre il tipo osservando l'espressione alla destra dell'operatore di assegnazione, il \texttt{var} permette di omettere la dichiarazione esplicita del tipo senza perdere in sicurezza.
+
+\begin{lstlisting}[caption={Confronto tra dichiarazione esplicita e var}]
+// Approccio tradizionale
+Employee harry = new Employee("Harry Hacker", 50000);
+
+// Approccio con inferenza del tipo
+var staff = new Employee("Harry Hacker", 50000); 
+\end{lstlisting}
+
+Esistono tuttavia dei limiti tecnici e stilistici precisi per l'utilizzo di questo strumento:
+\begin{itemize}
+    \item \textbf{Ambito locale:} Può essere utilizzato esclusivamente per le variabili locali all'interno dei metodi. Non è ammesso per i campi di istanza di una classe, dove il tipo deve essere sempre esplicito.
+    \item \textbf{Inizializzazione immediata:} Una variabile dichiarata con \texttt{var} deve essere inizializzata nello stesso momento in cui viene dichiarata, altrimenti il compilatore non avrebbe elementi per dedurne il tipo.
+    \item \textbf{Leggibilità:} Horstmann suggerisce di usare \texttt{var} solo quando il tipo è ovvio dalla lettura del lato destro. Ad esempio, \texttt{var in = new Scanner(System.in)} è chiaro, mentre \texttt{var x = calcola()} potrebbe rendere il codice criptico se non si conosce il valore di ritorno del metodo.
+\end{itemize}
+
+\begin{important}
+    È fondamentale ricordare che il tipo viene fissato a tempo di compilazione. Una volta che \texttt{var staff} è stato interpretato come \texttt{Employee}, non potrà mai contenere un tipo diverso (come una stringa o un intero) durante l'esecuzione del programma.
+\end{important}
+
+\section{I vantaggi dell'incapsulamento}
+
+L'incapsulamento non consiste solo nel nascondere i dati, ma nel fornire un'interfaccia controllata per interagire con essi. Horstmann identifica tre benefici fondamentali nell'uso di metodi accessori (getter) e mutatori (setter) rispetto ai campi pubblici.
+
+\subsection{Controllo, Flessibilità e Validazione}
+\begin{enumerate}
+    \item \textbf{Debugging semplificato:} Se un campo viene modificato solo tramite un mutatore, la ricerca di eventuali bug legati a valori errati è circoscritta a quel metodo specifico.
+    \item \textbf{Trasparenza dell'implementazione:} La struttura interna dei dati può evolvere (es. dividere un campo \texttt{name} in \texttt{firstName} e \texttt{lastName}) senza che il codice esterno debba essere modificato, poiché l'interfaccia dei metodi rimane costante.
+    \item \textbf{Integrità dei dati:} I metodi mutatori possono eseguire controlli di validità (es. impedire stipendi negativi) prima di aggiornare lo stato interno.
+\end{enumerate}
+
+\subsection{Il rischio della fuga di riferimenti (\textit{Leaking References})}
+
+Un errore di progettazione sottile ma grave consiste nello scrivere metodi accessori che restituiscono riferimenti a oggetti \textbf{mutabili}. 
+
+\begin{caution}
+    \textbf{Riferimenti mutabili e rottura dell'incapsulamento.} \\
+    Se un campo privato è un oggetto mutabile (come la vecchia classe \texttt{Date}), restituire quel riferimento tramite un getter permette a codice esterno di modificare lo stato interno dell'oggetto all'insaputa della classe stessa. 
+\end{caution}
+
+Si consideri il seguente esempio di ``codice canaglia'':
+\begin{lstlisting}[caption={Violazione dell'incapsulamento}]
+Employee harry = ...;
+Date d = harry.getHireDay(); // d punta all'oggetto interno di harry
+double tenYearsInMilliseconds = 10 * 365.25 * 24 * 60 * 60 * 1000;
+d.setTime(d.getTime() - (long) tenYearsInMilliseconds); 
+// Lo stato di harry e cambiato senza usare i metodi di Employee!
+\end{lstlisting}
+
+\begin{important}
+    Per prevenire questa vulnerabilità, esistono due strategie principali:
+    \begin{itemize}
+        \item \textbf{Utilizzare oggetti immutabili:} Classi come \texttt{LocalDate} o \texttt{String} non possiedono metodi mutatori. Una volta creati, il loro stato non può cambiare, rendendo sicuro il ritorno del loro riferimento.
+        \item \textbf{Clonazione:} Se si deve assolutamente usare un oggetto mutabile, il getter dovrebbe restituire una copia (\textit{clone}) dell'oggetto, non l'originale.Vedremo più avanti in dettaglio questo tipo di soluzione. 
+    \end{itemize}
+\end{important}
+
+\section{I Metodi Privati}
+
+Nella grande maggioranza dei casi, i metodi di una classe vengono dichiarati con il modificatore \texttt{public}, poiché costituiscono l'interfaccia attraverso cui il mondo esterno interagisce con l'oggetto. Tuttavia, esistono circostanze in cui è preferibile o necessario rendere un metodo \texttt{private}.
+
+\subsection{Helper Methods e Pulizia del Codice}
+Spesso, l'implementazione di un compito complesso richiede di spezzare il codice in diverse sotto-operazioni. Questi "metodi di supporto" (\textit{helper methods}) non dovrebbero far parte dell'interfaccia pubblica: potrebbero essere troppo legati all'attuale implementazione interna o richiedere un protocollo di chiamata specifico che non deve essere esposto all'utente della classe. Dichiarandoli privati, ci si assicura che vengano utilizzati solo internamente.
+
+\subsection{Libertà di Evoluzione del Software}
+Il vantaggio principale della riservatezza dei metodi risiede nella libertà di manutenzione. 
+\begin{itemize}
+    \item \textbf{Metodi Pubblici:} Rappresentano un impegno verso chi utilizza la classe. Se un metodo è pubblico, non può essere rimosso o modificato drasticamente senza rischiare di "rompere" il codice esterno che vi fa affidamento.
+    \item \textbf{Metodi Privati:} Finché un metodo rimane privato, il progettista della classe ha la certezza che non venga utilizzato altrove. Questo permette di rinominarlo, ottimizzarlo o addirittura eliminarlo completamente in futuro, qualora la rappresentazione interna dei dati dovesse cambiare, senza alcun impatto sul resto del programma.
+\end{itemize}
+
+
+
+\begin{observation}
+    L'uso di metodi privati è una forma di incapsulamento del comportamento. Proprio come i campi privati proteggono lo stato dell'oggetto da manipolazioni esterne, i metodi privati proteggono la logica di implementazione, garantendo che l'utente della classe veda solo ciò che è strettamente necessario al corretto funzionamento del sistema.
+\end{observation}
+
+\section{Campi di istanza \texttt{final}}
+
+In Java, è possibile dichiarare un campo di istanza come \texttt{final}. Tale modificatore impone che la variabile venga inizializzata tassativamente entro la fine di ogni costruttore della classe. Una volta assegnato, il valore del campo non può più essere modificato.
+
+\subsection{Tipi primitivi e Classi Immutabili}
+L'uso di \texttt{final} è particolarmente efficace con i tipi primitivi o con classi immutabili (ovvero classi i cui metodi non modificano mai lo stato dell'oggetto, come \texttt{String} o \texttt{LocalDate}). In questi casi, il campo diventa a tutti gli effetti una costante dopo la costruzione dell'oggetto.
+
+\subsection{La trappola delle Classi Mutabili}
+È necessario prestare attenzione quando si usa \texttt{final} con oggetti mutabili. 
+
+\begin{caution}
+    Il modificatore \texttt{final} garantisce solo che il \textbf{riferimento} memorizzato nella variabile non punti mai a un oggetto diverso. Tuttavia, non impedisce la mutazione dell'oggetto stesso: per i mutabili final è solo il riferimento all'oggetto ad essere costante, ma tutto ciò a cui punta quel riferimento può essere cambiato.
+\end{caution}
+
+Ad esempio, un campo \texttt{private final StringBuilder evaluations} impedisce di assegnare un nuovo \texttt{StringBuilder} alla variabile, ma permette comunque di invocare metodi come \texttt{evaluations.append()}, modificando di fatto lo stato interno dell'oggetto.
+
+\begin{observation}
+    Un campo \texttt{final} può essere inizializzato con il valore \texttt{null} (magari a seguito di un controllo condizionale). In tal caso, la variabile rimarrà \texttt{null} per l'intero ciclo di vita dell'istanza e non potrà mai essere riassegnata a un oggetto reale.
+\end{observation}
+
+\section{Membri Statici: Campi e Costanti}
+
+Il modificatore \texttt{static} permette di definire membri che appartengono alla \textbf{classe} stessa piuttosto che alle singole istanze. 
+
+\subsection{Campi Statici (Variabili di Classe)}
+Se un campo è dichiarato \texttt{static}, ne esiste un'unica copia condivisa da tutti gli oggetti della classe. Anche se non viene istanziato alcun oggetto, il campo statico è presente in memoria.
+
+\begin{example}
+    Nella classe \texttt{Employee}, un campo \texttt{private int id} è un campo di istanza (ogni dipendente ha il suo), mentre un campo \texttt{private static int nextId} è un campo di classe (condiviso da tutti per generare ID univoci).
+\end{example}
+
+\begin{lstlisting}[caption={Utilizzo di un campo statico nel costruttore}]
+public Employee(...) {
+    id = nextId; // Assegna l'ID corrente
+    nextId++;    // Incrementa il contatore condiviso nella classe
+}
+\end{lstlisting}
+
+Mentre le variabili statiche sono rare (e vanno usate con cautela!) le costanti statiche (\texttt{static final}) sono molto comuni. Esse permettono di accedere a valori fissi tramite il nome della classe, senza dover istanziare oggetti.
+
+\begin{observation}
+    È buona norma accedere ai membri statici usando il nome della classe (es. \texttt{Employee.nextId}) invece che tramite un riferimento a un oggetto (es. \texttt{harry.nextId}), per rendere subito chiaro a chi legge che il campo non appartiene all'istanza.
+\end{observation}
+
+\subsection{I Metodi Statici}
+
+Qui il concetto è del tutto analogo a quello dei campi di istanza: si tratta di metodi comuni a tutta la classe. A differenza dei metodi di istanza, un metodo statico non ha un parametro implicito \texttt{this}; in altre parole, non riceve alcun riferimento a un'istanza specifica della classe quando viene invocato.
+
+Poiché non dispongono del riferimento \texttt{this}, i metodi statici presentano caratteristiche precise:
+\begin{itemize}
+    \item \textbf{Accesso ai dati:} un metodo statico può accedere ai campi statici della classe, ma non può mai accedere ai campi di istanza. Non operando su un oggetto, il metodo non ``saprebbe'' a quale istanza riferirsi per leggere i dati non statici.
+    \item \textbf{Invocazione:} come per i campi, sebbene il linguaggio permetta di invocare un metodo statico tramite il riferimento a un oggetto, la buona pratica prevede di utilizzare sempre il nome della classe. Questo chiarisce immediatamente che l'operazione non dipende dallo stato di un singolo oggetto.
+\end{itemize}
+
+
+È appropriato definire un metodo come \texttt{static} quando il metodo deve solo eseguire un calcolo basato su parametri forniti esplicitamente (come \texttt{Math.pow(x, a)}), oppure quando il metodo deve accedere esclusivamente a campi statici della propria classe (come un metodo che incrementa un contatore globale di istanze).
+
+\section{Il Metodo \texttt{main}}
+
+Il metodo \texttt{main} è il punto di ingresso di ogni applicazione Java. La sua natura riflette la necessità della Java Virtual Machine (JVM) di avviare l'esecuzione prima ancora che vengano creati gli oggetti.
+
+Il metodo \texttt{main} deve essere dichiarato \texttt{static} perché deve poter essere invocato dalla JVM senza che sia necessaria un'istanza della classe. Quando il programma parte, non esiste ancora alcun oggetto: il \texttt{main} statico viene eseguito, "accende il motore" e inizia a creare gli oggetti necessari all'applicazione.
+
+
+Una caratteristica potente di Java è che \textbf{ogni classe} può contenere un metodo \texttt{main}. Questo non significa che l'applicazione avrà più punti di ingresso, ma permette di inserire del codice di test o di dimostrazione direttamente all'interno della classe stessa.
+\begin{itemize}
+    \item Se si lancia la classe specifica (es. \texttt{java Employee}), viene eseguito il suo \texttt{main} (utile per testare se i metodi funzionano correttamente).
+    \item Se la classe è usata all'interno di un'applicazione più grande, il suo \texttt{main} viene semplicemente ignorato.
+\end{itemize}
+
+\subsection{Novità Java 21: Instance Main Methods (Preview)}
+A partire da Java 21, è stata introdotta una \textit{preview feature} che semplifica l'avvio dei programmi. In questa nuova modalità:
+\begin{itemize}
+    \item Il \texttt{main} non deve più essere obbligatoriamente \texttt{static} o \texttt{public}.
+    \item Può non avere il parametro \texttt{String[] args}.
+\end{itemize}
+Se il \texttt{main} non è statico, la JVM crea automaticamente un'istanza della classe (usando il costruttore predefinito) e invoca il metodo su di essa. Questa evoluzione punta a ridurre il "boilerplate code" per i principianti e per piccoli script.
+
+
+
+\begin{observation}
+    Per un programmatore C, il \texttt{main} di Java è l'equivalente della funzione globale \texttt{main()}, ma incapsulato in una classe per rispettare il paradigma ad oggetti. La versione "non statica" di Java 21 avvicina ancora di più il linguaggio alla semplicità dei linguaggi di scripting.
+\end{observation}
+
+\section{Il passaggio dei parametri: Call-by-Value}
+
+Esiste spesso confusione sulla modalità con cui Java passa i parametri ai metodi. La regola ferrea del linguaggio è una sola: \textbf{Java utilizza esclusivamente il passaggio per valore (call-by-value).} Ciò significa che il metodo riceve sempre una copia dei valori contenuti nelle variabili fornite come argomenti. Copie che, di fatto, sono quindi \textbf{variabili locali}.
+
+Il comportamento osservato differisce in base a ciò che la variabile contiene:
+\begin{itemize}
+    \item \textbf{Tipi Primitivi:} La variabile contiene il valore numerico o booleano. Il metodo riceve una copia di tale valore; ogni modifica effettuata all'interno del metodo rimane locale e non influenza la variabile originale.
+    \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto.
+\end{itemize}
+
+\begin{important}
+    \textbf{Il fallimento dello swap:} La dimostrazione definitiva che Java non usa il passaggio per riferimento è l'impossibilità di scrivere un metodo \texttt{swap(x, y)} che scambi i riferimenti di due oggetti esterni. Il metodo scambierà solo le sue copie locali, lasciando invariate le variabili originali.
+\end{important}
+
+\begin{observation}
+    \textbf{Il caso degli oggetti immutabili.}
+    Sebbene per le classi immutabili (come \texttt{String}, \texttt{Integer}, \texttt{LocalDate}) valga la regola del passaggio del riferimento per valore, il loro comportamento pratico è identico a quello dei tipi primitivi. Poiché l'oggetto non può essere modificato internamente, qualsiasi operazione di "modifica" effettuata nel metodo (es. \texttt{s = s + "!"}) non è altro che una riassegnazione della variabile locale a un nuovo oggetto, lasciando il riferimento originale del chiamante del tutto invariato.
+\end{observation}
+
+\begin{observation}
+    Per un programmatore C, questo sistema è identico al passaggio di un puntatore per valore: si può manipolare il dato puntato, ma non si può modificare l'indirizzo di memoria memorizzato nel puntatore originale del chiamante.
+\end{observation}

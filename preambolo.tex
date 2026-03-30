@@ -1,0 +1,84 @@
+% --- Pacchetti Fondamentali ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath, amssymb, amsthm} 
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{calc} 
+\usepackage{lmodern} % Font scalabile per evitare errori di dimensione
+\usepackage{enumitem} 
+\setlist{nosep} % Liste compatte
+
+% --- Configurazione Link (Hyperref) ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    filecolor=magenta,
+    urlcolor=blue,
+    citecolor=green!60!black
+}
+
+% --- Ambienti in Stile Matematico ---
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[chapter]
+\newtheorem{observation}{Osservazione}[chapter]
+\newtheorem{caution}{Attenzione}[chapter]
+\newtheorem{example}{Esempio}[chapter]
+
+% --- Configurazione Titoli (Titlesec) ---
+\usepackage[explicit]{titlesec}
+
+% Capitolo: Mostra solo il Titolo, nasconde il numero (ma lo mantiene per l'indice)
+\titleformat{\chapter}[block]
+  {\normalfont\bfseries\Huge}
+  {}
+  {0pt}
+  {\thispagestyle{empty}#1}
+
+\titlespacing*{\chapter}{0pt}{0pt}{4ex}
+
+% Sezioni e Sottosezioni: Mantengono la numerazione (es. 1.1, 1.2)
+\titleformat{\section}
+  {\normalfont\bfseries\large}
+  {\thesection} 
+  {1em}
+  {#1}
+
+\titleformat{\subsection}
+  {\normalfont\bfseries}
+  {\thesubsection}
+  {1em}
+  {#1}
+
+\titlespacing*{\section}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
+
+% --- Ambiente per il Codice Java ---
+\lstset{
+    language=Java,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4
+}
+
+% 1. Pacchetto per le tabelle professionali (risolve l'errore \toprule)
+\usepackage{booktabs}
+
+% 2. Definizione dell'ambiente "important" (risolve l'errore Environment undefined)
+% Usiamo uno stile simile a observation ma con un colore diverso o un'icona
+\theoremstyle{definition}
+\newtheorem*{important}{\color{red}IMPORTANTE}
+
+% 3. Per sicurezza, definiamo anche warning se non lo avevi fatto prima
+\newtheorem*{warning}{\color{orange}ATTENZIONE}
