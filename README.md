@@ -24,10 +24,6 @@ Il repository è organizzato per massimizzare la manutenibilità del codice LaTe
 
 * **`main.tex`**: Il file "master". Coordina l'intera struttura del documento, gestisce i frontespizi e include i vari capitoli.
 * **`preambolo.tex`**: Contiene tutte le configurazioni tecniche, i pacchetti necessari (matematica, codice, stili grafici) e la definizione degli ambienti personalizzati (*Osservazione*, *Attenzione*, *Esempio*).
-* **`capitoli/`**: Cartella contenente il cuore didattico del progetto:
-    * `00-logistica.tex`: Introduzione e logistica del corso.
-    * `01-fondamenta.tex`: Variabili, tipi primitivi, stringhe e strutture di controllo.
-    * `02-oop.tex`: Programmazione a oggetti, costruttori, membri statici e gestione dei parametri.
-
+* **`capitoli/`**: Cartella contenente il cuore didattico del progetto
 ---
 *Note di studio di Emanuele*
