@@ -343,3 +343,101 @@ Il comportamento osservato differisce in base a ciò che la variabile contiene:
 \begin{observation}
     Per un programmatore C, questo sistema è identico al passaggio di un puntatore per valore: si può manipolare il dato puntato, ma non si può modificare l'indirizzo di memoria memorizzato nel puntatore originale del chiamante.
 \end{observation}
+
+\section{I Records: classi come contenitori di dati}
+
+A partire da Java 16, il linguaggio introduce i \textbf{Records}, una forma specializzata di classe progettata per modellare aggregati di dati immutabili in modo conciso. I records eliminano il cosiddetto \textit{boilerplate code} tipico delle classi Java tradizionali (POJO - Plain Old Java Objects).
+
+Un record si definisce dichiarandone i campi, in gergo chiamati \textbf{componenti} del record, tra parentesi tonde:
+\begin{lstlisting}[caption={Dichiarazione di un Record}]
+public record Point(double x, double y) { }
+\end{lstlisting}
+
+Questa singola riga di codice equivale a una classe completa che include:
+\begin{itemize}
+    \item Campi privati e finali: \texttt{private final double x;}.
+    \item Un costruttore che inizializza i campi.
+    \item Metodi accessori (getters): \texttt{p.x()} e \texttt{p.y()} (nota l'assenza del prefisso \texttt{get}).
+    \item Implementazioni standard di \texttt{toString()}, \texttt{equals()} e \texttt{hashCode()}.
+\end{itemize}
+\vspace{\baselineskip}
+
+Le caratteristiche principali dei record sono:
+\begin{itemize}
+    \item \textbf{Immutabilità:} I record sono progettati per essere "viste" immutabili di dati. Una volta creato, lo stato di un record non dovrebbe cambiare.
+    \item \textbf{Estensibilità:} Un record può implementare interfacce, definire metodi di istanza, metodi statici e costruttori personalizzati, ma \textbf{non può} aggiungere altri campi di istanza né estendere altre classi.
+    \item \textbf{Personalizzazione:} È possibile sovrascrivere i metodi generati automaticamente, ad esempio per aggiungere una logica di validazione nel costruttore.
+\end{itemize}
+
+\begin{caution}
+    \textbf{Attenzione alla mutabilità dei componenti.}
+    I componenti di un record sono implicitamente \textit{final}, quindi va ricordato ciò che abbiamo detto a proposito di tali campi: se un record ha come componente un oggetto mutabile (es. un array), l'immutabilità del record è solo superficiale; il riferimento all'array non può cambiare, ma gli elementi interni all'array sì. Per garantire la sicurezza, è preferibile usare solo tipi primitivi o immutabili come componenti.
+\end{caution}
+
+\begin{observation}
+    \textbf{Analogia con il C:} Per un programmatore C, il record è l'equivalente funzionale di una \texttt{struct} costante, ma con il vantaggio di avere già pronti tutti i metodi per il confronto e la visualizzazione testuale.
+\end{observation}
+\vspace{\baselineskip}
+
+
+Un esempio base di record:
+
+\begin{lstlisting}[language=Java, caption=Dichiarazione ed istanza di un Record]
+// Dichiarazione del record (genera automaticamente campi, 
+// costruttore, getter, equals, hashCode e toString)
+public record Persona(String nome, int eta) {}
+
+// Utilizzo
+public class Main {
+    public static void main(String[] args) {
+        // Creazione di un'istanza
+        Persona p = new Persona("Mario Rossi", 30);
+        
+        // Accesso ai dati (notare l'assenza di "get")
+        System.out.println(p.nome()); 
+    }
+}
+\end{lstlisting}
+\medskip % Spazio verticale pulito tra gli esempi
+
+\vspace{\baselineskip}
+
+In questo esempio personalizziamo il comportamento interno del record:
+
+\begin{lstlisting}[language=Java, caption=Record con logica personalizzata]
+public record Prodotto(String codice, double prezzo) {
+
+    // 1. Override del costruttore (Compact Constructor)
+    // Usato per validazione o normalizzazione
+    public Prodotto {
+        if (prezzo < 0) {
+            throw new IllegalArgumentException("Il prezzo non puo essere negativo");
+        }
+        codice = codice.toUpperCase(); // Normalizzazione
+    }
+
+    // 2. Metodo proprio (aggiuntivo)
+    public double prezzoConIva() {
+        return prezzo * 1.22;
+    }
+
+    // 3. Override di un Getter (accessor)
+    @Override
+    public String codice() {
+        return "ID-" + codice;
+    }
+
+    // 4. Override di toString
+    @Override
+    public String toString() {
+        return "Prodotto: " + codice + " costa " + prezzo + " Euro";
+    }
+}
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: Quando usare un Record?]
+Usa un \textbf{record} invece di una classe tradizionale quando l'oggetto è completamente definito dal suo stato (i suoi attributi) e tali attributi sono \textbf{costanti} e si è sicuri di non doverne aggiungere altri in futuro. 
+
+È la scelta ideale per DTO (Data Transfer Objects), chiavi di mappe o semplici contenitori di dati, a patto di poter accettare le restrizioni dei record (niente ereditarietà, campi final).
+\end{tcolorbox}
+
