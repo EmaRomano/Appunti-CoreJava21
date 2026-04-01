@@ -116,7 +116,7 @@ if (x != 0) {
 
 La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le caratteristiche tecniche e le limitazioni algebriche discusse.
 
-\begin{table}[h!]
+\begin{table}[ht!]
 \centering
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{@{}llll@{}}
@@ -227,7 +227,7 @@ A differenza di \texttt{String}, questa classe offre metodi per la modifica \tex
 \end{itemize}
 
 \begin{important}
-    \textbf{Ottimizzazione del Compilatore:} Nelle versioni moderne di Java, il compilatore trasforma automaticamente le concatenazioni semplici (es. \texttt{s = a + b}) in istruzioni \texttt{StringBuilder}. Tuttavia, all'interno dei \textbf{cicli}, il compilatore non è in grado di applicare questa ottimizzazione in modo efficiente, rendendo l'uso manuale di \texttt{StringBuilder} un requisito fondamentale per scrivere codice professionale. Non conviene invece usarlo se devono solo unire due o tre stringhe una sola volta: l'overhead per istanziare l'oggetto StringBuilder renderebbe il codice inutilmente complesso e leggermente più lento rispetto ad una semplice conceatenazione con \texttt{+}.
+    \textbf{Ottimizzazione del Compilatore:} Nelle versioni moderne di Java, il compilatore trasforma automaticamente le concatenazioni semplici (es. \texttt{s = a + b}) in istruzioni \texttt{StringBuilder}. Tuttavia, all'interno dei \textbf{cicli}, il compilatore non è in grado di applicare questa ottimizzazione in modo efficiente, rendendo l'uso manuale di \texttt{StringBuilder} un requisito fondamentale per scrivere codice professionale. Non conviene invece usarlo se devono solo unire due o tre stringhe una sola volta: l'overhead per istanziare l'oggetto StringBuilder renderebbe il codice inutilmente complesso e leggermente più lento rispetto ad una semplice concatenazione con l'operatore \texttt{+}.
 \end{important}
 % --- Fine Sezione StringBuilder ---
 
@@ -269,7 +269,7 @@ In Java, l'output standard viene gestito principalmente attraverso l'oggetto \te
 
 La sintassi di \texttt{printf} segue lo schema: \texttt{System.out.printf(formato, argomenti)}. Ecco i simboli più comuni:
 
-\begin{table}[h!]
+\begin{table}[ht!]
 \centering
 \begin{tabular}{ll}
 \toprule
