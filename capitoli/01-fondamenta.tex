@@ -389,6 +389,33 @@ switch (obj) {
     Sebbene esistano diverse combinazioni sintattiche per lo \texttt{switch} (incrociando l'uso di \texttt{:} o \texttt{->} con la natura di \textit{statement} o \textit{expression}), la buona pratica in Java moderno è orientata verso la massima sicurezza. Si tende a utilizzare quasi esclusivamente la \textbf{sintassi a freccia} (\texttt{->}) per eliminare alla radice il rischio di \textit{fall-through} e a preferire, laddove possibile, le \textbf{switch expressions} per rendere il codice più dichiarativo e meno incline a errori di stato.
 \end{observation}
 
+% --- Inizio sezione Clausola WHEN negli Switch ---
+\subsection{L'Utilizzo della Clausola \texttt{when} negli \texttt{switch}}
+
+La clausola \textbf{\texttt{when}} (o \textit{Guards}) estende la potenza dell'istruzione \texttt{switch} permettendo di aggiungere condizioni booleane specifiche a ogni \texttt{case}.
+
+Invece di limitarsi a confrontare un valore costante, \texttt{when} permette di filtrare il match in base a variabili dinamiche.
+
+\begin{lstlisting}[language=Java, caption=Esempio di Pattern Matching con clausola when]
+switch (dispositivo) {
+    case Smartphone s when s.getLivelloBatteria() < 10 -> 
+        pulisciMemoria();
+    case Smartphone s when s.isModalitaAereo() -> 
+        disabilitaRete();
+    default -> 
+        attendiSegnale();
+}
+\end{lstlisting}
+
+L'introduzione di questa clausola è particolarmente vantaggiosa in tre scenari principali:
+
+\begin{itemize}
+    \item \textbf{Rimozione dei rami condizionali annidati:} Evita di dover inserire blocchi \texttt{if-else} all'interno di un \texttt{case}, rendendo il codice più lineare e leggibile (cosiddetto \textit{Flattening}).
+    \item \textbf{Pattern Matching Avanzato:} Permette di gestire lo stesso tipo di oggetto in modi diversi nello stesso \texttt{switch}. Ad esempio, posso avere due \texttt{case} per la classe \texttt{Ordine}, uno \texttt{when total > 1000} e uno per i restanti.
+    \item \textbf{Espressività Semantica:} Sposta la logica di controllo direttamente nella firma del caso, rendendo immediatamente chiaro sotto quali condizioni quel ramo viene eseguito.
+\end{itemize}
+
+
 \section{Arrays}
 
 In Java, gli array sono oggetti che memorizzano una collezione di valori dello stesso tipo. A differenza del C, la gestione della memoria è sicura: l'accesso fuori dai limiti (\textit{bounds}) causa un'eccezione immediata invece di corrompere la memoria circostante.
