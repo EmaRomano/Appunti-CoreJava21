@@ -173,7 +173,7 @@ Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il
 \end{enumerate}
 
 \begin{observation}
-Nei casi in cui l'immutabilità comporti una reale inefficienza (come la costruzione di stringhe complesse in cicli intensivi), Java mette a disposizione la classe \texttt{StringBuilder}, che permette manipolazioni mutabili e che analizzeremo in seguito.
+Nei casi in cui l'immutabilità comporti una reale inefficienza (come la costruzione di stringhe complesse in cicli intensivi), Java mette a disposizione la classe \texttt{StringBuilder}, che permette manipolazioni mutabili e che analizzeremo in un paragrafo a seguire.
 \end{observation}
 
 \subsection{L'Immutabilità in Java: Oltre le Stringhe}
@@ -194,6 +194,42 @@ Oltre alle stringhe, i principali tipi immutabili in Java includono:
 \begin{observation}
 L'immutabilità funge da \textbf{invariante logica}: in un sistema complesso, sapere che certi oggetti non cambieranno mai il proprio stato permette al all'informatico di ragionare sul codice con la stessa certezza con cui si ragiona su una costante in una formula.
 \end{observation}
+
+% --- Inizio Sezione StringBuilder ---
+\section{La Classe StringBuilder}
+
+Come analizzato nella paragrafo precedente, l'immutabilità delle stringhe garantisce sicurezza e risparmio di memoria tramite lo \textit{String Pool}. Tuttavia, questa caratteristica diventa un limite critico in termini di performance quando è necessario modificare ripetutamente un testo (ad esempio all'interno di un ciclo).
+
+La classe \texttt{StringBuilder} (definita in \texttt{java.lang}) è progettata per gestire stringhe **mutabili**. Internamente gestisce un array di caratteri (un buffer) che può essere modificato direttamente senza creare nuovi oggetti.
+
+\begin{observation}[Capacity vs Length]
+    \texttt{StringBuilder} distingue tra:
+    \begin{itemize}
+        \item \textbf{Length}: Il numero di caratteri effettivamente contenuti.
+        \item \textbf{Capacity}: La dimensione del buffer interno. Se la lunghezza supera la capacità, l'array viene automaticamente ridimensionato (solitamente raddoppiato), garantendo un'efficienza ammortizzata.
+    \end{itemize}
+\end{observation}
+
+\begin{lstlisting}[caption={Esempio di utilizzo efficiente in un ciclo}]
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 100; i++) {
+    sb.append("Elemento ").append(i).append("; ");
+}
+String risultato = sb.toString(); // Conversione finale in String
+\end{lstlisting}
+
+A differenza di \texttt{String}, questa classe offre metodi per la modifica \textit{in-place}:
+\begin{itemize}
+    \item \texttt{append(valore)}: Aggiunge qualsiasi tipo di dato alla fine della sequenza.
+    \item \texttt{insert(offset, valore)}: Inserisce testo in un punto specifico spostando i caratteri successivi.
+    \item \texttt{delete(start, end)}: Rimuove una porzione di testo.
+    \item \texttt{reverse()}: Inverte l'ordine dei caratteri (operazione estremamente efficiente).
+\end{itemize}
+
+\begin{important}
+    \textbf{Ottimizzazione del Compilatore:} Nelle versioni moderne di Java, il compilatore trasforma automaticamente le concatenazioni semplici (es. \texttt{s = a + b}) in istruzioni \texttt{StringBuilder}. Tuttavia, all'interno dei \textbf{cicli}, il compilatore non è in grado di applicare questa ottimizzazione in modo efficiente, rendendo l'uso manuale di \texttt{StringBuilder} un requisito fondamentale per scrivere codice professionale. Non conviene invece usarlo se devono solo unire due o tre stringhe una sola volta: l'overhead per istanziare l'oggetto StringBuilder renderebbe il codice inutilmente complesso e leggermente più lento rispetto ad una semplice conceatenazione con \texttt{+}.
+\end{important}
+% --- Fine Sezione StringBuilder ---
 
 \section{Input e output su console}
 
