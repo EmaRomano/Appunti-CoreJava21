@@ -441,3 +441,50 @@ Usa un \textbf{record} invece di una classe tradizionale quando l'oggetto è com
 È la scelta ideale per DTO (Data Transfer Objects), chiavi di mappe o semplici contenitori di dati, a patto di poter accettare le restrizioni dei record (niente ereditarietà, campi final).
 \end{tcolorbox}
 
+% --- Inizio Sezione Stack vs Heap ---
+\section{Gestione della Memoria: Stack vs Heap}
+
+Un obiettivo fondamentale per comprendere il comportamento di Java, specialmente durante l'analisi delle classi e degli oggetti, è la distinzione tra l'allocazione nello \textbf{Stack} e nello \textbf{Heap}.\vspace{\baselineskip}
+
+Lo Stack è una sorta di memoria di un metodo in esecuzione, una sezione di memoria rapida e organizzata in modo lineare (LIFO). 
+\begin{itemize}
+    \item \textbf{Contenuto}: Memorizza le variabili locali e i \textbf{tipi primitivi} (\texttt{int}, \texttt{double}, \texttt{boolean}, ecc.).
+    \item \textbf{Riferimenti}: Quando viene creato un oggetto, lo Stack non contiene l'oggetto stesso, ma solo l'indirizzo di memoria (riferimento) necessario per rintracciarlo nello Heap.
+    \item \textbf{Ciclo di vita}: La memoria viene gestita automaticamente; quando un metodo termina l'esecuzione, il suo spazio nello Stack viene rimosso immediatamente.
+\end{itemize}
+\vspace{\baselineskip}
+Lo Heap è un'area di memoria molto più vasta e dinamica.
+\begin{itemize}
+    \item \textbf{Contenuto}: Qui risiedono tutti i veri \textbf{oggetti} (istanze di classi) e gli \textbf{array}. Anche le stringhe letterali vengono conservate qui, all'interno del cosiddetto \textit{String Pool}.
+    \item \textbf{Accesso}: Gli oggetti nello Heap sono accessibili solo tramite i riferimenti memorizzati nello Stack.
+    \item \textbf{Ciclo di vita}: Gli oggetti rimangono nello Heap finché sono raggiungibili da almeno un riferimento. Quando non sono più referenziati, il \textbf{Garbage Collector} si occupa di deallocarli per liberare spazio.
+\end{itemize}
+
+\begin{observation}
+Comprendere questa distinzione chiarisce il comportamento dei parametri nei metodi:
+\begin{enumerate}
+    \item \textbf{Passaggio per Valore (Primitivi)}: Viene copiata la variabile sullo Stack; le modifiche nel metodo non influenzano l'originale.
+    \item \textbf{Passaggio per Riferimento (Oggetti)}: Viene copiato l'indirizzo memorizzato nello Stack. Poiché entrambi i riferimenti puntano allo \textbf{stesso oggetto nello Heap}, le modifiche apportate all'oggetto sono visibili globalmente.
+\end{enumerate}
+\end{observation}
+
+\subsection{Confronto Sintetico}
+\begin{table}[ht!]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Caratteristica} & \textbf{Stack} & \textbf{Heap} \\ \midrule
+\textbf{Tipo di accesso} & Sequenziale (LIFO) & Casuale \\
+\textbf{Velocità} & Molto Elevata & Più Lenta \\
+\textbf{Cosa ospita} & Primitivi e Riferimenti & Oggetti, Array, String Pool \\
+\textbf{Gestione} & Automatica (Compiler) & Garbage Collector \\
+\textbf{Visibilità} & Privata al Thread & Condivisa (rischio thread-safety) \\ \bottomrule
+\end{tabular}
+\caption{Differenze chiave tra Stack e Heap in Java.}
+\end{table}
+
+\begin{important}
+    \textbf{Connessione con la Concorrenza:} In sistemi complessi o distribuiti, ogni thread possiede il proprio Stack privato, mentre lo Heap è condiviso tra tutti. Questa condivisione è la causa principale dei problemi di visibilità e sincronizzazione che richiedono l'uso di blocchi (\texttt{synchronized}) o variabili atomiche.
+\end{important}
+% --- Fine Sezione Stack vs Heap ---
