@@ -451,6 +451,52 @@ L'introduzione di questa clausola è particolarmente vantaggiosa in tre scenari 
     \item \textbf{Espressività Semantica:} Sposta la logica di controllo direttamente nella firma del caso, rendendo immediatamente chiaro sotto quali condizioni quel ramo viene eseguito.
 \end{itemize}
 
+\section{Big Numbers: BigInteger e BigDecimal}
+
+Quando la precisione dei tipi primitivi interi (\texttt{long}) o a virgola mobile (\texttt{double}) non è sufficiente, il pacchetto \texttt{java.math} mette a disposizione due classi fondamentali: \textbf{BigInteger} e \textbf{BigDecimal}. Queste classi permettono di manipolare numeri con una sequenza di cifre arbitrariamente lunga.
+
+Esistono tre modi principali per creare un "Big Number":
+
+\begin{itemize}
+    \item \textbf{Metodo statico \texttt{valueOf}}: Ideale per convertire numeri ordinari.
+    \begin{lstlisting}[language=Java]
+BigInteger a = BigInteger.valueOf(100);
+    \end{lstlisting}
+    \item \textbf{Costruttore con Stringa}: Indispensabile per numeri che superano la capacità dei tipi primitivi.
+    \begin{lstlisting}[language=Java]
+BigInteger reallyBig = new BigInteger("2222322446294204455297398934619099672066669390964000099");
+    \end{lstlisting}
+    \item \textbf{Costanti predefinite}: \texttt{BigInteger.ZERO}, \texttt{ONE}, \texttt{TWO} e \texttt{TEN}.
+\end{itemize}
+
+\begin{important}
+    Per \texttt{BigDecimal}, si deve \textbf{sempre} usare il costruttore che accetta una \texttt{String}. Il costruttore \texttt{BigDecimal(double)} è intrinsecamente prono a errori di arrotondamento dovuti alla rappresentazione binaria dei floating-point.
+\end{important}
+
+Ad esempio, \texttt{new BigDecimal(0.1)} non produce esattamente $0.1$, ma una sequenza imprecisa (com'è noto da nozioni di architettura dei calcolatori, 0.1 in binario è un numero periodico infinito, quindi viene approssimato):
+$$0.1000000000000000055511151231257827021181583404541015625$$
+L'uso della stringa \texttt{"0.1"} garantisce invece la precisione esatta richiesta.\vspace{\baselineskip}
+
+Poiché Java non supporta l'overloading degli operatori (a differenza di C++), non è possibile usare \texttt{+}, \texttt{-}, \texttt{*} o \texttt{/}. È necessario utilizzare i metodi d'istanza dedicati.
+
+\begin{table}[ht!]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Operazione} & \textbf{Metodo Java} \\ \midrule
+Somma ($+$) & \texttt{a.add(b)} \\
+Sottrazione ($-$) & \texttt{a.subtract(b)} \\
+Moltiplicazione ($*$) & \texttt{a.multiply(b)} \\
+Divisione ($/$) & \texttt{a.divide(b)} \\
+Modulo ($\%$) & \texttt{a.mod(b)} \\ \bottomrule
+\end{tabular}
+\caption{Metodi aritmetici per BigInteger e BigDecimal.}
+\end{table}
+
+\begin{observation}[Immutabilità]
+    Proprio come le \texttt{String}, anche i Big Numbers sono \textbf{immutabili}. Metodi come \texttt{add} non modificano l'oggetto originale nello \textbf{Heap}, ma restituiscono una nuova istanza con il risultato.
+\end{observation}
+
 
 \section{Arrays}
 
