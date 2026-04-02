@@ -1,9 +1,15 @@
+# File temporanei principali
 *.aux
 *.log
 *.out
 *.toc
-*.pdf
-*.gz
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# Se userai bibliografie o presentazioni (Beamer)
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
