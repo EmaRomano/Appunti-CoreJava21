@@ -1,0 +1,52 @@
+% --- File: appendice-riferimento-rapido.tex ---
+\chapter{Quick Reference: Metodi di uso frequente}
+
+In questa appendice sono raccolti i metodi delle librerie standard di Java 21 necessari per risolvere la maggior parte degli esercizi algoritmici senza consultare la documentazione esterna.
+
+\section{Classe String}
+Le stringhe sono immutabili. Ogni metodo restituisce una nuova istanza.
+
+\begin{table}[ht!]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Metodo} & \textbf{Descrizione} \\ \midrule
+\texttt{length()} & Restituisce il numero di caratteri. \\
+\texttt{charAt(int i)} & Carattere alla posizione $i$. \\
+\texttt{substring(start, end)} & Sottostringa dall'indice \textit{start} a \textit{end-1}. \\
+\texttt{contains(CharSequence)} & Verifica se la sequenza e presente. \\
+\texttt{split(String regex)} & Divide la stringa in un array di sottostringhe. \\
+\texttt{toLowerCase() / toUpperCase()} & Cambio di \textit{case}. \\
+\texttt{strip() / trim()} & Rimuove spazi bianchi (strip e piu moderno/Unicode). \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Classe Math}
+Metodi statici per operazioni matematiche comuni.
+
+\begin{table}[ht!]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Metodo} & \textbf{Esempio / Risultato} \\ \midrule
+\texttt{Math.min(a, b) / Math.max(a, b)} & Restituisce il minore o il maggiore. \\
+\texttt{Math.abs(x)} & Valore assoluto $|x|$. \\
+\texttt{Math.sqrt(x)} & Radice quadrata $\sqrt{x}$. \\
+\texttt{Math.pow(base, esp)} & Elevamento a potenza (restituisce \texttt{double}). \\
+\texttt{Math.round(x)} & Arrotondamento all'intero piu vicino. \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\section{BigInteger e BigDecimal}
+Metodi per l'aritmetica ad alta precisione.
+
+\begin{table}[ht!]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Operazione} & \textbf{Sintassi Java} \\ \midrule
+Somma / Sottrazione & \texttt{a.add(b) / a.subtract(b)} \\
+Moltiplicazione / Divisione & \texttt{a.multiply(b) / a.divide(b, roundingMode)} \\
+Confronto & \texttt{a.compareTo(b)} ($0$ se uguali, $1$ se $a>b$, $-1$ se $a<b$) \\ \bottomrule
+\end{tabularx}
+\end{table}
