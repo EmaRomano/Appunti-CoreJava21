@@ -50,3 +50,34 @@ Moltiplicazione / Divisione & \texttt{a.multiply(b) / a.divide(b, roundingMode)}
 Confronto & \texttt{a.compareTo(b)} ($0$ se uguali, $1$ se $a>b$, $-1$ se $a<b$) \\ \bottomrule
 \end{tabularx}
 \end{table}
+
+\section{Gestione del Tempo (java.time)}
+Ricorda: queste classi sono immutabili. Ogni modifica crea un nuovo oggetto.
+
+\begin{table}[ht!]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Metodo} & \textbf{Descrizione / Esempio} \\ \midrule
+\texttt{LocalDate.now()} & Data corrente del sistema. \\
+\texttt{LocalDate.of(y, m, d)} & Crea una data specifica (es. 2026, 4, 2). \\
+\texttt{date.plusDays(n)} & Aggiunge $n$ giorni (restituisce nuovo oggetto). \\
+\texttt{date.isBefore(other)} & Verifica se la data precede un'altra. \\
+\texttt{ChronoUnit.DAYS.between(a, b)} & Calcola i giorni tra due date. \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Parsing e Conversione}
+Metodi per trasformare stringhe in tipi di dato e viceversa.
+
+\begin{table}[ht!]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Operazione} & \textbf{Sintassi Java} \\ \midrule
+Da String a int & \texttt{Integer.parseInt("123")} \\
+Da String a double & \texttt{Double.parseDouble("12.5")} \\
+Da int/double a String & \texttt{String.valueOf(n)} \\
+Format di output & \texttt{System.out.printf("\%d - \%.2f", i, d)} \\ \bottomrule
+\end{tabularx}
+\end{table}
