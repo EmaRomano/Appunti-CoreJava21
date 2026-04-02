@@ -344,6 +344,99 @@ Il comportamento osservato differisce in base a ciò che la variabile contiene:
     Per un programmatore C, questo sistema è identico al passaggio di un puntatore per valore: si può manipolare il dato puntato, ma non si può modificare l'indirizzo di memoria memorizzato nel puntatore originale del chiamante.
 \end{observation}
 
+% --- Inizio Sezione: Tipi Enumerati (Enum) ---
+\section{Tipi Enumerati (Enum)}
+
+In Java, un \textbf{Enum} non è una semplice lista di costanti intere (come in C o C++), ma una classe speciale che estende implicitamente la classe \texttt{java.lang.Enum}. Rappresenta un insieme fisso di costanti tipizzate, garantendo che una variabile di quel tipo possa assumere solo uno dei valori predefiniti.
+
+L'utilizzo degli \texttt{enum} è considerato una \textit{best practice} per diversi motivi:
+\begin{itemize}
+    \item \textbf{Type Safety}: Impedisce il passaggio di valori non validi (evitando l'uso di "Magic Numbers" o costanti \texttt{int}).
+    \item \textbf{Namespace}: Le costanti sono confinate nel tipo enumerato, evitando conflitti di nomi.
+    \item \textbf{Potenzialità di Classe}: Possono avere campi, costruttori e metodi, permettendo di associare dati e comportamenti a ogni costante.
+    \item \textbf{Immutabilità}: Le istanze di un enum sono create all'avvio e non possono essere modificate, rendendole intrinsecamente \textit{thread-safe}.
+\end{itemize}
+
+\vspace{\baselineskip}
+
+Di seguito è riportato lo schema più completo per definire un \texttt{enum}, includendo attributi, costruttori e metodi personalizzati.
+
+\begin{lstlisting}[language=Java, caption={Sintassi generale di un Enum in Java}]
+public enum NomeEnum {
+    // 1. Definizione delle costanti (devono apparire per prime)
+    COSTANTE_A("Descrizione A", 10),
+    COSTANTE_B("Descrizione B", 20),
+    COSTANTE_C; // Se non ci sono argomenti, il costruttore e di default
+
+    // 2. Campi di istanza (solitamente private final per immutabilita)
+    private final String descrizione;
+    private final int valore;
+
+    // 3. Costruttore (sempre private o package-private)
+    private NomeEnum(String descrizione, int valore) {
+        this.descrizione = descrizione;
+        this.valore = valore;
+    }
+
+    // Costruttore di default (opzionale se necessario)
+    private NomeEnum() {
+        this.descrizione = "Default";
+        this.valore = 0;
+    }
+
+    // 4. Metodi (Getter, Logica di business, Override)
+    public String getDescrizione() {
+        return descrizione;
+    }
+
+    public int getValore() {
+        return valore;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s (Codice: %d)", descrizione, valore);
+    }
+}
+\end{lstlisting}
+
+Un \texttt{enum} viene utilizzato come un qualsiasi altro tipo di dato, con la differenza fondamentale che non può essere istanziato tramite l'operatore \texttt{new}. L'accesso alle costanti avviene tramite il nome della classe enumerata.
+
+\subsubsection*{Esempio di integrazione in una Classe}
+\begin{lstlisting}[language=Java, caption={Esempio di utilizzo di un Enum in una classe di business}]
+public class Ordine {
+    private int id;
+    private StatoOrdine stato; // Riferimento all'enum
+
+    public Ordine(int id) {
+        this.id = id;
+        this.stato = StatoOrdine.NUOVO; // Valore iniziale
+    }
+
+    public void avanzaStato() {
+        // Esempio di switch moderno (Java 21+)
+        this.stato = switch (this.stato) {
+            case NUOVO -> StatoOrdine.IN_ELABORAZIONE;
+            case IN_ELABORAZIONE -> StatoOrdine.SPEDITO;
+            case SPEDITO -> StatoOrdine.CONSEGNATO;
+            case CONSEGNATO -> StatoOrdine.CONSEGNATO;
+        };
+    }
+}
+\end{lstlisting}
+
+Ogni enum eredita automaticamente dei metodi statici molto potenti:
+\begin{itemize}
+    \item \texttt{values()}: Restituisce un array contenente tutte le costanti dell'enum nell'ordine in cui sono dichiarate. Utile per iterazioni.
+    \item \texttt{valueOf(String name)}: Converte una stringa nel corrispondente valore enum. Lancia \texttt{IllegalArgumentException} se la stringa non corrisponde a nessuna costante.
+    \item \texttt{ordinal()}: Restituisce la posizione intera (base 0) della costante nella dichiarazione. \textit{Nota: se ne sconsiglia l'uso per logiche di business persistenti poiché fragile rispetto a cambiamenti dell'ordine.}
+\end{itemize}
+
+\begin{observation}[Confronto e Memoria]
+    Poiché le istanze di un \texttt{enum} sono \textbf{singleton} (ne esiste una sola copia nello \textbf{Heap} per tutta la durata dell'applicazione), il confronto tra due variabili enum può essere effettuato in modo sicuro ed efficiente utilizzando l'operatore \texttt{==} invece di \texttt{.equals()}. Questo non solo è più leggibile, ma evita anche potenziali \texttt{NullPointerException}.
+\end{observation}
+
+
 \section{I Records: classi come contenitori di dati}
 
 A partire da Java 16, il linguaggio introduce i \textbf{Records}, una forma specializzata di classe progettata per modellare aggregati di dati immutabili in modo conciso. I records eliminano il cosiddetto \textit{boilerplate code} tipico delle classi Java tradizionali (POJO - Plain Old Java Objects).
