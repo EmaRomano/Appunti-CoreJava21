@@ -29,7 +29,7 @@ public class Employee {
     È importante ricordare che un costruttore non può essere invocato su un oggetto già esistente per "re-inizializzarlo". Viene eseguito una sola volta per ogni istanza, all'atto della creazione.
 \end{observation}
 
-Spesso, per rendere il codice più leggibile, si tende a dare ai parametri del costruttore lo stesso nome dei campi di istanza della classe. In questi casi, il nome del parametro "nasconde" (\textit{shadowing}) il campo di istanza. Per risolvere l'ambiguità e indicare esplicitamente che ci si riferisce alla variabile dell'oggetto e non al parametro locale, si utilizza la parola chiave \texttt{this}.
+Spesso, per rendere il codice più leggibile ed evitare la proliferazione di identificatori, si tende a dare ai parametri del costruttore lo stesso nome dei campi di istanza della classe. In questi casi, il nome del parametro "nasconde" (\textit{shadowing}) il campo di istanza. Per risolvere l'ambiguità e indicare esplicitamente che ci si riferisce alla variabile dell'oggetto e non al parametro locale, si utilizza la parola chiave \texttt{this}.
 
 In Java, \texttt{this} è un riferimento all'oggetto corrente su cui il metodo o il costruttore è stato invocato. Scrivere \texttt{this.nomeCampo} indica in modo univoco al compilatore di accedere alla variabile memorizzata nello \textit{heap} per quell'istanza specifica.
 
@@ -337,7 +337,7 @@ Il comportamento osservato differisce in base a ciò che la variabile contiene:
 
 \begin{observation}
     \textbf{Il caso degli oggetti immutabili.}
-    Sebbene per le classi immutabili (come \texttt{String}, \texttt{Integer}, \texttt{LocalDate}) valga la regola del passaggio del riferimento per valore, il loro comportamento pratico è identico a quello dei tipi primitivi. Poiché l'oggetto non può essere modificato internamente, qualsiasi operazione di "modifica" effettuata nel metodo (es. \texttt{s = s + "!"}) non è altro che una riassegnazione della variabile locale a un nuovo oggetto, lasciando il riferimento originale del chiamante del tutto invariato.
+    Sebbene per le classi immutabili (come \texttt{String}, \texttt{Integer}, \texttt{LocalDate}) valga la regola del passaggio per copia del valore del riferimento, il loro comportamento pratico è identico a quello dei tipi primitivi. Poiché l'oggetto non può essere modificato internamente, qualsiasi operazione di "modifica" effettuata nel metodo (es. \texttt{s = s + "!"}) non è altro che una riassegnazione della variabile locale a un nuovo oggetto, lasciando il riferimento originale del chiamante del tutto invariato.
 \end{observation}
 
 \begin{observation}
