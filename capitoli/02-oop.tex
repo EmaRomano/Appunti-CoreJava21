@@ -323,12 +323,12 @@ Se il \texttt{main} non è statico, la JVM crea automaticamente un'istanza della
 
 \section{Il passaggio dei parametri: Call-by-Value}
 
-Esiste spesso confusione sulla modalità con cui Java passa i parametri ai metodi. La regola ferrea del linguaggio è una sola: \textbf{Java utilizza esclusivamente il passaggio per valore (call-by-value).} Ciò significa che il metodo riceve sempre una copia dei valori contenuti nelle variabili fornite come argomenti. Copie che, di fatto, sono quindi \textbf{variabili locali}.
+Esiste spesso confusione sulla modalità con cui Java passa i parametri ai metodi. La regola ferrea del linguaggio è una sola: \textbf{Java utilizza esclusivamente il passaggio per (copia del) valore (call-by-value).} Ciò significa che il metodo riceve sempre una copia dei valori contenuti nelle variabili fornite come argomenti. Copie che, di fatto, sono quindi \textbf{variabili locali}.
 
 Il comportamento osservato differisce in base a ciò che la variabile contiene:
 \begin{itemize}
     \item \textbf{Tipi Primitivi:} La variabile contiene il valore numerico o booleano. Il metodo riceve una copia di tale valore; ogni modifica effettuata all'interno del metodo rimane locale e non influenza la variabile originale.
-    \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto.
+    \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto. In questo caso si parlas di \textit{passaggio per copia del valore del riferimento}.
 \end{itemize}
 
 \begin{important}
@@ -556,8 +556,8 @@ Lo Heap è un'area di memoria molto più vasta e dinamica.
 \begin{observation}
 Comprendere questa distinzione chiarisce il comportamento dei parametri nei metodi:
 \begin{enumerate}
-    \item \textbf{Passaggio per Valore (Primitivi)}: Viene copiata la variabile sullo Stack; le modifiche nel metodo non influenzano l'originale.
-    \item \textbf{Passaggio per Riferimento (Oggetti)}: Viene copiato l'indirizzo memorizzato nello Stack. Poiché entrambi i riferimenti puntano allo \textbf{stesso oggetto nello Heap}, le modifiche apportate all'oggetto sono visibili globalmente.
+    \item \textbf{Passaggio per copia del valore (primitivi)}: Viene copiata la variabile sullo Stack; le modifiche nel metodo non influenzano l'originale.
+    \item \textbf{Passaggio per copia del valore del riferimento (oggetti)}: Viene copiato l'indirizzo memorizzato nello Stack. Poiché entrambi i riferimenti puntano allo \textbf{stesso oggetto nello Heap}, le modifiche apportate all'oggetto sono visibili globalmente.
 \end{enumerate}
 \end{observation}
 

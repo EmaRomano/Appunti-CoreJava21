@@ -152,7 +152,7 @@ In particolare, gli oggetti \texttt{String} sono \textbf{immutabili}: una volta 
 Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il profilo delle performance (si pensi a cicli iterativi che concatenano stringhe). In realtà, si tratta di una scelta strategica per bilanciare sicurezza, gestione della memoria e velocità. Ecco i quattro motivi principali:
 
 \begin{enumerate}
-    \item \textbf{Il String Pool (Efficienza di Memoria)} \\
+    \item \textbf{String Pool (Efficienza di Memoria)} \\
     Le stringhe sono tra i dati più frequenti in un'applicazione. Grazie all'immutabilità, Java può utilizzare lo \textit{String Pool}: una zona di memoria dove viene conservata una sola copia di ogni stringa letterale.
     Se definiamo \texttt{String a = "Ciao"} e \texttt{String b = "Ciao"}, entrambe le variabili punteranno allo \textbf{stesso identico oggetto}. Se le stringhe fossero mutabili, la modifica di \texttt{a} altererebbe inavvertitamente anche \texttt{b}. L'immutabilità permette quindi un enorme risparmio di RAM.
 
@@ -166,7 +166,7 @@ Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il
     Se una stringa fosse mutabile, un thread malevolo potrebbe cambiare il contenuto del percorso di un file un istante dopo che il sistema di sicurezza ha autorizzato l'accesso, ma un istante prima dell'apertura effettiva. Questo bug è noto come \textbf{Time-of-Check to Time-of-Use (TOCTOU)}.
 
     \item \textbf{Caching dell'Hashcode (Performance)} \\
-    Poiché il contenuto di una \texttt{String} non cambia mai, Java ne calcola l'hashcode una sola volta e lo memorizza in \textit{cache}. Questo rende le stringhe estremamente veloci quando usate come chiavi nelle \texttt{HashMap} o nei \texttt{HashSet}. Se la stringa fosse mutabile, l'hash andrebbe ricalcolato ad ogni operazione di ricerca o inserimento.
+    \textbf{\textcolor{green!60!black}{[DA RIVEDERE DOPO AVER FATTO BENE HASHCODE E COLLECTIONS]}}Poiché il contenuto di una \texttt{String} non cambia mai, Java ne calcola l'hashcode una sola volta e lo memorizza in \textit{cache}. Questo rende le stringhe estremamente veloci quando usate come chiavi nelle \texttt{HashMap} o nei \texttt{HashSet}. Se la stringa fosse mutabile, l'hash andrebbe ricalcolato ad ogni operazione di ricerca o inserimento.
 
     \item \textbf{Thread Safety} \\
     In contesti multi-core, gli oggetti immutabili sono \textit{thread-safe} per definizione. Non è necessario implementare blocchi o meccanismi di sincronizzazione complessi (che rallentano l'esecuzione) per evitare che due thread modifichino la stessa stringa contemporaneamente, corrompendo i dati.
@@ -192,7 +192,7 @@ Oltre alle stringhe, i principali tipi immutabili in Java includono:
 
 
 \begin{observation}
-L'immutabilità funge da \textbf{invariante logica}: in un sistema complesso, sapere che certi oggetti non cambieranno mai il proprio stato permette al all'informatico di ragionare sul codice con la stessa certezza con cui si ragiona su una costante in una formula.
+L'immutabilità funge da \textbf{invariante logica}: in un sistema complesso, sapere che certi oggetti non cambieranno mai il proprio stato permette all'informatico di ragionare sul codice con la stessa certezza con cui si ragiona su una costante in una formula.
 \end{observation}
 
 % --- Inizio Sezione StringBuilder ---
