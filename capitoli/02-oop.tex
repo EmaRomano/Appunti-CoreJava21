@@ -528,11 +528,11 @@ public record Prodotto(String codice, double prezzo) {
 }
 \end{lstlisting}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: Quando usare un Record?]
+\begin{tip}[Quando usare un Record?]
 Usa un \textbf{record} invece di una classe tradizionale quando l'oggetto è completamente definito dal suo stato (i suoi attributi) e tali attributi sono \textbf{costanti} e si è sicuri di non doverne aggiungere altri in futuro. 
 
 È la scelta ideale per DTO (Data Transfer Objects), chiavi di mappe o semplici contenitori di dati, a patto di poter accettare le restrizioni dei record (niente ereditarietà, campi final).
-\end{tcolorbox}
+\end{tip}
 
 % --- Inizio Sezione Stack vs Heap ---
 \section{Gestione della Memoria: Stack vs Heap}

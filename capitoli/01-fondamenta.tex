@@ -139,7 +139,6 @@ La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le carat
 \begin{itemize}
     \item \textbf{Aritmetica Modulare}: L'overflow degli interi è silenzioso e ciclico ($max + 1 = min$).
     \item \textbf{Precisione Binaria}: Non usare mai \texttt{double} o \texttt{float} per calcoli monetari o di precisione assoluta (usare \texttt{BigDecimal}).
-    \item \textbf{Immutabilità Logica}: I tipi primitivi passano sempre per \textbf{valore}, mai per riferimento.
 \end{itemize}
 \end{important}
 
@@ -175,6 +174,38 @@ Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il
 \begin{observation}
 Nei casi in cui l'immutabilità comporti una reale inefficienza (come la costruzione di stringhe complesse in cicli intensivi), Java mette a disposizione la classe \texttt{StringBuilder}, che permette manipolazioni mutabili e che analizzeremo in un paragrafo a seguire.
 \end{observation}
+
+\subsection{Eccezioni allo String Pool: Stringhe Dinamiche}
+
+E fondamentale distinguere tra stringhe \textit{letterali} e stringhe \textit{dinamiche}:
+
+\begin{itemize}
+    \item \textbf{Stringhe Letterali}: Definite direttamente nel codice (es. \texttt{"Ciao"}). Il compilatore le inserisce automaticamente nello \textit{String Pool}.
+    \item \textbf{Stringhe Dinamiche}: Create a runtime (es. tramite \texttt{new String()}, input dell'utente o metodi come \texttt{substring()}). Queste \textbf{non} risiedono nello String Pool ma vengono allocate come nuovi oggetti nello Heap.
+\end{itemize}
+
+\begin{example}[Confronto di Riferimenti]
+    Se scriviamo:
+    \begin{lstlisting}[language=Java]
+    String s1 = "Test"; // Pool
+    String s2 = new String("Test"); // Heap (nuovo oggetto)
+    System.out.println(s1 == s2); // Risultato: false
+    \end{lstlisting}
+    Anche se il contenuto è identico, i riferimenti di memoria sono diversi.
+\end{example}
+
+\begin{tip}[Il metodo \texttt{intern()}]
+    Esiste un modo per forzare una stringa dinamica nel Pool: il metodo \texttt{s.intern()}. Se invocato, Java controlla se esiste gia una stringa uguale nel Pool: se sì, restituisce il riferimento esistente; altrimenti, aggiunge la stringa allo Pool e ne restituisce il riferimento.
+    Il metodo \texttt{intern()} è una scelta vincente in scenari di \textbf{Data Deduplication}:
+
+\begin{itemize}
+    \item \textbf{Dati Altamente Ripetitivi}: Quando carichi grandi dataset (es. da file CSV o database) che contengono migliaia di occorrenze delle stesse stringhe (es. nomi di città, categorie merceologiche, stati "SÌ/NO").
+    \item \textbf{Ottimizzazione RAM}: Invece di avere 10.000 oggetti "Milano" diversi nello Heap, avrai 10.000 riferimenti che puntano all'unica istanza "Milano" nel Pool.
+    \item \textbf{Confronti Massivi}: Se devi fare milioni di confronti tra stringhe, una volta "internate", il confronto tramite \texttt{==} è istantaneo (confronto di indirizzi) rispetto alla scansione carattere per carattere di \texttt{.equals()}.
+\end{itemize}
+
+\textbf{Attenzione:} Evita \texttt{intern()} su stringhe ad alta cardinalità (es. ID univoci, timestamp, codici fiscali) perché satureresti lo String Pool inutilmente, degradando le prestazioni invece di migliorarle.
+\end{tip}
 
 \subsection{L'Immutabilità in Java: Oltre le Stringhe}
 
