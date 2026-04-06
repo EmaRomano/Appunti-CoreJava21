@@ -1,0 +1,167 @@
+% !TeX root = ../main.tex
+\chapter{Aspetti di Gestione del Codice}
+
+\section{I Package e il Naming Convention}
+
+Nello sviluppo software moderno, la probabilità che due programmatori diversi scelgano lo stesso nome per una classe (ad esempio \texttt{Employee}, \texttt{Account} o \texttt{User}) è estremamente alta. Per evitare conflitti, chiamati \textbf{collisioni di nomi} (\textit{namespace collisions}), Java introduce il concetto di \textbf{Package}.
+
+Un package è una collezione di classi correlate che formano un'unità logica separata dal resto del codice. Funge da "cognome" per la classe, garantendo che il suo nome sia unico all'interno dell'intero ecosistema Java.
+
+Per garantire l'unicità dei package a livello globale, la comunità Java ha adottato una convenzione ingegnosa: utilizzare il proprio \textbf{nome di dominio Internet al contrario}.
+Poiché i domini sono assegnati in modo univoco dalle autorità internazionali, nessuno potrà mai creare un package che inizi con il tuo dominio se tu ne sei il legittimo proprietario.
+
+\begin{example}[Scomposizione di un nome]
+    Se l'azienda \texttt{horstmann.com} sviluppa un progetto chiamato \texttt{corejava}, il package sarà \texttt{com.horstmann.corejava}. Una classe \texttt{Employee} al suo interno avrà come "nome legale completo" (\textbf{Fully Qualified Name}):
+    \begin{center}
+        \texttt{com.horstmann.corejava.Employee}
+    \end{center}
+\end{example}
+
+Un errore comune per chi inizia è pensare che i package siano "annidati" come le cartelle di un sistema operativo e che quindi condividano permessi o caratteristiche. In Java, questa gerarchia è puramente visiva per l'essere umano, ma non esiste per il compilatore.
+
+\begin{important}[L'Indipendenza dei Package]
+    Non esiste alcuna relazione tecnica tra package che sembrano annidati. Ad esempio, \texttt{java.util} e \texttt{java.util.jar} sono trattati come due entità \textbf{completamente distinte}. 
+    \begin{itemize}
+        \item Una classe in \texttt{java.util} non ha alcun accesso privilegiato ai membri di una classe in \texttt{java.util.jar}.
+        \item Importare \texttt{java.util.*} \textbf{non} importa le classi presenti in \texttt{java.util.jar}.
+    \end{itemize}
+\end{important}
+
+\begin{tip}[Best Practice per i Nomi]
+    I nomi dei package dovrebbero essere sempre scritti in \textbf{minuscolo}. Questo aiuta a distinguerli immediatamente dalle classi, che per convenzione iniziano sempre con la lettera maiuscola.
+\end{tip}
+
+\begin{observation}[Titolarità dei Package]
+    In ambito professionale, lo sviluppatore non utilizza un proprio dominio personale, bensì quello dell'organizzazione per cui lavora. 
+    \begin{itemize}
+        \item \textbf{Aziende}: Si utilizza il dominio aziendale (es. \texttt{com.google.*}).
+        \item \textbf{Open Source}: Si utilizza spesso il prefisso del repository: \\[2pt] \quad\texttt{com.github.username.*}.
+    \end{itemize}
+    E importante notare che il compilatore Java \textbf{non verifica} l'esistenza reale del dominio; la convenzione serve esclusivamente a garantire l'unicità logica dei nomi su scala globale.
+\end{observation}
+
+\subsection{Collaborazione e Conflitti}
+
+Quando più programmatori lavorano sullo stesso dominio aziendale, l'organizzazione segue regole di compartimentazione rigorose per evitare sovrapposizioni:
+
+\begin{itemize}
+    \item \textbf{Sotto-pacchetti Specifici}: Il progetto viene suddiviso in moduli funzionali (es. \texttt{ui}, \texttt{backend}, \texttt{security}), assegnando a ogni team o sviluppatore una porzione specifica dell'albero dei package.
+    \item \textbf{Naming Convention del Ruolo}: Si prediligono nomi di classe che descrivano la funzione specifica (es. \texttt{UserValidator} invece di un generico \texttt{UserCheck}), riducendo il rischio di omonimie.
+    \item \textbf{Sistemi di Controllo Versione}: Strumenti come \textbf{Git} gestiscono la presenza di più sviluppatori sugli stessi file, permettendo la fusione delle modifiche (\textit{merging}) e la risoluzione dei conflitti in modo controllato.
+\end{itemize}
+
+\begin{tip}[L'Importanza del Prefisso]
+    Il prefisso del dominio (es. \texttt{it.ferrari}) serve a proteggere il progetto dal \textbf{mondo esterno}. L'organizzazione interna dei sub-package serve invece a proteggere i \textbf{colleghi tra loro}.
+\end{tip}
+
+\section{L'Importazione delle Classi}
+
+Una classe può utilizzare liberamente tutte le classi presenti nel proprio package e tutte le classi \textbf{public} provenienti da altri package. Per accedere a queste ultime, Java offre due strade: l'uso del nome completo o la scorciatoia dell'istruzione \texttt{import}.
+
+Il modo più diretto (ma faticoso) per usare una classe esterna è scriverne il \textbf{Fully Qualified Name} ogni volta che la si invoca:
+\begin{center}
+    \texttt{java.time.LocalDate today = java.time.LocalDate.now();}
+\end{center}
+Poiché questo approccio è prolisso, si utilizza quasi sempre l'istruzione \texttt{import} in cima al file (sotto la dichiarazione del package). Questo agisce come un "alias" che permette di usare solo il nome semplice della classe.
+
+\begin{observation}[Tipi di Import]
+Esistono due modi per importare:
+\begin{itemize}
+    \item \textbf{Specifico}: \texttt{import java.time.LocalDate;} (Importa solo quella classe).
+    \item \textbf{Wildcard}: \texttt{import java.time.*;} (Importa potenzialmente tutte le classi del package).
+\end{itemize}
+\textbf{Nota bene:} L'uso del carattere \texttt{*} non ha alcun impatto negativo sulla dimensione del file compilato (\textit{bytecode}), ma rende meno esplicito quali classi siano effettivamente utilizzate nel file.
+\end{observation}
+
+\begin{important}[La regola del pacchetto singolo]
+    La wildcard \texttt{*} può "aprire" solo un singolo package. Non è possibile usare \texttt{import java.*} per importare tutti i sotto-pacchetti che iniziano con \texttt{java}. Ogni livello va importato singolarmente.
+\end{important}
+
+\begin{tip}[L'eccezione java.lang]
+    Il package \texttt{java.lang} (che contiene classi base come \texttt{System}, \texttt{String} o \texttt{Math}) è \textbf{sempre} importato automaticamente in ogni file Java. Non c'è mai bisogno di scriverlo esplicitamente.
+\end{tip}
+
+\subsection{Risoluzione dei Conflitti di Omonimia}
+Il problema principale dei package sorge quando due classi hanno lo stesso nome ma risiedono in pacchetti diversi. L'esempio classico è la classe \texttt{Date}, presente sia in \texttt{java.util} che in \texttt{java.sql}.
+
+\begin{example}[Gestire i conflitti]
+    Se importiamo entrambi i package con la wildcard:
+    \begin{itemize}
+        \item \texttt{import java.util.*;}
+        \item \texttt{import java.sql.*;}
+    \end{itemize}
+    Il compilatore andrà in errore se scriviamo semplicemente \texttt{Date}, perché non saprà quale scegliere. Per risolvere:
+    \begin{enumerate}
+        \item Si aggiunge un import specifico per "rompere il pareggio": \\[2pt] \quad \texttt{import java.util.Date;}
+        \item Se servono \textbf{entrambe} le classi nello stesso file, si è obbligati a usare il nome completo (\textit{Fully Qualified Name}) per almeno una delle due: \\
+        \texttt{var d1 = new java.util.Date();} \\
+        \texttt{var d2 = new java.sql.Date(...);}
+    \end{enumerate}
+\end{example}
+
+
+
+\begin{observation}[Dietro le quinte del compilatore]
+    Si ricordi che gli \texttt{import} sono solo una comodità per il programmatore. Una volta compilato il codice, nel \textbf{bytecode} finale non esistono più nomi brevi: il compilatore sostituisce ogni riferimento con il \textbf{Fully Qualified Name} completo.
+\end{observation}
+
+\subsection{Gli Import Statici}
+
+Oltre alle classi, Java permette di importare direttamente \textbf{metodi e campi statici}. Una volta importati, questi membri possono essere utilizzati nel codice come se fossero definiti localmente, senza dover far precedere il nome della classe di appartenenza.
+
+\begin{example}[Sintassi]
+Per importare tutti i membri statici della classe \texttt{System}:
+\begin{lstlisting}
+import static java.lang.System.*;
+
+out.println("Ciao!"); // Invece di System.out.println
+exit(0);              // Invece di System.exit(0)
+\end{lstlisting}
+\end{example}
+
+Horstmann solleva un punto critico: non sempre abbreviare è un bene.
+\begin{itemize}
+    \item \textbf{Sconsigliato}: Abbreviare \texttt{System.out} in \texttt{out} spesso rende il codice meno chiaro per chi legge, poiché \texttt{out} è un nome molto generico.
+    \item \textbf{Consigliato}: L'uso con la classe \texttt{Math} è molto apprezzato. Scrivere:\\[2pt] \quad\texttt{sqrt(pow(x, 2))} \\[2pt] \quad è molto più vicino alla notazione matematica rispetto a: \\[2pt] \quad\texttt{Math.sqrt(Math.pow(x, 2))}.
+\end{itemize}
+
+\begin{tip}[Import di Enumerazioni]
+Gli import statici sono estremamente comodi con le \textbf{Enum}. Se devi gestire molti giorni della settimana, importare \texttt{static java.time.DayOfWeek.*} ti permette di usare semplicemente \texttt{FRIDAY} invece di \texttt{DayOfWeek.FRIDAY}.
+\end{tip}
+
+
+\begin{observation}[Il bytecode non mente]
+Proprio come per gli import di classe, gli import statici non hanno alcun impatto sulle prestazioni o sulla dimensione del file \texttt{.class}. Il compilatore si occupa semplicemente di "risolvere" i nomi abbreviati sostituendoli con i nomi completi durante la compilazione.
+\end{observation}
+
+\section{Inserimento di una Classe in un Package}
+
+Per assegnare una classe a un package, è necessario inserire la direttiva \texttt{package} all'inizio del file sorgente, prima di ogni altra dichiarazione (escludendo i commenti).
+
+\begin{example}[Struttura del File]
+\begin{lstlisting}
+package com.horstmann.corejava;
+
+public class Employee {
+    // ... codice ...
+}
+\end{lstlisting}
+\end{example}
+
+\subsection{Corrispondenza tra Package e Directory}
+Esiste un legame indissolubile tra la struttura dei package e l'organizzazione del \textit{file system}. Un sorgente appartenente al package \texttt{a.b.c} deve risiedere fisicamente nella directory \texttt{a/b/c/}.
+
+\begin{important}[Compilazione ed Esecuzione]
+E fondamentale distinguere come il sistema si interfaccia con i file e con le classi:
+\begin{itemize}
+    \item \textbf{Il Compilatore (\texttt{javac})} opera su \textbf{file}: richiede il percorso con i separatori di cartella e l'estensione (es. \texttt{javac com/user/Test.java}).
+    \item \textbf{La JVM (\texttt{java})} carica \textbf{classi}: utilizza la \textit{dot notation} e non richiede estensioni (es. \texttt{java com.user.Test}).
+\end{itemize}
+Se la gerarchia delle cartelle non corrisponde esattamente al nome del package, la JVM non sarà in grado di localizzare la classe a \textit{runtime}.
+
+In altre parole, il nome del package deve rispecchiare esattamente la struttura delle cartelle sul disco(\textit{regola dello specchio}); se si infrange questa regola, il compilatore potrebbe anche essere clemente, ma quando si proverà a far partire il programma, la JVM risponderà con un secco ClassNotFoundException.
+\end{important}
+
+\begin{observation}[Unnamed Package]
+I file privi della direttiva \texttt{package} finiscono nel cosiddetto \textit{unnamed package}. Sebbene utile per piccoli test rapidi, questa pratica è sconsigliata per lo sviluppo professionale in quanto impedisce l'organizzazione strutturata del codice.
+\end{observation}

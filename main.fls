@@ -1059,6 +1059,9 @@ INPUT capitoli/01-fondamenta.aux
 INPUT ./capitoli/02-oop.aux
 INPUT capitoli/02-oop.aux
 INPUT capitoli/02-oop.aux
+INPUT ./capitoli/gestione-codice.aux
+INPUT capitoli/gestione-codice.aux
+INPUT capitoli/gestione-codice.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux
@@ -1206,6 +1209,16 @@ INPUT ./capitoli/02-oop.tex
 INPUT capitoli/02-oop.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtk10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbxi10.tfm
+INPUT ./capitoli/gestione-codice.tex
+INPUT ./capitoli/gestione-codice.tex
+INPUT ./capitoli/gestione-codice.tex
+OUTPUT capitoli/gestione-codice.aux
+INPUT ./capitoli/gestione-codice.tex
+INPUT ./capitoli/gestione-codice.tex
+INPUT ./capitoli/gestione-codice.tex
+INPUT capitoli/gestione-codice.tex
+INPUT ./capitoli/gestione-codice.tex
+INPUT capitoli/gestione-codice.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
@@ -1233,6 +1246,9 @@ INPUT capitoli/01-fondamenta.aux
 INPUT ./capitoli/02-oop.aux
 INPUT capitoli/02-oop.aux
 INPUT capitoli/02-oop.aux
+INPUT ./capitoli/gestione-codice.aux
+INPUT capitoli/gestione-codice.aux
+INPUT capitoli/gestione-codice.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux
