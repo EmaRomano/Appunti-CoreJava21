@@ -6,8 +6,7 @@ Questo repository contiene i miei appunti personali e i frammenti di codice rela
 L'obiettivo di questo progetto è consolidare i concetti fondamentali della programmazione orientata agli oggetti (OOP) in Java, con un occhio di riguardo alle novità introdotte in **Java 21**.
 
 ## 🛠️ Strumenti Utilizzati
-* **Linguaggio:** Java 21
-* **Documentazione:** LaTeX (compilato in VS Code)
+* **Linguaggio:** LaTeX (compilato in VS Code)
 * **Editor:** Visual Studio Code
 * **Versione:** Git per il controllo di versione
 
