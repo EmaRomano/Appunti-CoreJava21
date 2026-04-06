@@ -54,6 +54,25 @@ Quando più programmatori lavorano sullo stesso dominio aziendale, l'organizzazi
     Il prefisso del dominio (es. \texttt{it.ferrari}) serve a proteggere il progetto dal \textbf{mondo esterno}. L'organizzazione interna dei sub-package serve invece a proteggere i \textbf{colleghi tra loro}.
 \end{tip}
 
+\section{L'Accesso a livello di Package}
+
+Oltre ai modificatori \texttt{public} e \texttt{private}, Java prevede un terzo livello di visibilità che si attiva quando \textbf{non viene specificato alcun modificatore}. Questo livello è noto come \textit{package-private} o accesso di default.
+
+Una classe, un metodo o una variabile definiti senza modificatori di accesso sono visibili e utilizzabili da \textbf{tutte le altre classi appartenenti allo stesso package}, ma sono totalmente inaccessibili all'esterno.
+
+Sebbene l'accesso di package sia accettabile per le classi di utilità interna, Horstmann sottolinea come sia una scelta pericolosa per i campi di istanza (variabili).
+
+\begin{important}[Regola d'oro dell'Incapsulamento]
+    Le variabili di istanza dovrebbero essere \textbf{sempre} dichiarate come \texttt{private}. Dimenticare il modificatore non le rende private, ma le espone a tutte le classi del package, violando il principio di protezione dei dati.
+\end{important}
+
+\subsection{Sicurezza e Moduli}
+In passato, era possibile "intrufolarsi" in un package altrui semplicemente dichiarando lo stesso nome di pacchetto nel proprio file sorgente. 
+\begin{itemize}
+    \item Il JDK oggi protegge i package di sistema (quelli che iniziano con \texttt{java.}).
+    \item Per i progetti complessi, la soluzione moderna per isolare davvero i package è l'uso dei \textbf{Moduli} (introdotti in Java 9), che permettono di dichiarare esplicitamente quali package sono "esportati" e quali restano privati. Vedremo i moduli più avanti, ma è importante sapere che rappresentano un'evoluzione significativa rispetto alla semplice organizzazione in package, offrendo un controllo molto più rigoroso sull'accesso e la visibilità del codice.
+\end{itemize}
+
 \section{L'Importazione delle Classi}
 
 Una classe può utilizzare liberamente tutte le classi presenti nel proprio package e tutte le classi \textbf{public} provenienti da altri package. Per accedere a queste ultime, Java offre due strade: l'uso del nome completo o la scorciatoia dell'istruzione \texttt{import}.
