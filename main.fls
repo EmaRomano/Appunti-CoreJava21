@@ -1219,6 +1219,14 @@ INPUT ./capitoli/gestione-codice.tex
 INPUT capitoli/gestione-codice.tex
 INPUT ./capitoli/gestione-codice.tex
 INPUT capitoli/gestione-codice.tex
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex

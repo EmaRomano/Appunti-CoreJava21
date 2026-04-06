@@ -1,11 +1,28 @@
 % !TeX root = ../main.tex
 \chapter{Aspetti di Gestione del Codice}
 
+\section{Anatomia di un Progetto Java: Convenzioni e Struttura}
+
+Nello sviluppo professionale, un progetto Java non è mai una semplice cartella piena di file sparsi. Esistono delle convenzioni universali (utilizzate da IDE come IntelliJ, Eclipse o sistemi come Maven e Gradle) che servono a separare ciò che il programmatore scrive da ciò che il computer esegue.
+
+La \textbf{Root} (Radice) è la cartella principale che contiene l'intero progetto. Al suo interno, il lavoro viene diviso in due rami principali per garantire pulizia e sicurezza:
+
+\begin{itemize}
+    \item \textbf{Cartella \texttt{src} (Source)}: Contiene esclusivamente i file sorgente (\texttt{.java}). È l'unica cartella che viene salvata nei sistemi di controllo versione (come Git).
+    \item \textbf{Cartella \texttt{bin} oppure \texttt{out} (Binary/Output)}:Qui il compilatore deposita i file \texttt{.class} (il bytecode). Questa cartella è generata automaticamente e può essere eliminata in qualsiasi momento senza perdere il lavoro, poiché viene rigenerata alla successiva compilazione.
+\end{itemize}
+
+
+\begin{observation}[Perché separare \texttt{src} da \texttt{bin}?]
+    Separare i file è fondamentale per la distribuzione: se vuoi regalare il tuo programma a un amico, gli darai solo il contenuto di \texttt{bin}. Se gli dessi anche \texttt{src}, lui potrebbe vedere e modificare il tuo codice sorgente. Inoltre, permette a strumenti come Git di non tracciare file inutili che appesantirebbero solo il repository.
+\end{observation}
+
+
 \section{I Package e il Naming Convention}
 
-Nello sviluppo software moderno, la probabilità che due programmatori diversi scelgano lo stesso nome per una classe (ad esempio \texttt{Employee}, \texttt{Account} o \texttt{User}) è estremamente alta. Per evitare conflitti, chiamati \textbf{collisioni di nomi} (\textit{namespace collisions}), Java introduce il concetto di \textbf{Package}.
+Nello sviluppo software moderno, la probabilità che due programmatori diversi scelgano lo stesso nome per una classe (ad esempio \texttt{Employee}, \texttt{Account} o \texttt{User}) è estremamente alta. Per evitare conflitti, chiamati \textbf{collisioni di nomi} (\textit{namespace collisions}), Java introduce il concetto di package.
 
-Un package è una collezione di classi correlate che formano un'unità logica separata dal resto del codice. Funge da "cognome" per la classe, garantendo che il suo nome sia unico all'interno dell'intero ecosistema Java.
+Un \textbf{package è una collezione di classi correlate che formano un'unità logica separata dal resto del codice}. Funge da "cognome" per la classe, garantendo che il suo nome sia unico all'interno dell'intero ecosistema Java.
 
 Per garantire l'unicità dei package a livello globale, la comunità Java ha adottato una convenzione ingegnosa: utilizzare il proprio \textbf{nome di dominio Internet al contrario}.
 Poiché i domini sono assegnati in modo univoco dalle autorità internazionali, nessuno potrà mai creare un package che inizi con il tuo dominio se tu ne sei il legittimo proprietario.
@@ -17,15 +34,22 @@ Poiché i domini sono assegnati in modo univoco dalle autorità internazionali, 
     \end{center}
 \end{example}
 
-Un errore comune per chi inizia è pensare che i package siano "annidati" come le cartelle di un sistema operativo e che quindi condividano permessi o caratteristiche. In Java, questa gerarchia è puramente visiva per l'essere umano, ma non esiste per il compilatore.
+\begin{caution}[Package vs Directory: Distinzione Concettuale]
+Un errore tipico dei principianti è identificare il concetto di \textbf{package} con quello di \textbf{directory} (cartella). Sebbene Java, come vedremo a breve, imponga una corrispondenza biunivoca tra il nome del package e il percorso fisico sul disco, i due concetti rimangono distinti:
+\begin{itemize}
+    \item Il \textbf{Package} è un'entità logica (\textit{Namespace}): serve a raggruppare classi correlate e a prevenire conflitti di nomi.
+    \item La \textbf{Directory} è un'entità fisica: è una struttura del \textit{file system} utilizzata dal sistema operativo.
+\end{itemize}
+In sintesi: un package \textbf{non è} semplicemente una collezione di file contenuti nella stessa cartella. Prova ne è il fatto che file situati nella stessa cartella, ma privi della direttiva \texttt{package}, appartengono, come vedremo, all'``unnamed package'' e non a un package che prende il nome dalla cartella stessa.
+\end{caution}
 
-\begin{important}[L'Indipendenza dei Package]
-    Non esiste alcuna relazione tecnica tra package che sembrano annidati. Ad esempio, \texttt{java.util} e \texttt{java.util.jar} sono trattati come due entità \textbf{completamente distinte}. 
-    \begin{itemize}
-        \item Una classe in \texttt{java.util} non ha alcun accesso privilegiato ai membri di una classe in \texttt{java.util.jar}.
-        \item Importare \texttt{java.util.*} \textbf{non} importa le classi presenti in \texttt{java.util.jar}.
-    \end{itemize}
-\end{important}
+Un altro errore comune per chi inizia è pensare che i package siano "annidati" come le cartelle di un sistema operativo e che quindi condividano permessi o caratteristiche. In Java, questa gerarchia è puramente visiva per l'essere umano, ma non esiste per il compilatore: per quest'ultimo, i package sono tutti "allo stesso livello". 
+
+Non esiste dunque alcuna relazione tecnica tra package che sembrano annidati. Ad esempio, \texttt{java.util} e \texttt{java.util.jar} sono trattati come due entità \textbf{completamente distinte}. 
+\begin{itemize}
+    \item Una classe in \texttt{java.util} non ha alcun accesso privilegiato ai membri di una classe in \texttt{java.util.jar}.
+    \item Importare \texttt{java.util.*} \textbf{non} importa le classi presenti in \texttt{java.util.jar}.
+\end{itemize}
 
 \begin{tip}[Best Practice per i Nomi]
     I nomi dei package dovrebbero essere sempre scritti in \textbf{minuscolo}. Questo aiuta a distinguerli immediatamente dalle classi, che per convenzione iniziano sempre con la lettera maiuscola.
@@ -54,6 +78,87 @@ Quando più programmatori lavorano sullo stesso dominio aziendale, l'organizzazi
     Il prefisso del dominio (es. \texttt{it.ferrari}) serve a proteggere il progetto dal \textbf{mondo esterno}. L'organizzazione interna dei sub-package serve invece a proteggere i \textbf{colleghi tra loro}.
 \end{tip}
 
+\section{Creazione e Gestione Manuale dei Package}
+
+Per comprendere davvero come Java gestisce il codice, è utile simulare il lavoro che l'IDE svolge "dietro le quinte". La creazione di un package senza l'aiuto di IntelliJ richiede una sincronizzazione precisa tra il codice sorgente e la struttura delle cartelle del sistema operativo.
+
+\subsection*{Fase 1: Dichiarazione e Struttura Fisica}
+Per creare un package, ad esempio \texttt{eu.dedalo.math}:
+\begin{itemize}
+  \item si crea un percorso fisico nella cartella \texttt{src} che rifletta il nome del package, dunque \texttt{src/eu/dedalo/math/},
+  \item in tutti i file sorgenti .java che stanno alla fine del percorso si dichiara che appartengono a quel package: \texttt{package eu.dedalo.math;}. Questa direttiva si dice \textbf{dichiarazione di appartenenza al package (package statement)} e deve essere la prima istruzione del file, prima di qualsiasi import o dichiarazione di classe.
+\end{itemize}
+
+\vspace{\baselineskip}
+
+In Java, la regola è che ogni file sorgente che dichiara di appartenere a un package deve essere posizionato in una cartella che rispecchia esattamente la struttura del package. Se questa corrispondenza non viene rispettata, il compilatore genererà errori. Se invece la dichiarazione di package è assente, il file viene considerato parte dell'``unnamed package'', che è una sorta di spazio dei nomi predefinito per i file senza package.
+
+
+\subsection*{Fase 2: Compilazione Professionale}
+
+Supponiamo ora di aver creato il file sorgente \texttt{Calcolatrice.java} nel package che abbiamo appena costruito. È tecnicamente possibile compilare il file puntando direttamente al suo percorso nel file system senza specificare una directory di output:
+
+\begin{lstlisting}[language=bash]
+# Compilazione diretta dal terminale
+javac src/eu/dedalo/math/Calcolatrice.java
+\end{lstlisting}
+
+In questo caso, però, il compilatore non crea una struttura separata, ma deposita il file \texttt{.class} generato nella stessa cartella del file \texttt{.java}. 
+
+Per questo motivo la best practice prevede l'uso del flag \texttt{-d} (\textit{destination}).
+
+\begin{lstlisting}[language=bash, caption={Compilazione da terminale}]
+# Posizionarsi nella cartella 'src'
+javac -d ../bin eu/dedalo/math/Calcolatrice.java
+\end{lstlisting}
+
+Il comando \texttt{-d ../bin} istruisce il compilatore a:
+\begin{itemize}
+    \item Leggere la riga \texttt{package eu.dedalo.math;} nel sorgente.
+    \item Creare automaticamente la gerarchia di cartelle \texttt{eu/dedalo/math/} dentro la cartella \texttt{bin}.
+    \item Depositare il file \texttt{Calcolatrice.class} nella cartella finale.
+\end{itemize}
+
+
+\subsection*{Fase 3: Esecuzione e il "Nome Legale"}
+L'errore più comune in questa fase è cercare di eseguire il programma entrando nella cartella dove risiede il file \texttt{.class}. In Java, questo non funziona.
+
+Per lanciare il programma da terminale, la JVM deve essere posizionata sulla \textbf{base della gerarchia dei package} (comunemente chiamata \textit{Classpath Root}).
+
+\begin{itemize}
+    \item Se ti trovi fisicamente dentro la cartella \texttt{bin}, la base è la cartella corrente.
+    \item Se ti trovi nella \textit{Project Root}, devi specificare dove sono i binari: \\ \texttt{java -cp bin eu.dedalo.math.Calcolatrice}
+\end{itemize}
+
+In ogni caso, \textbf{non} devi mai entrare dentro le sottocartelle del package (come \texttt{math/}) per lanciare il comando, altrimenti la JVM "perderebbe il filo" della struttura logica: la JVM cercherebbe una classe che dichiara di non avere package (unnamed package); trovando invece scritto \texttt{package eu.dedalo.math;}, la JVM rifiuterebbe di caricarla per incoerenza tra posizione e dichiarazione.
+
+
+\begin{important}[Compilazione ed Esecuzione: File vs Classi]
+È fondamentale distinguere come il sistema si interfaccia con il codice a seconda della fase in cui ci troviamo. Assumendo di trovarsi nella \textbf{Project Root}:
+
+\begin{itemize}
+    \item \textbf{Il Compilatore (\texttt{javac})} lavora sui \textbf{File}:
+    \begin{itemize}
+        \item Ragiona per \textbf{percorsi fisici} (usa lo \textit{slash} \texttt{/}).
+        \item Richiede l'estensione \textbf{\texttt{.java}}.
+        \item \textit{Best Practice}: \texttt{javac -d bin src/eu/dedalo/math/Calcolatrice.java}
+    \end{itemize}
+    
+    \item \textbf{La JVM (\texttt{java})} lavora sulle \textbf{Classi}:
+    \begin{itemize}
+        \item Ragiona per \textbf{nomi logici} (usa il \textit{dot} \texttt{.}).
+        \item \textbf{Mai} usare l'estensione (niente \texttt{.class}).
+        \item Richiede la \textbf{Classpath Root}: deve sapere da dove inizia il package (es. la cartella \texttt{bin}).
+        \item \textit{Best Practice}: \texttt{java -cp bin eu.dedalo.math.Calcolatrice}
+    \end{itemize}
+\end{itemize}
+\end{important}
+
+\begin{tip}[Regola Mnemonica]
+    Usa lo \textbf{slash} (\texttt{/}) quando stai parlando con il Sistema Operativo (file sul disco). \\
+    Usa il \textbf{punto} (\texttt{.}) quando stai parlando con la Java Virtual Machine (logica dei package).
+\end{tip}
+
 \section{L'Accesso a livello di Package}
 
 Oltre ai modificatori \texttt{public} e \texttt{private}, Java prevede un terzo livello di visibilità che si attiva quando \textbf{non viene specificato alcun modificatore}. Questo livello è noto come \textit{package-private} o accesso di default.
@@ -70,14 +175,14 @@ Sebbene l'accesso di package sia accettabile per le classi di utilità interna, 
 In passato, era possibile "intrufolarsi" in un package altrui semplicemente dichiarando lo stesso nome di pacchetto nel proprio file sorgente. 
 \begin{itemize}
     \item Il JDK oggi protegge i package di sistema (quelli che iniziano con \texttt{java.}).
-    \item Per i progetti complessi, la soluzione moderna per isolare davvero i package è l'uso dei \textbf{Moduli} (introdotti in Java 9), che permettono di dichiarare esplicitamente quali package sono "esportati" e quali restano privati. Vedremo i moduli più avanti, ma è importante sapere che rappresentano un'evoluzione significativa rispetto alla semplice organizzazione in package, offrendo un controllo molto più rigoroso sull'accesso e la visibilità del codice.
+    \item Per i progetti complessi, la soluzione moderna per isolare davvero i package è l'uso dei \textbf{Moduli} (introdotti in Java 9), che permettono di dichiarare esplicitamente quali package sono "esportati" e quali restano privati. Vedremo i moduli più avanti, ma è importante sapere fin da ora che rappresentano un'evoluzione significativa rispetto alla semplice organizzazione in package, offrendo un controllo molto più rigoroso sull'accesso e la visibilità del codice.
 \end{itemize}
 
-\section{L'Importazione delle Classi}
+\section{Gli Import}
 
 Una classe può utilizzare liberamente tutte le classi presenti nel proprio package e tutte le classi \textbf{public} provenienti da altri package. Per accedere a queste ultime, Java offre due strade: l'uso del nome completo o la scorciatoia dell'istruzione \texttt{import}.
 
-Il modo più diretto (ma faticoso) per usare una classe esterna è scriverne il \textbf{Fully Qualified Name} ogni volta che la si invoca:
+Il modo più diretto (ma faticoso) per usare una classe di un altro package è scriverne il \textbf{Fully Qualified Name} ogni volta che la si invoca:
 \begin{center}
     \texttt{java.time.LocalDate today = java.time.LocalDate.now();}
 \end{center}
@@ -151,36 +256,4 @@ Gli import statici sono estremamente comodi con le \textbf{Enum}. Se devi gestir
 
 \begin{observation}[Il bytecode non mente]
 Proprio come per gli import di classe, gli import statici non hanno alcun impatto sulle prestazioni o sulla dimensione del file \texttt{.class}. Il compilatore si occupa semplicemente di "risolvere" i nomi abbreviati sostituendoli con i nomi completi durante la compilazione.
-\end{observation}
-
-\section{Inserimento di una Classe in un Package}
-
-Per assegnare una classe a un package, è necessario inserire la direttiva \texttt{package} all'inizio del file sorgente, prima di ogni altra dichiarazione (escludendo i commenti).
-
-\begin{example}[Struttura del File]
-\begin{lstlisting}
-package com.horstmann.corejava;
-
-public class Employee {
-    // ... codice ...
-}
-\end{lstlisting}
-\end{example}
-
-\subsection{Corrispondenza tra Package e Directory}
-Esiste un legame indissolubile tra la struttura dei package e l'organizzazione del \textit{file system}. Un sorgente appartenente al package \texttt{a.b.c} deve risiedere fisicamente nella directory \texttt{a/b/c/}.
-
-\begin{important}[Compilazione ed Esecuzione]
-E fondamentale distinguere come il sistema si interfaccia con i file e con le classi:
-\begin{itemize}
-    \item \textbf{Il Compilatore (\texttt{javac})} opera su \textbf{file}: richiede il percorso con i separatori di cartella e l'estensione (es. \texttt{javac com/user/Test.java}).
-    \item \textbf{La JVM (\texttt{java})} carica \textbf{classi}: utilizza la \textit{dot notation} e non richiede estensioni (es. \texttt{java com.user.Test}).
-\end{itemize}
-Se la gerarchia delle cartelle non corrisponde esattamente al nome del package, la JVM non sarà in grado di localizzare la classe a \textit{runtime}.
-
-In altre parole, il nome del package deve rispecchiare esattamente la struttura delle cartelle sul disco(\textit{regola dello specchio}); se si infrange questa regola, il compilatore potrebbe anche essere clemente, ma quando si proverà a far partire il programma, la JVM risponderà con un secco ClassNotFoundException.
-\end{important}
-
-\begin{observation}[Unnamed Package]
-I file privi della direttiva \texttt{package} finiscono nel cosiddetto \textit{unnamed package}. Sebbene utile per piccoli test rapidi, questa pratica è sconsigliata per lo sviluppo professionale in quanto impedisce l'organizzazione strutturata del codice.
 \end{observation}
