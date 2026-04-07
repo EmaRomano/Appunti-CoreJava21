@@ -63,7 +63,7 @@ In Java, il riferimento \texttt{this} punta sempre all'oggetto corrente (il cosi
 \section{Overloading e Firma dei Metodi}
 L'overloading consente di definire più costruttori o metodi con lo stesso nome, purché abbiano parametri differenti.
 \begin{itemize}
-    \item \textbf{Firma (Signature):} È l'identità del metodo, composta da \textbf{nome + tipi dei parametri}.
+    \item \textbf{Firma (Signature):} È l'identità del metodo, composta da \textit{nome del metodo, numero e tipo dei parametri e l'ordine in cui sono dichiarati}.
     \item \textbf{Esclusione del Ritorno:} Il tipo di ritorno \textbf{non} fa parte della firma. Non è possibile avere due metodi con parametri identici ma tipi di ritorno diversi.
 \end{itemize}
 
@@ -108,6 +108,10 @@ public class Employee {
 \begin{observation}
     \textbf{Il vantaggio della manutenzione.} 
     Se in futuro si volesse aggiungere un controllo di validità (ad esempio, impedire che lo stipendio sia negativo), basterebbe inserire la logica nel \textbf{costruttore master}. Tutti gli altri costruttori ne beneficerebbero automaticamente, garantendo la coerenza dello stato dell'oggetto indipendentemente da come viene creato.
+\end{observation}
+
+\begin{observation}
+    Si parla dunque di overloading di un metodo se ci sono due metodi con lo stesso nome ma con firma diversa. Anche se il numero di parametri è lo stesso ma cambia l'ordine, sempre di overloading si tratta, perché cambia la firma. Di fatto, anche se l'identificatore del metodo è lo stesso, si tratta di metodi diversi. Quindi l'overloading non è altro che un modo per evitare il proliferare di identificatori di metodi ed è comodo anche per continuare a descrivere (tramite un nome appropriato) cosa fa un metodo anche se cambiano i parametri.
 \end{observation}
 
 \begin{important}
