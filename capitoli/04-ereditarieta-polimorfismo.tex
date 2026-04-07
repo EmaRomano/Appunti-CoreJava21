@@ -1,0 +1,130 @@
+% !TeX root = ../main.tex
+\chapter{Ereditarietà e Polimorfismo}
+
+\section{Classi, Superclassi e Sottoclassi}
+
+L'ereditarietà è il meccanismo che permette di creare nuove classi basandosi su classi esistenti. L'idea fondamentale è quella di riutilizzare i metodi e i campi di una classe esistente, aggiungendo o modificando funzionalità per rispondere a esigenze più specifiche.
+
+Il criterio fondamentale per stabilire se l'ereditarietà sia appropriata è la relazione \textbf{"is-a"} (è-un). 
+Ogni istanza della sottoclasse deve poter essere considerata un'istanza della superclasse. Ad esempio, poiché ogni \textit{Manager} è un \textit{Dipendente}, la classe \texttt{Manager} può ereditare da \texttt{Employee}. Richiamiamo innanzitutto la classe \texttt{Employee} che abbiamo visto nei capitoli precedenti:
+
+\begin{lstlisting}[language=Java, caption={La superclasse Employee originale}]
+import java.time.LocalDate;
+
+public class Employee {
+    private String name;
+    private double salary;
+    private LocalDate hireDay;
+
+    public Employee(String name, double salary, int year, int month, int day) {
+        this.name = name;
+        this.salary = salary;
+        this.hireDay = LocalDate.of(year, month, day);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public LocalDate getHireDay() {
+        return hireDay;
+    }
+
+    public void raiseSalary(double byPercent) {
+        double raise = salary * byPercent / 100;
+        salary += raise;
+    }
+}
+\end{lstlisting}
+
+In Java, l'ereditarietà si esprime tramite la parola chiave \texttt{extends}.
+
+\begin{lstlisting}[language=Java, caption={Esempio di ereditarietà}]
+public class Manager extends Employee {
+    private double bonus; // Campo aggiuntivo
+
+    public void setBonus(double bonus) {
+        this.bonus = bonus;
+    }
+}
+\end{lstlisting}
+
+Nonostante il prefisso "super", una superclasse non è "superiore" in termini di capacità. Al contrario, la sottoclasse è solitamente più complessa:
+\begin{itemize}
+    \item La \textbf{Superclasse} contiene i metodi più generali.
+    \item La \textbf{Sottoclasse} eredita tutto ciò che c'è nella superclasse e aggiunge campi o metodi specializzati (\textit{more functionality}).
+\end{itemize}
+
+\begin{caution}[Precisazione sull'esempio del libro]
+    Nel libro di testo, l'esempio viene proposto nell'ipotesi (puramente esemplificativa)che un Employee non possa mai diventare Manager. In una situazione reale questo non è in genere realistico e la modellazione delle classi dovrebbe tenere conto di questa possibilità.
+\end{caution}
+
+\begin{observation}[Accesso di classe vs Accesso di istanza]
+    In Java, il modificatore \texttt{private} garantisce la visibilità a livello di \textbf{classe} e non di singola istanza:
+    \begin{itemize}
+        \item Un'istanza di \texttt{Employee} può accedere ai membri privati di un'altra istanza della stessa classe.
+        \item Una sottoclasse \texttt{Manager}, pur ereditando lo stato, è considerata \textbf{codice esterno} rispetto alla definizione della superclasse.
+    \end{itemize}
+    \textbf{Conseguenza}: La sottoclasse possiede i dati della superclasse (memoria), ma deve interagire con essi tramite l'interfaccia pubblica (metodi), preservando l'integrità dell'incapsulamento.
+\end{observation}
+
+\section{Sovrascrivere i Metodi (Overriding)}
+
+Spesso i metodi della superclasse non sono del tutto appropriati per la sottoclasse. Nel nostro esempio, il metodo \texttt{getSalary()} di \texttt{Employee} restituisce solo lo stipendio base, mentre per un \texttt{Manager} dovrebbe restituire la somma di stipendio e bonus.
+Tentare di implementare il metodo accedendo direttamente al campo della superclasse fallisce:
+\begin{lstlisting}[language=Java]
+public double getSalary() {
+    return salary + bonus; // ERRORE: salary e privato in Employee
+}
+\end{lstlisting}
+Anche se \texttt{Manager} è una sottoclasse, deve rispettare l'incapsulamento e usare l'interfaccia pubblica della superclasse.
+Un errore altro comune è chiamare il metodo per nome sperando che Java "capisca" di voler usare quello del padre:
+\begin{lstlisting}[language=Java]
+public double getSalary() {
+    double baseSalary = getSalary(); // ERRORE: chiama se stesso all'infinito
+    return baseSalary + bonus;
+}
+\end{lstlisting}
+Questo codice causa un \textit{crash} del programma perché il metodo richiama se stesso senza sosta (Stack Overflow).
+
+Per istruire il compilatore a invocare il metodo della superclasse anziché quello corrente, si utilizza la parola chiave \textbf{\texttt{super}}.
+
+\begin{lstlisting}[language=Java, caption={Overriding corretto con super}]
+public double getSalary() {
+    double baseSalary = super.getSalary();
+    return baseSalary + bonus;
+}
+\end{lstlisting}
+
+\begin{important}[\texttt{super} non è un riferimento]
+A differenza di \texttt{this}, che è un riferimento all'oggetto corrente (e può essere assegnato a una variabile), \textbf{\texttt{super}} è solo una \textbf{parola chiave speciale} che dirige il compilatore verso la superclasse. Non puoi, ad esempio, scrivere \texttt{Object x = super;}.
+\end{important}
+
+\subsection{L'importanza di \texttt{@Override}}
+Le annotazioni in Java sono metadati che forniscono informazioni aggiuntive al compilatore; saranno trattate più approfonditamente più avanti, ma è importante introdurre subito l'annotazione \texttt{@Override} in questo contesto.
+Sebbene non sia strettamente necessaria per il funzionamento del codice, è buona norma precedere ogni metodo sovrascritto con l'annotazione \textbf{\texttt{@Override}}.
+
+\begin{lstlisting}[language=Java, caption={Uso di @Override}]
+@Override
+public double getSalary() {
+    return super.getSalary() + bonus;
+}
+\end{lstlisting}
+
+[Motivazioni e Vantaggi]
+L'uso di questa annotazione serve a istruire il compilatore sulle nostre intenzioni. Le motivazioni principali sono:
+\begin{enumerate}
+    \item \textbf{Controllo degli errori di battitura}: Se scrivessimo per errore \texttt{getsalary()} (con la 's' minuscola), senza annotazione Java penserebbe semplicemente che stiamo creando un \textit{nuovo} metodo. Con \texttt{@Override}, il compilatore segnalerebbe un errore perché non esiste alcun metodo \texttt{getsalary} nella superclasse da sovrascrivere.
+    \item \textbf{Verifica della firma}: Se cambiamo i parametri del metodo (es. aggiungiamo un argomento), non stiamo più facendo \textit{overriding} ma \textit{overloading}. L'annotazione ci avvisa immediatamente se stiamo rompendo il legame con il metodo del padre.
+    \item \textbf{Documentazione}: Rende immediatamente chiaro a chi legge il codice che quel metodo non è un'aggiunta originale della sottoclasse, ma una modifica di un comportamento ereditato.
+\end{enumerate}
+
+
+
+\begin{tip}[Fail-Fast]
+Usare \texttt{@Override} è un esempio del principio \textit{"fail-fast"}: è meglio che il compilatore ci urli contro subito per un errore di distrazione, piuttosto che scoprire a runtime che il nostro \texttt{Manager} sta prendendo lo stipendio base perché il metodo di calcolo del bonus ha un nome leggermente sbagliato.
+\end{tip}

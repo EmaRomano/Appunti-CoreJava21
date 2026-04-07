@@ -1062,6 +1062,9 @@ INPUT capitoli/02-oop.aux
 INPUT ./capitoli/03-gestione-codice.aux
 INPUT capitoli/03-gestione-codice.aux
 INPUT capitoli/03-gestione-codice.aux
+INPUT ./capitoli/04-ereditarieta-polimorfismo.aux
+INPUT capitoli/04-ereditarieta-polimorfismo.aux
+INPUT capitoli/04-ereditarieta-polimorfismo.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux
@@ -1227,6 +1230,16 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+OUTPUT capitoli/04-ereditarieta-polimorfismo.aux
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT capitoli/04-ereditarieta-polimorfismo.tex
+INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
+INPUT capitoli/04-ereditarieta-polimorfismo.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
@@ -1263,6 +1276,9 @@ INPUT capitoli/02-oop.aux
 INPUT ./capitoli/03-gestione-codice.aux
 INPUT capitoli/03-gestione-codice.aux
 INPUT capitoli/03-gestione-codice.aux
+INPUT ./capitoli/04-ereditarieta-polimorfismo.aux
+INPUT capitoli/04-ereditarieta-polimorfismo.aux
+INPUT capitoli/04-ereditarieta-polimorfismo.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux
