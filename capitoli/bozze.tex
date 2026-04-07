@@ -10,3 +10,78 @@
     \item \textbf{Distruzione di oggetti}: par. 4.6.8.
     \item \textbf{Costruttori canonici nei records}: par. 4.7.2.
 \end{itemize}
+
+\section{Il Class Path}
+
+Il \textbf{Class Path} (percorso delle classi) è la collezione di tutte le locazioni (cartelle o archivi) in cui la JVM e il compilatore cercano i file \texttt{.class}. È, di fatto, l'elenco dei punti di partenza per la risoluzione dei package.
+
+Il Class Path è una stringa composta da vari percorsi. Il separatore dipende dal sistema operativo:
+
+\begin{table}[h]
+    \centering
+    \small % Riduce leggermente la dimensione del testo per far stare tutto comodamente
+    \begin{tabularx}{\textwidth}{l X l} % Rimosse le linee verticali per stile professionale
+        \toprule
+        \textbf{Sistema} & \textbf{Esempio di Class Path} & \textbf{Separatore} \\
+        \midrule
+        \textbf{Fedora / UNIX} & \path{/home/user/classdir:.:/libs/archive.jar} & Due punti (\texttt{:}) \\
+        \addlinespace % Aggiunge un piccolo spazio tra le righe
+        \textbf{Windows} & \path{C:\classdir;.;C:\libs\archive.jar} & Punto e virgola (\texttt{;}) \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\begin{observation}[Il simbolo del punto]
+    In entrambi i sistemi, il punto (\texttt{.}) rappresenta la \textbf{directory corrente}.
+\end{observation}
+
+È comune confondere il Classpath con la directory di output. Ecco la distinzione corretta:
+
+\begin{itemize}
+    \item \textbf{Per il Compilatore (\texttt{javac})}: Il Classpath serve a \textbf{risolvere i riferimenti esterni}. Se la tua classe \texttt{A} usa la classe \texttt{B} (che si trova in un JAR o in un'altra cartella), il compilatore deve "leggere" \texttt{B} per verificare che tu stia usando i suoi metodi correttamente.
+    \begin{itemize}
+        \item \textit{Nota}: Per decidere \textbf{dove mettere} il file compilato, si usa sempre il flag \texttt{-d}, non il Classpath.
+    \end{itemize}
+
+    \item \textbf{Per la JVM (\texttt{java})}: Il Classpath serve a \textbf{caricare il codice in memoria}. La JVM non sa nulla dei file \texttt{.java}; lei cerca solo il bytecode (\texttt{.class}) seguendo i percorsi indicati nel Classpath per poter avviare l'esecuzione.
+\end{itemize}
+
+\subsection{La "Ricerca Intelligente" del Compilatore}
+Horstmann sottolinea che il compilatore è più sofisticato della JVM nella ricerca. Quando incontra una classe, ad esempio \texttt{Employee}:
+\begin{enumerate}
+    \item Cerca il file \texttt{Employee.class} nel Classpath.
+    \item Se trova anche il file \texttt{Employee.java}, controlla le date di modifica.
+    \item \textbf{Auto-recompile}: Se il sorgente (\texttt{.java}) è più recente del compilato (\texttt{.class}), il compilatore ricompila automaticamente il sorgente per garantire che tu stia usando la versione più aggiornata.
+\end{enumerate}
+
+\subsection{I file JAR (Java Archive)}
+Oltre alle normali directory, le classi possono essere raggruppate in file \textbf{JAR}.
+\begin{itemize}
+    \item Un file JAR è essenzialmente un archivio in formato \textbf{ZIP} che contiene classi e strutture di sottocartelle compresse.
+    \item È lo standard per la distribuzione di librerie di terze parti.
+    \item Permette di migliorare le prestazioni (un solo file da aprire invece di centinaia) e risparmiare spazio.
+\end{itemize}
+
+
+\subsection{L'Algoritmo di Ricerca}
+Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cercherà in ordine:
+\begin{enumerate}
+    \item Nelle classi delle \textbf{API di Java} (sempre cercate per prime, non serve includerle nel Class Path).
+    \item In ogni voce del Class Path, aggiungendo il percorso del package alla base. Ad esempio, se il path contiene \texttt{/home/user/classdir}, cercherà: \\
+    \texttt{/home/user/classdir/com/horstmann/corejava/Employee.class}
+\end{enumerate}
+
+\begin{caution}[La trappola del punto]
+    Per impostazione predefinita, il Class Path è costituito solo dal punto (\texttt{.}). Tuttavia, se specifichi un Class Path personalizzato (tramite la variabile d'ambiente \texttt{CLASSPATH} o il flag \texttt{-cp}) e \textbf{dimentichi} di includere il punto (\texttt{.}), la JVM non guarderà più nella cartella corrente.
+    \begin{itemize}
+        \item \textbf{Risultato}: Il programma compila (perché \texttt{javac} guarda sempre la cartella corrente), ma non parte (perché \texttt{java} non la trova).
+    \end{itemize}
+\end{caution}
+
+\subsection{Uso delle Wildcard}
+È possibile includere tutti i file JAR di una cartella usando l'asterisco:
+\begin{lstlisting}[language=bash]
+# Su Fedora (bisogna proteggere l'asterisco dalle espansioni della shell)
+java -cp "/home/user/libs/*:." MiaClasse
+\end{lstlisting}
+\textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
