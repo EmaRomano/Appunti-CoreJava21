@@ -60,7 +60,7 @@ Nonostante il prefisso "super", una superclasse non è "superiore" in termini di
 \end{itemize}
 
 \begin{caution}[Precisazione sull'esempio del libro]
-    Nel libro di testo, l'esempio viene proposto nell'ipotesi (puramente esemplificativa)che un Employee non possa mai diventare Manager. In una situazione reale questo non è in genere realistico e la modellazione delle classi dovrebbe tenere conto di questa possibilità.
+    Nel libro di testo, l'esempio viene proposto nell'ipotesi (puramente esemplificativa) che un Employee non possa mai diventare Manager. In una situazione reale questo non è in genere realistico e la modellazione delle classi dovrebbe tenere conto di questa possibilità.
 \end{caution}
 
 \begin{observation}[Accesso di classe vs Accesso di istanza]
@@ -128,3 +128,40 @@ L'uso di questa annotazione serve a istruire il compilatore sulle nostre intenzi
 \begin{tip}[Fail-Fast]
 Usare \texttt{@Override} è un esempio del principio \textit{"fail-fast"}: è meglio che il compilatore ci urli contro subito per un errore di distrazione, piuttosto che scoprire a runtime che il nostro \texttt{Manager} sta prendendo lo stipendio base perché il metodo di calcolo del bonus ha un nome leggermente sbagliato.
 \end{tip}
+
+\section{I Costruttori delle Sottoclassi}
+
+A differenza dei metodi, i costruttori non vengono "ereditati" nel senso stretto del termine: ogni sottoclasse deve definire i propri costruttori, ma ha l'obbligo di invocare un costruttore della superclasse per inizializzare i campi privati ereditati. Il meccanismo di \textit{constructor chaining} (catena dei costruttori) impone infatti dei vincoli precisi a seconda della struttura della superclasse. Si possono verificare due scenari principali:
+
+\begin{enumerate}
+    \item \textbf{Superclasse con costruttore no-args (esplicito o implicito)}
+    Se nella superclasse esiste un costruttore senza argomenti, la sottoclasse non è obbligata a dichiarare un costruttore proprio. In questo caso, viene utilizzato il costruttore di default della sottoclasse che invoca implicitamente \texttt{super()}.
+
+    \item \textbf{Superclasse senza costruttore no-args}
+    Se nella superclasse è presente almeno un costruttore con parametri e \textbf{non} è stato definito un costruttore senza argomenti, la sottoclasse ha un obbligo formale:
+    bisogna dichiarare esplicitamente un costruttore nella sottoclasse e la prima istruzione di tale costruttore deve essere una chiamata esplicita a uno dei costruttori della superclasse tramite la sintassi \texttt{super(...parametri...)}.
+\end{enumerate}
+
+\begin{caution}[Errore di compilazione comune]
+    Se la superclasse richiede parametri e la sottoclasse non li fornisce esplicitamente (o tenta di farlo dopo la prima riga), il compilatore segnalerà l'errore: \textit{"Implicit super constructor is undefined. Must explicitly invoke another constructor"}.
+\end{caution}
+
+\begin{observation}[Invocazione Implicita e Campi Propri]
+    Se nella superclasse non è definito alcun costruttore esplicito (ovvero è presente il costruttore \textit{no-args} di default), la sottoclasse gode di maggiore flessibilità: è possibile definire un costruttore che inizializza esclusivamente i \textbf{campi propri} della sottoclasse. In questo scenario, la chiamata a \texttt{super()} può essere omessa (e di solito è considerata una buona pratica, per ridurre la verbosità), poiché il compilatore la inserirà automaticamente come prima riga invisibile.
+\end{observation}
+
+
+\begin{observation}[La regola della prima posizione]
+    Entrambe le istruzioni, \texttt{this()} e \texttt{super()}, hanno il vincolo categorico di dover essere la \textbf{prima istruzione} del costruttore. Di conseguenza, \textbf{non possono mai comparire nello stesso costruttore}.
+\end{observation}
+
+
+\begin{observation}
+Cosa succede se un costruttore nella sottoclasse usa \texttt{this(...)}? La responsabilità di invocare il padre viene semplicemente "passata" lungo la catena:
+\begin{enumerate}
+    \item Il Costruttore A chiama \texttt{this(...)} (Costruttore B).
+    \item Il Costruttore B deve, a sua volta, chiamare \texttt{super(...)} (o un altro costruttore della stessa classe che alla fine lo faccia).
+\end{enumerate}
+
+Indipendentemente da quanti \texttt{this()} vengano usati, l'ultimo anello della catena di costruttori di una classe \textbf{deve} sempre invocare (esplicitamente o implicitamente) un costruttore della superclasse. La "nascita" del padre non può essere evitata, può solo essere delegata a un altro costruttore "fratello".
+\end{observation}
