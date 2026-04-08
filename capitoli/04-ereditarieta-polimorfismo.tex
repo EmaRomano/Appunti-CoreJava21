@@ -56,7 +56,7 @@ public class Manager extends Employee {
 Nonostante il prefisso "super", una superclasse non è "superiore" in termini di capacità. Al contrario, la sottoclasse è solitamente più complessa:
 \begin{itemize}
     \item La \textbf{Superclasse} contiene i metodi più generali.
-    \item La \textbf{Sottoclasse} eredita tutto ciò che c'è nella superclasse e aggiunge campi o metodi specializzati (\textit{more functionality}).
+    \item La \textbf{Sottoclasse} eredita tutto ciò che c'è nella superclasse e aggiunge campi o metodi specializzati (\textit{campi e metodi propri}).
 \end{itemize}
 
 \begin{caution}[Precisazione sull'esempio del libro]
@@ -165,3 +165,106 @@ Cosa succede se un costruttore nella sottoclasse usa \texttt{this(...)}? La resp
 
 Indipendentemente da quanti \texttt{this()} vengano usati, l'ultimo anello della catena di costruttori di una classe \textbf{deve} sempre invocare (esplicitamente o implicitamente) un costruttore della superclasse. La "nascita" del padre non può essere evitata, può solo essere delegata a un altro costruttore "fratello".
 \end{observation}
+
+\section{Polimorfismo}
+
+Il polimorfismo è la capacità di un oggetto di essere trattato come un'istanza della sua superclasse. Questo concetto si basa sul \textbf{Principio di Sostituzione}.
+
+Il principio afferma che è sempre possibile utilizzare un oggetto di una sottoclasse in qualsiasi contesto in cui sia attesa una superclasse. Questo perché, per la relazione \textit{is-a}, una sottoclasse possiede tutte le caratteristiche della superclasse.
+
+\begin{lstlisting}[language=Java, caption={Esempio di sostituzione}]
+
+// Sintassi generale:
+// SuperClasse oggetto = new SottoClasse(...);
+
+Employee e = new Manager("Rossi", 50000, 2023, 10, 1);
+\end{lstlisting}
+
+Nella riga di codice polimorfica di sopra, dobbiamo distinguere due aspetti:
+\begin{itemize}
+    \item \textbf{Tipo Dichiarato}: È il tipo della variabile (\texttt{Employee}). Determina quali metodi il compilatore ci permetterà di chiamare: \textit{non è possibile invocare metodi specifici} di \texttt{Manager} su una variabile dichiarata come \texttt{Employee}; se provassimo a chiamare \texttt{e.setBonus(10000)}, otterremmo un errore di compilazione.
+    \item \textbf{Tipo Effettivo}: È il tipo dell'oggetto creato in memoria (\texttt{Manager}). Determina quale versione del metodo verrà eseguita a runtime.
+\end{itemize}
+
+
+
+\begin{important}[L'unidirezionalità della sostituzione]
+    La sostituzione funziona solo verso l'alto nella gerarchia:
+    \begin{itemize}
+        \item \textbf{OK}: Assegnare un \texttt{Manager} a una variabile \texttt{Employee}.
+        \item \textbf{ERRORE}: Assegnare un \texttt{Employee} a una variabile \texttt{Manager}.
+    \end{itemize}
+\end{important}
+
+\begin{observation}[Array Polimorfici]
+    Il principio di sostituzione si applica anche agli array. È possibile creare un array di una superclasse e riempirlo con oggetti di sottoclassi diverse:
+    \begin{lstlisting}[language=Java]
+    Employee[] staff = new Employee[3];
+    staff[0] = new Manager("Boss", 80000, 2020, 1, 1);
+    staff[1] = new Employee("Worker", 40000, 2021, 5, 1);
+    \end{lstlisting}
+    Questo permette di gestire gruppi eterogenei di oggetti con un unico ciclo di elaborazione.
+\end{observation}
+
+\subsection{Il Legame Dinamico (Dynamic Binding)}
+
+Il cuore pulsante del polimorfismo è il \textbf{dynamic binding}. È il meccanismo per cui la JVM decide, solo al momento dell'esecuzione, quale versione di un metodo invocare.
+
+Consideriamo un array di tipo \texttt{Employee} che contiene sia dipendenti "standard" che manager:
+
+\begin{lstlisting}[language=Java, caption={Esempio di Dynamic Binding}]
+Employee[] staff = new Employee[3];
+
+// Sostituzione: Manager "travestito" da Employee
+staff[0] = new Manager("Carl Cracker", 80000, 1987, 12, 15);
+staff[1] = new Employee("Harry Hacker", 50000, 1989, 10, 1);
+staff[2] = new Employee("Tony Tester", 40000, 1990, 3, 15);
+
+// Ciclo polimorfico
+for (Employee e : staff) {
+    System.out.println(e.getName() + " " + e.getSalary());
+}
+\end{lstlisting}
+
+Quando il programma arriva alla riga \texttt{e.getSalary()}, avviene la magia del dynamic binding:
+\begin{enumerate}
+    \item Il \textbf{Compilatore} controlla il tipo dichiarato (\texttt{Employee}) e verifica che esista un metodo \texttt{getSalary()}. Se esiste, dà il via libera.
+    \item La \textbf{JVM (a runtime)} guarda l'oggetto reale a cui punta \texttt{e}:
+    \begin{itemize}
+        \item Se \texttt{e} punta a un \texttt{Employee}, viene eseguito \texttt{Employee.getSalary()} (quello base).
+        \item Se \texttt{e} punta a un \texttt{Manager}, viene eseguito \texttt{Manager.getSalary()} (il metodo sovrascritto, che aggiunge il bonus).
+
+    \end{itemize}
+\end{enumerate}
+
+
+
+\begin{important}[Flessibilità ed Estensibilità]
+    La bellezza del dynamic binding è che se domani aggiungessimo una nuova sottoclasse \texttt{Executive} con il suo metodo \texttt{getSalary()} specifico, il ciclo \texttt{for} qui sopra \textbf{non cambierebbe di una virgola}. Il codice diventa "aperto" a nuove forme senza dover essere riscritto.
+\end{important}
+
+\begin{observation}
+    Il polimorfismo è la capacità di una variabile di riferirsi a tipi diversi. Il dynamic binding è la capacità della JVM di scegliere il metodo corretto per quel tipo specifico. Sono due facce della stessa medaglia.
+\end{observation}
+
+\subsection{Sintesi Mnemonica: Il Senso di Marcia}
+
+Per evitare confusione nel gestire le gerarchie, possiamo definire una regola basata sulla "direzione" in cui Java percorre l'albero delle classi:
+
+\begin{description}
+    \item[\textbf{I Costruttori partono dall'alto (Top-Down)}:] 
+    Quando crei un oggetto, Java garantisce che le fondamenta siano solide prima di costruire i piani superiori. L'esecuzione risale fino a \texttt{Object} e poi scende: \textit{Padre $\rightarrow$ Figlio}. Non puoi esistere come "Manager" se prima non sei stato inizializzato come "Employee".
+    
+    \item[\textbf{I Metodi partono dal basso (Bottom-Up)}:] 
+    Quando invochi un metodo su un oggetto polimorfico, Java cerca l'implementazione più specifica possibile. Parte dalla classe effettiva dell'oggetto e risale solo se non trova una sovrascrittura: \textit{Figlio $\rightarrow$ Padre}. Si predilige sempre la "personalità" della sottoclasse rispetto alla generalità della superclasse.
+\end{description}
+
+
+
+\begin{tip}[Perché questo dualismo?]
+    Questa differenza esiste per un motivo preciso:
+    \begin{itemize}
+        \item I \textbf{costruttori} servono alla \textbf{sicurezza}: garantiscono che ogni parte dell'oggetto sia configurata correttamente.
+        \item I \textbf{metodi} servono alla \textbf{flessibilità}: permettono a una sottoclasse di cambiare comportamento senza che chi usa l'oggetto debba accorgersene.
+    \end{itemize}
+\end{tip}
