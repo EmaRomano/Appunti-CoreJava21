@@ -403,3 +403,36 @@ public class Executive extends Employee {
 \begin{tip}[Non abusare dei final!]
     In passato molti programmatori tendevano ad usare spesso \texttt{final} anche in contesti in cui non era necessario, per ragioni di ottimizzazione (che qui omettiamo). Oggi non è più necessario, perché la JVM moderna è già abbastanza intelligente da gestire l'ottimizzazione da sola. Dovresti usare \texttt{final} solo per ragioni di \textbf{chiarezza di design} e \textbf{sicurezza}.
 \end{tip}
+
+
+\section{Il Casting degli Oggetti}
+
+Il casting consiste nel forzare il compilatore a trattare un riferimento di una superclasse come se fosse di una sottoclasse. Questa operazione è necessaria per accedere ai membri (campi o metodi) che sono presenti solo nella sottoclasse.
+
+\begin{lstlisting}[language=Java, caption={Esempio di Downcasting}]
+Employee e = new Manager(...); // Polimorfismo
+// e.setBonus(5000); // ERRORE: Employee non ha setBonus
+
+Manager m = (Manager) e; // Downcasting
+m.setBonus(5000); // OK
+\end{lstlisting}
+
+Mentre l'\textit{upcasting} (da sottoclasse a superclasse) è sempre sicuro e automatico, il \textbf{downcasting} è una scommessa: se l'oggetto \texttt{e} fosse davvero un \texttt{Employee} "semplice" e non un \texttt{Manager}, l'istruzione \texttt{(Manager) e} causerebbe il crash immediato del programma con una \textbf{\texttt{ClassCastException}}.
+
+Il casting non cambia l'oggetto in memoria. L'oggetto è sempre lo stesso. Quello che cambia sono gli "occhiali" con cui Java lo guarda:
+\begin{itemize}
+    \item Con gli occhiali \texttt{Employee}, vedi solo i metodi e campi dichiarati in \texttt{Employee}.
+    \item Con gli occhiali \texttt{Manager}, vedi anche i metodi e campi dichiarati in \texttt{Manager}.
+\end{itemize}
+
+Il casting dice a Java: "Togli gli occhiali da Employee e metti quelli da Manager. Mi assumo io la responsabilità che dietro quel vetro ci sia effettivamente un Manager". Se ti sbagli, Java "ti punisce" interrompendo il programma.
+
+
+\begin{tip}[Design Rule]
+    Se ti ritrovi a voler chiamare un metodo specifico (es. \texttt{setBonus}) su una lista generica di oggetti (\texttt{Employee}), chiediti:
+    \begin{enumerate}
+        \item Quel metodo dovrebbe forse far parte della superclasse?
+        \item Sto usando la struttura dati corretta o dovrei avere una lista separata di soli \texttt{Manager}?
+    \end{enumerate}
+    Il casting dovrebbe essere l'eccezione, non la regola: l'abuso del casting spesso è un segnale di un'architettura debole
+\end{tip}
