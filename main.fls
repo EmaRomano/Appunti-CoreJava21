@@ -1168,8 +1168,8 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/t1lmtt.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/lm/t1lmtt.fd
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtt12.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmri12.tfm
-OUTPUT main.toc
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmro12.tfm
+OUTPUT main.toc
 INPUT ./capitoli/01-fondamenta.tex
 INPUT ./capitoli/01-fondamenta.tex
 INPUT ./capitoli/01-fondamenta.tex

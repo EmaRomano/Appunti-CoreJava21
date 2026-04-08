@@ -436,3 +436,154 @@ Il casting dice a Java: "Togli gli occhiali da Employee e metti quelli da Manage
     \end{enumerate}
     Il casting dovrebbe essere l'eccezione, non la regola: l'abuso del casting spesso è un segnale di un'architettura debole
 \end{tip}
+
+\section{Evoluzione di \texttt{instanceof}: Pattern Matching}
+
+A partire da Java 16, l'operatore \texttt{instanceof} è stato potenziato per ridurre la verbosità del \textit{downcasting} e migliorare la leggibilità del codice.
+
+Invece di controllare il tipo e poi eseguire un cast manuale, è possibile dichiarare una \textbf{pattern variable} direttamente nel test.
+
+\begin{lstlisting}[language=Java, caption={Confronto tra vecchio e nuovo approccio}]
+// Prima di Java 16 (Verboso)
+if (staff[i] instanceof Manager) {
+    Manager boss = (Manager) staff[i]; // Cast manuale ripetitivo
+    boss.setBonus(5000);
+}
+
+// Da Java 16 in poi (Pattern Matching)
+if (staff[i] instanceof Manager boss) {
+    boss.setBonus(5000); // boss e gia di tipo Manager
+}
+\end{lstlisting}
+
+\subsection{Scoping e Operatori Logici}
+La variabile introdotta dal pattern (es. \texttt{boss}) ha uno \textbf{scope limitato} basato sul flusso logico (\textit{flow-sensitive scoping}):
+
+\begin{itemize}
+    \item \textbf{AND (\texttt{\&\&})}: È permesso usare la variabile nella parte destra dell'espressione, poiché viene valutata solo se il test \texttt{instanceof} è vero.
+    \item \textbf{OR (\texttt{||})}: È proibito, poiché la parte destra viene eseguita se il test è falso, rendendo la variabile non definita.
+\end{itemize}
+
+\begin{lstlisting}[language=Java]
+if (e instanceof Executive exec && exec.getTitle().length() > 10) { ... } // OK
+\end{lstlisting}
+
+\begin{important}[Attenzione: Shadowing dei Campi]
+    La variabile introdotta da un pattern (es. \texttt{exec}, \texttt{boss}) è una variabile locale. Come tale, può \textbf{oscurare} (shadow) un campo della classe che ha lo stesso nome. Questo può portare a errori logici difficili da individuare.
+
+    \begin{lstlisting}[language=Java, caption={Esempio di Shadowing con instanceof}]
+    class Value {
+        private double v; // Campo della classe
+
+        public boolean equals(Object other) {
+            // Se il test e vero, 'v' all'interno del blocco
+            // si riferisce a LabeledValue, NON al campo della classe.
+            if (other instanceof LabeledValue v) {
+                return this.v == v.getValue(); 
+            }
+            return false;
+        }
+    }
+    \end{lstlisting}
+    \textbf{Best Practice}: Per evitare confusione, è sempre consigliabile dare alla variabile del pattern un nome univoco o diverso dai campi della classe (es. \texttt{otherValue} invece di \texttt{v}).
+\end{important}
+
+\subsection{Il Record Pattern e la Decostruzione (Java 21+)}
+
+L'evoluzione di Java ha cercato di rendere sempre più immediata la decostruzione dei records. 
+Supponiamo, ad esempio, di avere il record: \texttt{record Point(double x, double y) \{\}}. Ecco come è cambiato il modo di estrarre le coordinate \texttt{x} e \texttt{y} da un oggetto \texttt{obj}.
+
+\subsubsection*{1. Prima di Java 16}
+Lavoro manuale in tre passaggi: controllo, cast manuale ed estrazione tramite metodi accessor.
+\begin{lstlisting}[language=Java]
+if (obj instanceof Point) {
+    Point p = (Point) obj; // Cast fastidioso e ripetitivo
+    double x = p.x();      // Estrazione manuale 1
+    double y = p.y();      // Estrazione manuale 2
+}
+\end{lstlisting}
+
+\subsubsection*{2. Java 16 - Type Pattern: Il primo passo}
+Il cast scompare grazie alla \textit{pattern variable}, ma l'estrazione dei componenti è ancora manuale.
+\begin{lstlisting}[language=Java]
+if (obj instanceof Point p) {
+    double x = p.x(); // Devo ancora chiamare esplicitamente i metodi
+    double y = p.y();
+}
+\end{lstlisting}
+
+\subsubsection*{3. Java 21 - Record Pattern: La Rivoluzione}
+L'oggetto viene \textbf{decostruito} sul posto. Non serve più una variabile d'appoggio per l'intero oggetto se ci servono solo i suoi componenti.
+\begin{lstlisting}[language=Java]
+if (obj instanceof Point(double x, double y)) {
+    // x e y sono variabili locali gia estratte e pronte all'uso!
+    System.out.println("Coordinate: " + x + ", " + y);
+}
+\end{lstlisting}
+
+\subsection*{Il "Superpotere": Il Nesting (Annidamento)}
+Il vero vantaggio emerge con strutture dati complesse. Il Record Pattern permette di scendere in profondità in un'unica riga di codice.
+
+\begin{lstlisting}[language=Java, caption={Decostruzione nidificata}]
+record Point(double x, double y) {}
+record Circle(Point center, double radius) {}
+
+// Recupero la coordinata X del centro di un cerchio obj in un colpo solo:
+if (obj instanceof Circle(Point(double x, double y), double r)) {
+    System.out.println("La X del centro e: " + x);
+}
+\end{lstlisting}
+
+\begin{observation}[Utilità nel Backend]
+    Questa sintassi è estremamente potente quando si maneggiano strutture dati nidificate (come quelle provenienti da JSON o database). Permette di "interrogare" la forma dell'oggetto e contemporaneamente estrarre chirurgicamente solo i dati necessari, riducendo drasticamente il \textit{boilerplate code} e il rischio di errori.
+\end{observation}
+
+\begin{observation}[Variabili non usate]
+    In Java 21, se un componente del record non è necessario, si può usare il carattere \textit{underscore} (\texttt{\_}) per ignorarlo (JEP 443):
+    \texttt{if (p instanceof Point(var a, \_)) \{ ... \}}
+\end{observation}
+
+\section{Accesso Protetto: Il modificatore \texttt{protected}}
+
+Il modificatore \texttt{protected} offre una via di mezzo tra il rigore del \texttt{private} e la totale apertura del \texttt{public}. Permette l'accesso ai membri di una classe alle sue sottoclassi e a tutte le classi all'interno dello stesso package.
+
+Ecco un confronto dei quattro livelli di accesso in Java:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Modificatore} & \textbf{Classe} & \textbf{Package} & \textbf{Sottoclasse} & \textbf{Mondo} \\ \hline
+\texttt{public}       & Sì              & Sì               & Sì                   & Sì             \\ \hline
+\texttt{protected}    & Sì              & Sì               & Sì* & No             \\ \hline
+\textit{Default}      & Sì              & Sì               & No                   & No             \\ \hline
+\texttt{private}      & Sì              & No               & No                   & No             \\ \hline
+\end{tabular}
+\caption{Tabella dei modificatori di accesso.}
+\end{table}
+
+
+Spieghiamo il significato dell'asterisco (*) in tabella. Esiste una regola sottile ma fondamentale: se una sottoclasse si trova in un \textbf{package diverso} dalla superclasse, essa può accedere ai membri \texttt{protected} \textbf{solo attraverso riferimenti del proprio tipo} (o dei propri sottotipi).
+
+\begin{lstlisting}[language=Java, caption={Restrizione di accesso protected}]
+// Package A
+public class Employee {
+    protected LocalDate hireDay;
+}
+
+// Package B
+public class Administrator extends Employee {
+    public void check(Employee e, Administrator a) {
+        this.hireDay = ...; // OK: accesso al proprio campo ereditato
+        a.hireDay = ...;    // OK: a e un Administrator
+        // e.hireDay = ...; // ERRORE: non puo spiare dentro un Employee generico
+    }
+}
+\end{lstlisting}
+
+\begin{tip}[Considerazioni di Design: Campi vs Metodi]
+\begin{itemize}
+    \item \textbf{Campi \texttt{protected}}: Generalmente sconsigliati. Violano l'incapsulamento perché una volta dichiarati, non puoi più cambiare l'implementazione interna senza rompere il codice di tutte le sottoclassi scritte da altri.
+    \item \textbf{Metodi \texttt{protected}}: Molto più utili. Indicano un metodo "delicato" che solo le sottoclassi (che conoscono bene il funzionamento interno del padre) sono autorizzate a invocare.
+\end{itemize}
+\end{tip}
