@@ -1,5 +1,5 @@
 % !TeX root = ../main.tex
-\chapter{Appendice: Nozioni accessorie}
+\chapter{Appendice A: Nozioni Accessorie}
 
 \section{Il Concetto di Hashing}
 \label{app:hashing}
@@ -30,6 +30,6 @@ L'hashing risolve problemi critici in diversi settori:
     \item \textbf{Strutture Dati (Hash Tables)}: Permette di trovare un elemento in un insieme di milioni di record in tempo costante ($O(1)$), usando l'hash come indice per un "armadietto" (\textit{bucket}) specifico.
 \end{itemize}
 
-\subsection{Il Problema delle Collisioni}
+\subsection*{Il Problema delle Collisioni}
 Poiché l'insieme dei possibili input è infinito, mentre l'insieme dei possibili valori hash (numeri interi o stringhe di lunghezza fissa) è finito, esiste la possibilità teorica che due input diversi producano lo stesso hash. Questo evento è chiamato \textbf{collisione}.
 Un buon algoritmo di hash riduce drasticamente la probabilità di collisioni, e i sistemi informatici (come la JVM di Java) sono progettati per gestire correttamente questi rari casi di "omonimia digitale".
