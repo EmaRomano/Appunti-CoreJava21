@@ -1085,6 +1085,9 @@ INPUT capitoli/03-gestione-codice.aux
 INPUT ./capitoli/04-ereditarieta-polimorfismo.aux
 INPUT capitoli/04-ereditarieta-polimorfismo.aux
 INPUT capitoli/04-ereditarieta-polimorfismo.aux
+INPUT ./capitoli/appendice-accessori-teoria.aux
+INPUT capitoli/appendice-accessori-teoria.aux
+INPUT capitoli/appendice-accessori-teoria.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux
@@ -1272,6 +1275,16 @@ INPUT capitoli/04-ereditarieta-polimorfismo.tex
 INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
 INPUT capitoli/04-ereditarieta-polimorfismo.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtti10.tfm
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/appendice-accessori-teoria.tex
+OUTPUT capitoli/appendice-accessori-teoria.aux
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/appendice-accessori-teoria.tex
+INPUT capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
 INPUT ./capitoli/bozze.tex
@@ -1308,6 +1321,9 @@ INPUT capitoli/03-gestione-codice.aux
 INPUT ./capitoli/04-ereditarieta-polimorfismo.aux
 INPUT capitoli/04-ereditarieta-polimorfismo.aux
 INPUT capitoli/04-ereditarieta-polimorfismo.aux
+INPUT ./capitoli/appendice-accessori-teoria.aux
+INPUT capitoli/appendice-accessori-teoria.aux
+INPUT capitoli/appendice-accessori-teoria.aux
 INPUT ./capitoli/bozze.aux
 INPUT capitoli/bozze.aux
 INPUT capitoli/bozze.aux

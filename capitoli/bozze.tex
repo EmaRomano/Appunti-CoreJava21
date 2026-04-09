@@ -1,5 +1,6 @@
 % !TeX root = ../main.tex
 \chapter{Bozze e Argomenti in Sospeso}
+
 \section{Argomenti in sospeso da riprendere}
 
 \textbf{Cap.4}:
@@ -10,6 +11,8 @@
     \item \textbf{Distruzione di oggetti}: par. 4.6.8.
     \item \textbf{Costruttori canonici nei records}: par. 4.7.2.
 \end{itemize}
+
+
 
 \section{Il Class Path}
 
@@ -62,7 +65,6 @@ Oltre alle normali directory, le classi possono essere raggruppate in file \text
     \item Permette di migliorare le prestazioni (un solo file da aprire invece di centinaia) e risparmiare spazio.
 \end{itemize}
 
-
 \subsection{L'Algoritmo di Ricerca}
 Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cercherà in ordine:
 \begin{enumerate}
@@ -86,7 +88,9 @@ java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
 
-\subsection{La Gerarchia dei Record: Una discendenza speciale}
+
+
+\section{La Gerarchia dei Record: Una discendenza speciale}
 
 Nonostante la loro sintassi semplificata, i Record rimangono pienamente inseriti nella gerarchia degli oggetti Java.
 
@@ -103,7 +107,7 @@ Nonostante la loro sintassi semplificata, i Record rimangono pienamente inseriti
     \end{enumerate}
 \end{warning}
 
-\section{I Record e l'automazione dei metodi di \texttt{Object}}
+\subsection{I Record e l'automazione dei metodi di \texttt{Object}}
 
 I \textbf{Record} (introdotti in Java 14 e stabilizzati in Java 16) sono progettati per essere "vettori di dati immutabili". Per questo motivo, Java rimuove tutto il \textit{boilerplate code} relativo ai metodi della classe \texttt{Object}.
 

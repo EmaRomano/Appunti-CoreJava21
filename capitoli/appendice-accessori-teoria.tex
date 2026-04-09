@@ -1,0 +1,35 @@
+% !TeX root = ../main.tex
+\chapter{Appendice: Nozioni accessorie}
+
+\section{Il Concetto di Hashing}
+\label{app:hashing}
+
+L'hashing è uno dei pilastri fondamentali dell'informatica moderna. Non è una tecnologia esclusiva di Java, ma un concetto matematico e logico universale utilizzato per la sintesi e l'identificazione rapida dei dati.
+
+Un \textbf{hash} (o \textit{digest}) è il risultato di una funzione che prende un input di lunghezza arbitraria (come un testo, un file o un oggetto complesso) e lo trasforma in una stringa o in un numero di \textbf{lunghezza fissa}.
+
+L'analogia più calzante è quella dell'\textbf{impronta digitale}:
+\begin{itemize}
+    \item Un libro di 1000 pagine è un dato complesso.
+    \item Il suo valore hash è un numero (es. 42) che rappresenta in modo quasi univoco quel libro.
+    \item È molto più facile confrontare due numeri (42 vs 43) che confrontare due libri parola per parola.
+\end{itemize}
+
+Affinché una funzione di hash sia utile, deve rispettare tre criteri:
+\begin{enumerate}
+    \item \textbf{Deterministicità}: Lo stesso input deve generare \textit{sempre} lo stesso identico output.
+    \item \textbf{Efficienza}: Il calcolo dell'hash deve essere estremamente rapido, indipendentemente dalla dimensione del dato in ingresso.
+    \item \textbf{Effetto Valanga (\textit{Avalanche Effect})}: Una minima modifica all'input (anche un singolo bit) deve produrre un hash completamente diverso e non correlato al precedente.
+\end{enumerate}
+
+\subsection*{Ambiti di Applicazione}
+L'hashing risolve problemi critici in diversi settori:
+\begin{itemize}
+    \item \textbf{Sicurezza delle Password}: I sistemi non memorizzano le password in chiaro, ma solo il loro hash. In caso di furto del database, l'attaccante non può risalire alla password originale.
+    \item \textbf{Integrità dei Dati}: Attraverso algoritmi come SHA-256 o MD5, è possibile verificare se un file scaricato è integro o se è stato corrotto durante il trasferimento.
+    \item \textbf{Strutture Dati (Hash Tables)}: Permette di trovare un elemento in un insieme di milioni di record in tempo costante ($O(1)$), usando l'hash come indice per un "armadietto" (\textit{bucket}) specifico.
+\end{itemize}
+
+\subsection{Il Problema delle Collisioni}
+Poiché l'insieme dei possibili input è infinito, mentre l'insieme dei possibili valori hash (numeri interi o stringhe di lunghezza fissa) è finito, esiste la possibilità teorica che due input diversi producano lo stesso hash. Questo evento è chiamato \textbf{collisione}.
+Un buon algoritmo di hash riduce drasticamente la probabilità di collisioni, e i sistemi informatici (come la JVM di Java) sono progettati per gestire correttamente questi rari casi di "omonimia digitale".
