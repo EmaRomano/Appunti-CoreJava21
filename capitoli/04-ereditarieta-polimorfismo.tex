@@ -438,6 +438,7 @@ Il casting dice a Java: "Togli gli occhiali da Employee e metti quelli da Manage
 \end{tip}
 
 \section{Evoluzione di \texttt{instanceof}: Pattern Matching}
+\label{instanceof}
 
 A partire da Java 16, l'operatore \texttt{instanceof} è stato potenziato per ridurre la verbosità del \textit{downcasting} e migliorare la leggibilità del codice.
 
@@ -587,3 +588,195 @@ public class Administrator extends Employee {
     \item \textbf{Metodi \texttt{protected}}: Molto più utili. Indicano un metodo "delicato" che solo le sottoclassi (che conoscono bene il funzionamento interno del padre) sono autorizzate a invocare.
 \end{itemize}
 \end{tip}
+
+\section{La Classe \texttt{Object}}
+
+In Java, la classe \texttt{java.lang.Object} è l'antenata comune di tutte le classi. Se una classe non specifica esplicitamente una superclasse con \texttt{extends}, essa eredita automaticamente da \texttt{Object}. Dunque variabile di tipo \texttt{Object} funge da "contenitore universale" per qualsiasi riferimento a oggetto.
+
+Ogni classe in Java eredita quindi tutti i metodi di questa "superclasse cosmica" \texttt{Object}. Tuttavia, poiché \texttt{Object} è un'astrazione totale, le sue implementazioni di default sono necessariamente generiche e basate sull'identità fisica dell'oggetto piuttosto che sul suo stato logico.
+
+Affinché tali metodi possano eseguire azioni utili per le specifiche classi, è spesso cruciale effettuare l'override di questi metodi. Questa operazione è spesso delicata e bisogna sapere come eseguirla correttamente, altrimenti si rischia di introdurre bug difficili da diagnosticare.
+
+Vedremo quindi come implementare correttamente i tre metodi principali: \texttt{equals()}, \texttt{hashCode()} e \texttt{toString()}.
+
+\subsection{Il Metodo \texttt{equals()}}
+
+Il metodo \texttt{equals()} della classe \texttt{Object} implementa di default il test di \textbf{identità}: due riferimenti sono uguali solo se puntano allo stesso identico indirizzo di memoria (\texttt{this == otherObject}).
+
+Tuttavia, per molte classi è necessario un test basato sullo \textbf{stato}: due oggetti sono uguali se contengono gli stessi dati. Ad esempio, due stringhe con lo stesso testo dovrebbero essere considerate uguali anche se sono due oggetti distinti in memoria, oppure due array con gli stessi elementi dovrebbero essere considerati uguali.
+
+Di seguito viene riportata l'implementazione del metodo \texttt{equals()} per \texttt{Employee}. Questo esempio rappresenta la struttura "tipo" che ogni sviluppatore dovrebbe seguire per garantire un confronto robusto.
+
+\begin{lstlisting}[language=Java, caption={Implementazione standard di equals nella classe Employee}]
+public class Employee
+{
+   /* ... campi della classe ... */
+   @Override
+   public boolean equals(Object otherObject)
+   {
+      // 1. Test rapido di identita: 
+      // Se i riferimenti sono identici, gli oggetti sono certamente uguali.
+      if (this == otherObject) return true;
+
+      // 2. Controllo del valore null:
+      // Per contratto, equals(null) deve sempre restituire false.
+      if (otherObject == null) return false;
+
+      // 3. Confronto delle classi:
+      // Se le classi non coincidono esattamente, gli oggetti non sono uguali.
+      // Si usa getClass() per garantire la simmetria nelle gerarchie.
+      if (getClass() != otherObject.getClass())
+         return false;
+
+      // 4. Casting:
+      // Arrivati a questo punto, sappiamo che otherObject e un 
+      // Employee non nullo. Possiamo procedere al cast in sicurezza.
+      Employee other = (Employee) otherObject;
+
+      // 5. Confronto dei campi (Uguaglianza di stato):
+      // Si confrontano i singoli campi significativi per determinare 
+      // se il contenuto degli oggetti e lo stesso.
+      return name.equals(other.name)
+         && salary == other.salary
+         && hireDay.equals(other.hireDay);
+   }
+}
+\end{lstlisting}
+
+
+
+\begin{observation}
+    Da notare come il test di identità (\texttt{this == otherObject}) sia posto all'inizio come ottimizzazione: se stiamo confrontando un oggetto con se stesso, risparmiamo il tempo di eseguire tutti i controlli successivi e i confronti tra i campi.
+\end{observation}
+
+\begin{lstlisting}[language=Java, caption={Implementazione robusta di equals}]
+public boolean equals(Object otherObject) {
+    if (this == otherObject) return true; // 1
+    if (otherObject == null) return false; // 2
+    if (getClass() != otherObject.getClass()) return false; // 3
+    
+    Employee other = (Employee) otherObject; // 4
+    
+    // 5. Utilizzo di Objects.equals per gestire i campi null
+    return Objects.equals(name, other.name)
+        && salary == other.salary
+        && Objects.equals(hireDay, other.hireDay);
+}
+\end{lstlisting}
+
+\subsection*{Ereditarietà e \texttt{equals()}}
+Quando si estende una classe che ha già un proprio \texttt{equals()}, la sottoclasse deve innanzitutto invocare il metodo della superclasse.
+
+\begin{lstlisting}[language=Java]
+public class Manager extends Employee {
+    @Override
+    public boolean equals(Object otherObject) {
+        if (!super.equals(otherObject)) return false;
+        Manager other = (Manager) otherObject;
+        return bonus == other.bonus;
+    }
+}
+\end{lstlisting}
+
+Si procede in questo modo non solo per una questione di efficienza (richiede meno codice), ma soprattutto perché la superclasse è l'unica che conosce i propri campi (privati), quindi è l'unica che può confrontarli correttamente. La sottoclasse si occupa solo dei campi aggiuntivi di cui è responsabile.  
+
+\subsection*{Uguaglianza ed Ereditarietà: Il Problema della Simmetria}
+
+Il design del metodo \texttt{equals()} deve rispettare i cinque principi stabiliti dalla \textit{Java Language Specification}. La violazione di uno di questi può causare bug imprevedibili quando gli oggetti vengono inseriti in collezioni (come \texttt{HashSet} o \texttt{ArrayList}):
+ per ogni riferimento non nullo $x, y, z$:
+\begin{itemize}
+    \item \textbf{Riflessività}: \texttt{x.equals(x)} deve essere \texttt{true}.
+    \item \textbf{Simmetria}: \texttt{x.equals(y)} $\iff$ \texttt{y.equals(x)}.
+    \item \textbf{Transitività}: (\texttt{x.equals(y)} $\land$ \texttt{y.equals(z)}) $\implies$ \texttt{x.equals(z)}.
+    \item \textbf{Consistenza}: Il risultato non deve cambiare a meno che non cambi lo stato degli oggetti.
+    \item \textbf{Test del Null}: \texttt{x.equals(null)} deve sempre essere \texttt{false}.
+\end{itemize}
+
+Vale la pena sapere che esistono due scuole di pensiero riguardo l'implementazione del metodo \texttt{equals()} quando si deve gestire il confronto tra una superclasse (\texttt{Employee}) e una sottoclasse (\texttt{Manager}).
+
+\subsubsection*{L'approccio \texttt{instanceof}}
+Molti programmatori usano \texttt{if (!(otherObject instanceof Employee))}. 
+\begin{itemize}
+    \item \textbf{Pro}: Rispetta il \textit{Principio di Sostituzione di Liskov} (in pratica: posso usare un Manager ovunque sia richiesto un Employee).
+    \item \textbf{Contro}: \textbf{viola la simmetria}. 
+    Se \texttt{Employee.equals} usa \texttt{instanceof}, allora \texttt{e.equals(m)} sarà \texttt{true}. Per la regola di simmetria, anche \texttt{m.equals(e)} deve essere \texttt{true}. Tuttavia, un \texttt{Manager} ha campi extra (il bonus): se per essere simmetrico deve ignorare il bonus quando parla con un \texttt{Employee}, l'uguaglianza diventa logicamente inconsistente per la sottoclasse.
+\end{itemize}
+
+\subsubsection*{L'approccio \texttt{getClass()}}
+È quello usato nell'esempio di \texttt{Employee}.
+\begin{itemize}
+    \item \textbf{Pro}: Garantisce la simmetria assoluta. Se le classi non sono identiche, il test fallisce subito.
+    \item \textbf{Contro}: Impedisce l'uguaglianza tra tipi diversi anche se condividono la stessa logica di identità.
+\end{itemize}
+
+
+
+\subsubsection*{La Soluzione di Horstmann: Due Scenari}
+Non esiste una regola unica, ma due scenari di design:
+
+\begin{enumerate}
+    \item \textbf{Scenario 1: Le sottoclassi aggiungono stato} \\
+    Se un \texttt{Manager} ha campi che lo rendono "diverso" da un \texttt{Employee} (come il \texttt{bonus}), l'uguaglianza deve essere limitata alla classe esatta. \\
+    $\rightarrow$ \textbf{Usa \texttt{getClass()}}.
+    
+    \item \textbf{Scenario 2: L'uguaglianza è fissata dalla superclasse} \\
+    Se l'uguaglianza è determinata solo da un ID univoco definito nella superclasse e vale per tutti i figli. \\
+    $\rightarrow$ \textbf{Usa \texttt{instanceof}} e dichiara il metodo \texttt{equals} come \textbf{\texttt{final}} nella superclasse (per impedire ai figli di romperne la simmetria).
+\end{enumerate}
+
+\begin{observation}[Pasticci nella libreria standard]
+    La classe \texttt{java.sql.Timestamp} estende \texttt{java.util.Date}. Poiché \texttt{Date} usa \texttt{instanceof}, gli sviluppatori Java hanno ammesso che è impossibile per \texttt{Timestamp} essere simmetrico e accurato allo stesso tempo. È un classico esempio di cattivo design dell'ereditarietà.
+\end{observation}
+
+\begin{observation}
+    Nel mondo professionale (specialmente con framework come Hibernate/Spring Data), l'uguaglianza basata sull'ID è lo standard quasi assoluto perché rispecchia la struttura dei database.
+\end{observation}
+
+\subsection{ Riepilogo: La Ricetta Definitiva per un metodo \texttt{equals()} perfetto}
+
+Possiamo infine sintetizzare la creazione di un metodo \texttt{equals()} robusto in cinque passaggi fondamentali.
+
+\begin{enumerate}
+    \item \textbf{Assegnazione dei nomi}: Chiamare il parametro esplicito \texttt{otherObject}. In seguito, verrà convertito in una variabile locale chiamata \texttt{other}.
+    
+    \item \textbf{Test di Identità}:
+    \begin{lstlisting}[language=Java]
+if (this == otherObject) return true;
+    \end{lstlisting}
+
+    \item \textbf{Test del \texttt{null}}:
+    \begin{lstlisting}[language=Java]
+if (otherObject == null) return false;
+    \end{lstlisting}
+    Questo controllo è obbligatorio per contratto.
+
+    \item \textbf{Il bivio del Test dei Tipi}:
+    \begin{itemize}
+        \item Se la semantica dell'uguaglianza \textbf{può cambiare} nelle sottoclassi:
+        \begin{lstlisting}[language=Java]
+if (getClass() != otherObject.getClass()) return false;
+ClassName other = (ClassName) otherObject;
+        \end{lstlisting}
+        \item Se la semantica è \textbf{fissata nella superclasse} (uguaglianza per ID):
+        \begin{lstlisting}[language=Java]
+if (!(otherObject instanceof ClassName other)) return false;
+        \end{lstlisting}
+        \textit{Nota: ricordando quanto detto nel paragrafo \ref{instanceof}, la variabile \texttt{other} viene creata e castata automaticamente.}
+    \end{itemize}
+
+    \item \textbf{Confronto dei campi}:
+    \begin{itemize}
+        \item Usa \texttt{==} per i tipi primitivi.
+        \item Usa \texttt{Objects.equals(a, b)} per i campi oggetto \\ (per evitare \texttt{NullPointerException}).
+    \end{itemize}
+    \begin{lstlisting}[language=Java]
+return field1 == other.field1 
+    && Objects.equals(field2, other.field2) 
+    && ...;
+    \end{lstlisting}
+\end{enumerate}
+
+\begin{important}[Sottoclassi]
+    Se stai ridefinendo \texttt{equals()} in una sottoclasse, la prima operazione dopo i controlli di base deve essere l'invocazione di del metodo della superclasse \textbf{\texttt{super.equals(otherObject)}}. Va anche ricordato che il parametro del metodo \texttt{equals()} è sempre di tipo \texttt{Object} (ma ci si protegge da questo tipo di errore usando l'annotazione \texttt{@Override}).
+\end{important}
+
