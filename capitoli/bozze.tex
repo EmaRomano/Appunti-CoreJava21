@@ -87,39 +87,3 @@ Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cerc
 java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
-
-
-
-\section{La Gerarchia dei Record: Una discendenza speciale}
-
-Nonostante la loro sintassi semplificata, i Record rimangono pienamente inseriti nella gerarchia degli oggetti Java.
-
-\begin{itemize}
-    \item \textbf{Ereditarieta da \texttt{Object}}: Ogni record e, a tutti gli effetti, un \texttt{Object}. Puo essere assegnato a una variabile di tipo \texttt{Object} e ne possiede tutti i metodi fondamentali.
-    \item \textbf{La classe \texttt{java.lang.Record}}: Ogni record estende implicitamente la classe astratta \texttt{java.lang.Record}. Questa classe funge da "ponte" tra il tipo specifico e la superclasse cosmica \texttt{Object}.
-\end{itemize}
-
-\begin{warning}[Limitazioni dell'ereditarieta]
-    Proprio perche estendono implicitamente \texttt{java.lang.Record}:
-    \begin{enumerate}
-        \item Un record \textbf{non puo estendere} altre classi.
-        \item Un record \textbf{e sempre \texttt{final}}, il che significa che nessuna classe puo estendere un record.
-    \end{enumerate}
-\end{warning}
-
-\subsection{I Record e l'automazione dei metodi di \texttt{Object}}
-
-I \textbf{Record} (introdotti in Java 14 e stabilizzati in Java 16) sono progettati per essere "vettori di dati immutabili". Per questo motivo, Java rimuove tutto il \textit{boilerplate code} relativo ai metodi della classe \texttt{Object}.
-
-\begin{important}[Generazione Automatica]
-    Per ogni Record, il compilatore genera automaticamente le seguenti implementazioni:
-    \begin{itemize}
-        \item \textbf{\texttt{equals()}}: Confronta due record componente per componente (state-based equality). Due record sono uguali se hanno lo stesso tipo e i valori di tutti i loro campi coincidono.
-        \item \textbf{\texttt{hashCode()}}: Generato in modo coerente con \texttt{equals()}.
-        \item \textbf{\texttt{toString()}}: Restituisce una stringa leggibile che elenca tutti i componenti e i loro valori (es. \texttt{Point[x=10.0, y=20.0]}).
-    \end{itemize}
-\end{important}
-
-\begin{observation}
-    Sebbene sia possibile effettuare l'override di \texttt{equals()} anche in un record, ciò ne violerebbe quasi sempre la semantica. I record dovrebbero rappresentare \textbf{solo} i dati che contengono; pertanto, l'uguaglianza basata sullo stato generata automaticamente è quasi sempre quella corretta.
-\end{observation}

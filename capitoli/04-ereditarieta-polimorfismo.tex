@@ -732,7 +732,7 @@ Non esiste una regola unica, ma due scenari di design:
     Nel mondo professionale (specialmente con framework come Hibernate/Spring Data), l'uguaglianza basata sull'ID è lo standard quasi assoluto perché rispecchia la struttura dei database.
 \end{observation}
 
-\subsection{ Riepilogo: La Ricetta Definitiva per un metodo \texttt{equals()} perfetto}
+\subsection*{ Riepilogo: La Ricetta Definitiva per un metodo \texttt{equals()} perfetto}
 
 Possiamo infine sintetizzare la creazione di un metodo \texttt{equals()} robusto in cinque passaggi fondamentali.
 
@@ -779,4 +779,136 @@ return field1 == other.field1
 \begin{important}[Sottoclassi]
     Se stai ridefinendo \texttt{equals()} in una sottoclasse, la prima operazione dopo i controlli di base deve essere l'invocazione di del metodo della superclasse \textbf{\texttt{super.equals(otherObject)}}. Va anche ricordato che il parametro del metodo \texttt{equals()} è sempre di tipo \texttt{Object} (ma ci si protegge da questo tipo di errore usando l'annotazione \texttt{@Override}).
 \end{important}
+
+\subsection{Il Metodo \texttt{hashCode()}}
+
+Come approfondito nella sezione teorica in appendice (cfr. \ref{app:hashing}), l'hashing è un processo fondamentale per la sintesi dei dati. In Java, il metodo \texttt{hashCode()} della classe \texttt{Object} restituisce un valore intero (\texttt{int}) che funge da "impronta digitale" dell'oggetto.
+
+L'intero restituito da \texttt{hashCode()} è calcolato in modo da minimizzare la probabilità che due oggetti diversi abbiano lo stesso valore. Mentre l'implementazione predefinita di \texttt{Object} deriva questo numero dall'indirizzo di memoria dell'istanza (identità), nelle classi che rappresentano dati esso viene sovrascritto per riflettere lo stato dell'oggetto.
+
+
+In Java, l'utilizzo principale di questo metodo avviene all'interno delle \textbf{Collezioni} (come \texttt{HashSet} e \texttt{HashMap}), dove l'hash viene usato come indice per distribuire gli oggetti in diversi "compartimenti" (\textit{buckets}), rendendo le operazioni di ricerca quasi istantanee.Riprenderemo questo concetto nel capitolo sulle collections, ma è importante capire fin da ora che un'implementazione errata di \texttt{hashCode()} può portare a prestazioni disastrose e a comportamenti imprevedibili quando gli oggetti vengono inseriti in queste strutture dati.
+
+Esiste una regola fondamentale che ogni sviluppatore Java deve rispettare: \textbf{se due oggetti sono uguali secondo il metodo \texttt{equals()}, devono necessariamente avere lo stesso \texttt{hashCode()}.}
+
+\begin{important}
+    Se si sovrascrive \texttt{equals()}, si deve sovrascrivere anche \texttt{hashCode()}. Se non lo si fa, gli oggetti della classe non funzioneranno correttamente nelle strutture dati basate su hash, poiché oggetti logicamente identici verrebbero cercati in posizioni diverse della memoria.
+\end{important}
+
+Dalla versione 7 di Java, il modo più semplice e sicuro per implementare questo metodo è l'utilizzo della funzione statica \texttt{Objects.hash()}. Questa funzione accetta un numero variabile di argomenti e gestisce automaticamente i valori \texttt{null}.
+
+\begin{lstlisting}[language=Java, caption={Esempio di implementazione coordinata in Employee}]
+public class Employee {
+    private String name;
+    private double salary;
+    private LocalDate hireDay;
+
+    @Override
+    public boolean equals(Object otherObject) {
+        // ... (implementazione vista in precedenza) ...
+    }
+
+    @Override
+    public int hashCode() {
+        // Genera l'hash combinando i campi significativi
+        return Objects.hash(name, salary, hireDay);
+    }
+}
+\end{lstlisting}
+
+\begin{important}
+    Se la classe contiene dei campi che sono \textbf{array}, \texttt{Objects.hash()} non ne verificherà il contenuto (userebbe l'hash dell'indirizzo di memoria dell'array). In questo caso specifico, è necessario utilizzare il metodo \texttt{Arrays.hashCode()} per calcolare un hash basato sui singoli elementi dell'array. Per lo stesso motivo, usare \texttt{Arrays.deepHashCode} per array multidimensionali.
+\end{important}
+
+\subsubsection*{Approfondimento: Calcolo manuale e Performance}
+
+Sebbene \texttt{Objects.hash()} sia la scelta standard, in scenari di \textbf{alta performance} o in sistemi legacy, si preferisce il calcolo manuale. Il metodo \texttt{Objects.hash}, infatti, essendo un metodo \textit{varargs}, crea un array temporaneo a ogni invocazione, introducendo un overhead che può diventare significativo in cicli critici.
+
+\begin{lstlisting}[language=Java, caption={Calcolo manuale ottimizzato}]
+@Override
+public int hashCode() {
+    // Si usano numeri primi per distribuire meglio i valori
+    return 31 * Objects.hashCode(name) 
+         + 11 * Double.hashCode(salary) 
+         + 13 * Objects.hashCode(hireDay);
+}
+\end{lstlisting}
+
+Se il range dei valori dei campi è limitato e noto, è possibile progettare una funzione di hash \textbf{perfetta} (priva di collisioni). 
+Ad esempio, per una data composta da giorno, mese e anno, una formula come:
+\begin{center}
+    \texttt{hash = 31 * 12 * anno + 31 * mese + giorno}
+\end{center}
+garantisce che ogni data possibile produca un numero univoco (entro un range ragionevole di anni), poiché i "pesi" assegnati ai campi impediscono sovrapposizioni.
+
+\begin{caution}
+    Nel calcolo manuale, per i tipi primitivi (\texttt{double}, \texttt{long}), è fondamentale usare i metodi statici delle classi wrapper (es. \texttt{Double.hashCode(salary)}) invece di castare a \texttt{int}, per non perdere precisione e mantenere una buona distribuzione.
+\end{caution}
+
+\subsection{Il Metodo \texttt{toString()}}
+
+Il metodo \texttt{toString()} restituisce una stringa che rappresenta il valore dell'oggetto. La sua implementazione predefinita nella classe \texttt{Object} fornisce solo il nome della classe seguito dall'hash code (es. \texttt{Employee@15db9742}), un'informazione raramente utile.
+
+Sovrascrivere questo metodo è considerata una \textit{best practice} fondamentale per facilitare il debugging e il logging, poiché permette di ispezionare lo stato dell'oggetto in modo immediato.
+
+\subsubsection*{Convenzione di Formattazione}
+Horstmann raccomanda un formato standard per la stringa restituita:
+\begin{center}
+    \texttt{NomeClasse[campo1=valore1, campo2=valore2, ...]}
+\end{center}
+
+\begin{lstlisting}[language=Java, caption={Implementazione di toString in Employee e Manager}]
+// In Employee
+public String toString() {
+    return getClass().getName() + "[name=" + name + ",salary=" + salary + ",hireDay=" + hireDay + "]";
+}
+
+// In Manager (Sottoclasse)
+public String toString() {
+    return super.toString() + "[bonus=" + bonus + "]";
+}
+\end{lstlisting}
+
+
+
+\subsubsection*{Invocazione Implicita}
+Un aspetto potente di \texttt{toString()} è che viene invocato \textbf{automaticamente} dal compilatore in due casi comuni:
+\begin{enumerate}
+    \item Quando un oggetto viene concatenato a una stringa: \texttt{"Dati: " + myObject}.
+    \item Quando un oggetto viene passato a \texttt{System.out.println(myObject)}.
+\end{enumerate}
+
+\begin{observation}[Array e toString]
+    Gli array ereditano il \texttt{toString} standard di \texttt{Object}, rendendo la loro stampa diretta illeggibile. Per ottenere il contenuto di un array, è necessario utilizzare i metodi statici:
+    \begin{itemize}
+        \item \texttt{Arrays.toString(a)}: per array monodimensionali.
+        \item \texttt{Arrays.deepToString(a)}: per array multidimensionali.
+    \end{itemize}
+\end{observation}
+
+\subsection{Il caso particolare dei Record}
+
+Nonostante la loro sintassi semplificata, i Record rimangono pienamente inseriti nella gerarchia degli oggetti Java.
+
+\begin{itemize}
+    \item \textbf{Ereditarietà da \texttt{Object}}: Ogni record è, a tutti gli effetti, un \texttt{Object}. Puo essere assegnato a una variabile di tipo \texttt{Object} e ne possiede tutti i metodi fondamentali.
+    \item \textbf{La classe \texttt{java.lang.Record}}: Ogni record estende implicitamente la classe astratta \texttt{java.lang.Record}. Questa classe funge da "ponte" tra il tipo specifico e la superclasse cosmica \texttt{Object}.
+\end{itemize} \vspace{\baselineskip}
+
+Proprio perché estendono implicitamente \texttt{java.lang.Record}:
+\begin{enumerate}
+    \item Un record \textbf{non puo estendere} altre classi.
+    \item Un record \textbf{è sempre \texttt{final}}, il che significa che nessuna classe può estendere un record.
+\end{enumerate} \vspace{\baselineskip}
+
+Essendo progettati per essere "vettori di dati immutabili", per i Records Java rimuove tutto il \textit{boilerplate code} relativo ai metodi della classe \texttt{Object}: per ogni Record, il compilatore genera automaticamente le seguenti implementazioni:
+    \begin{itemize}
+        \item \textbf{\texttt{equals()}}: Confronta due record componente per componente (state-based equality). Due record sono uguali se hanno lo stesso tipo e i valori di tutti i loro campi coincidono.
+        \item \textbf{\texttt{hashCode()}}: Generato in modo coerente con \texttt{equals()}.
+        \item \textbf{\texttt{toString()}}: Restituisce una stringa leggibile che elenca tutti i componenti e i loro valori (es. \texttt{Point[x=10.0, y=20.0]}).
+    \end{itemize}
+
+\begin{observation}
+    Sebbene sia possibile effettuare l'override di \texttt{equals()} anche in un record, ciò ne violerebbe quasi sempre la semantica. I record dovrebbero rappresentare \textbf{solo} i dati che contengono; pertanto, l'uguaglianza basata sullo stato generata automaticamente è quasi sempre quella corretta.
+\end{observation}
 
