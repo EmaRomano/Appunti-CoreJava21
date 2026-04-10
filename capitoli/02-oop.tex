@@ -386,6 +386,15 @@ double[] prezzi = {10.5, 20.0, 5.75};
 double massimo = max(prezzi); // Legale: passa l'array direttamente
 \end{lstlisting}
 
+\begin{caution}[La trappola degli array di primitivi]
+    Bisogna prestare estrema attenzione quando si passa un array a un metodo con \textit{varargs} di tipo \texttt{Object...}:
+    \begin{itemize}
+        \item Se si passa un \textbf{array di oggetti} (es. \texttt{String[]}), Java lo "spacchetta" e tratta ogni elemento come un argomento distinto.
+        \item Se si passa un \textbf{array di primitivi} (es. \texttt{int[]}), Java \textbf{non} può trattarlo come un \texttt{Object[]}. Di conseguenza, considera l'intero array come un \textbf{singolo oggetto} e lo inserisce come unico elemento della lista parametri.
+    \end{itemize}
+    Per ottenere lo spacchettamento di un array di primitivi, è necessario convertirlo preventivamente in un array della relativa classe wrapper (\texttt{Integer[]}).
+\end{caution}
+
 \begin{tip}
     Anche il metodo \texttt{main} può essere dichiarato usando i varargs: 
     \texttt{public static void main(String... args)}. 

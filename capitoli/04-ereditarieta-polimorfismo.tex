@@ -912,3 +912,40 @@ Essendo progettati per essere "vettori di dati immutabili", per i Records Java r
     Sebbene sia possibile effettuare l'override di \texttt{equals()} anche in un record, ciò ne violerebbe quasi sempre la semantica. I record dovrebbero rappresentare \textbf{solo} i dati che contengono; pertanto, l'uguaglianza basata sullo stato generata automaticamente è quasi sempre quella corretta.
 \end{observation}
 
+\section{Classi Astratte}
+
+Salendo nella gerarchia dell'ereditarietà, le classi diventano sempre più generiche e astratte. A un certo punto, una classe antenata può diventare così generica che non ha più senso considerarla come un'entità a sé stante, ma piuttosto come una base comune per altre classi.
+
+Una classe dichiarata con la parola chiave \texttt{abstract} non può essere istanziata (non è possibile creare oggetti con \texttt{new NomeClasse}). Essa funge da "modello" per le sue sottoclassi concrete.
+
+Le classi astratte possono opzionalmente contenere metodi astratti, cioè dichiarati senza un'implementazione (senza corpo: il blocco di codice è assente). Una sottoclasse di una classe astratta può essere a sua volta astratta (se non implementa tutti i metodi astratti) o concreta (e in questo caso deve implementare tutti i metodi astratti).
+
+\begin{lstlisting}[language=Java, caption={Esempio di classe astratta Person}]
+public abstract class Person {
+    private String name;
+
+    public Person(String name) { this.name = name; }
+
+    public String getName() { return name; }
+
+    // Metodo astratto: ogni sottoclasse deve decidere come descriversi
+    public abstract String getDescription();
+}
+\end{lstlisting}
+
+
+
+
+Caratteristiche principali delle classi astratte:
+\begin{itemize}
+    \item \textbf{Stato e Comportamento}: Anche se astratta, una classe può avere campi (variabili di istanza) e metodi concreti. È buona norma spostare campi e metodi comuni il più in alto possibile nella gerarchia.
+    \item \textbf{Instanziazione}: È vietato fare \texttt{new Person(...)}. Tuttavia, è perfettamente legale (e fondamentale per il polimorfismo) creare variabili di tipo astratto che puntano a oggetti concreti:
+    \begin{center}
+        \texttt{Person p = new Student("Emanuele", "Matematica");}
+    \end{center}
+\end{itemize}
+
+\begin{observation}[Polimorfismo e Classi Astratte]
+    In un array di tipo \texttt{Person[]}, possiamo inserire sia \texttt{Student} che \texttt{Employee}. Quando invochiamo \texttt{p.getDescription()} su un elemento dell'array, la JVM chiamerà il metodo corretto in base all'oggetto reale (\textit{dynamic binding}), anche se il metodo era dichiarato come astratto nella classe base. Senza la dichiarazione \texttt{abstract} nel padre, il compilatore ci impedirebbe di chiamare il metodo sulla variabile di tipo \texttt{Person}.
+\end{observation}
+
