@@ -348,6 +348,52 @@ Il comportamento osservato differisce in base a ciò che la variabile contiene:
     Per un programmatore C, questo sistema è identico al passaggio di un puntatore per valore: si può manipolare il dato puntato, ma non si può modificare l'indirizzo di memoria memorizzato nel puntatore originale del chiamante.
 \end{observation}
 
+
+
+\section{Metodi con numero variabile di argomenti (Varargs)}
+
+Java permette di definire metodi che accettano un numero arbitrario di argomenti dello stesso tipo attraverso la sintassi dei \textbf{varargs} (puntini di sospensione \texttt{...}).
+
+Un parametro dichiarato come \texttt{Type... name} viene trattato all'interno del metodo come un array di tipo \texttt{Type[]}. Il compilatore si occupa di raccogliere gli argomenti passati nella chiamata e di incapsularli in un array in modo trasparente per lo sviluppatore.
+
+\begin{lstlisting}[language=Java, caption={Esempio di funzione max con varargs}]
+public static double max(double... values) {
+   double largest = Double.NEGATIVE_INFINITY;
+   for (double v : values) { // values e trattato come double[]
+      if (v > largest) largest = v;
+   }
+   return largest;
+}
+\end{lstlisting}
+
+\begin{important}
+    Il parametro varargs deve essere necessariamente l'\textbf{ultimo} nella firma del metodo. È possibile avere un solo parametro varargs per metodo.
+\end{important}
+
+\begin{observation}[Efficienza e Varargs]
+    È fondamentale distinguere tra l'utilizzo di \textit{varargs} con tipi primitivi e con tipi oggetto (o classi wrapper):
+    \begin{itemize}
+        \item \textbf{Tipi Primitivi} (\texttt{double...}): Il compilatore crea un array di primitivi (\texttt{double[]}). Non avviene alcun autoboxing e i dati sono memorizzati in modo contiguo. Questa è la soluzione più efficiente.
+        \item \textbf{Tipi Oggetto} (\texttt{Double...} o \texttt{Object...}): Se vengono passati valori primitivi, il compilatore deve eseguire l'autoboxing per \textbf{ogni singolo argomento} prima di inserirli nell'array. 
+    \end{itemize}
+    In scenari di calcolo intensivo, la differenza di performance è significativa: il passaggio di oggetti comporta un overhead dovuto sia alla creazione di istanze temporanee sullo \textit{heap}, sia alla gestione di un array di riferimenti invece di un array di valori grezzi.
+\end{observation}
+
+Poiché i varargs sono implementati come array, è perfettamente lecito passare un array pre-esistente al posto dei singoli elementi:
+
+\begin{lstlisting}[language=Java]
+double[] prezzi = {10.5, 20.0, 5.75};
+double massimo = max(prezzi); // Legale: passa l'array direttamente
+\end{lstlisting}
+
+\begin{tip}
+    Anche il metodo \texttt{main} può essere dichiarato usando i varargs: 
+    \texttt{public static void main(String... args)}. 
+    Questo non cambia la funzionalità del programma ma rende la firma leggermente più moderna.
+\end{tip}
+
+
+
 % --- Inizio Sezione: Tipi Enumerati (Enum) ---
 \section{Tipi Enumerati (Enum)}
 
