@@ -1269,6 +1269,7 @@ INPUT capitoli/04-ereditarieta-polimorfismo.tex
 INPUT ./capitoli/04-ereditarieta-polimorfismo.tex
 INPUT capitoli/04-ereditarieta-polimorfismo.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtti10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbxi10.tfm
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex

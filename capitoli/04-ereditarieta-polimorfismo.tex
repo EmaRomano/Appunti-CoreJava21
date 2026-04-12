@@ -949,3 +949,21 @@ Caratteristiche principali delle classi astratte:
     In un array di tipo \texttt{Person[]}, possiamo inserire sia \texttt{Student} che \texttt{Employee}. Quando invochiamo \texttt{p.getDescription()} su un elemento dell'array, la JVM chiamerà il metodo corretto in base all'oggetto reale (\textit{dynamic binding}), anche se il metodo era dichiarato come astratto nella classe base. Senza la dichiarazione \texttt{abstract} nel padre, il compilatore ci impedirebbe di chiamare il metodo sulla variabile di tipo \texttt{Person}.
 \end{observation}
 
+\section{Classi Sigillate (\textit{Sealed Classes})}
+
+Introdotte stabilmente in Java 17, le \textbf{sealed classes} permettono allo sviluppatore di restringere la gerarchia di ereditarietà, specificando esattamente quali sottoclassi possono estendere una determinata classe o interfaccia.
+
+Una classe dichiarata con il modificatore \texttt{sealed} deve elencare esplicitamente le sue sottoclassi autorizzate tramite la clausola \texttt{permits}.
+
+\begin{lstlisting}[language=Java, caption={Esempio di Sealed Class}]
+public sealed class Shape permits Circle, Square, Triangle {
+    // ...
+}
+\end{lstlisting}
+
+I motivi principali per utilizzare le classi sigillate sono:
+\begin{itemize}
+    \item \textbf{Controllo del Dominio}: Utile quando si modella una struttura dati "finita" (come i tipi di un formato dati come JSON).
+    \item \textbf{Analisi Esaustiva}: Il compilatore può verificare se in uno \texttt{switch} abbiamo coperto tutti i casi possibili della gerarchia, rendendo superfluo il ramo \texttt{default}.
+\end{itemize}
+
