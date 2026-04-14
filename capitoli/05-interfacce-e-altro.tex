@@ -1,0 +1,122 @@
+% !TeX root = ../main.tex
+\chapter{Interfacce, Lambdas e Inner Classes}
+
+\section{Interfacce in Java}
+
+Un'interfaccia è un costrutto della programmazione ad oggetti che definisce un \textbf{contratto} di comportamento. Mentre una classe descrive \textit{cosa un oggetto è} (stato e comportamento), un'interfaccia descrive \textit{cosa un oggetto sa fare}.
+\vspace{\baselineskip}
+
+Un'interfaccia viene dichiarata con la parola chiave \texttt{interface}. Per sua natura, è una struttura puramente astratta:
+
+\begin{itemize}
+    \item \textbf{Metodi}: Tutti i metodi dichiarati in un'interfaccia sono implicitamente \texttt{public} e \texttt{abstract} (fino a Java 7). Non è necessario specificare questi modificatori.
+    \item \textbf{Campi}: Qualsiasi variabile dichiarata in un'interfaccia è implicitamente \texttt{public}, \texttt{static} e \texttt{final} (costante).
+    \item \textbf{Istanziazione}: Non è possibile creare un'istanza di un'interfaccia tramite \texttt{new}. Tuttavia, un'interfaccia può essere utilizzata come \textbf{tipo di dato} per riferimenti a oggetti di classi che la implementano.
+\end{itemize}
+\vspace{\baselineskip}
+
+Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \texttt{implements}. 
+
+\begin{itemize}
+    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: essendo i metodi di un'interfaccia implicitamente \texttt{public}), essi devono essere implementati con la stessa visibilità o superiore (non possono essere \texttt{protected} o \texttt{private}).
+    \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero illimitato di interfacce, risolvendo il problema dell'ereditarietà multipla.
+\end{itemize}
+
+
+\subsection{L'interfaccia \texttt{Comparable}}
+L'interfaccia \texttt{Comparable} è uno degli esempi più chiari di come Java utilizzi le interfacce per definire protocolli di interazione tra oggetti.
+
+\begin{lstlisting}[language=Java]
+public interface Comparable {
+    int compareTo(Object other);
+}
+\end{lstlisting}
+
+Il "contratto" di questa interfaccia si sviluppa su tre livelli distinti:
+
+\begin{itemize}
+    \item \textbf{Obbligo Sintattico}: A livello puramente formale, il compilatore richiede solo che la classe concreta implementi il metodo \texttt{compareTo} con la firma corretta e che restituisca un valore di tipo \texttt{int}. Il compilatore \textbf{non entra nel merito} della logica interna: se il metodo restituisse sempre \texttt{42}, il codice sarebbe sintatticamente corretto e verrebbe compilato senza errori, pur essendo logicamente inutile.
+    \item \textbf{Obbligo Semantico}:  Molti algoritmi (come \texttt{Arrays.sort}) sono programmati assumendo che lo sviluppatore abbia rispettato la logica del confronto.
+    Se la logica di \texttt{compareTo} è incoerente (es. $x < y$ ma il metodo dice il contrario), gli algoritmi di ordinamento produrranno risultati errati, loop infiniti o eccezioni a runtime. Si parla in tal caso di \textbf{contratto semantico}: l'interfaccia garantisce la forma, lo sviluppatore garantisce il significato.
+    \item \textbf{La Logica del Valore di Ritorno}: La convenzione sui valori di ritorno è basata sul segno numerico, il che permette una gestione matematica molto efficiente del confronto:
+
+        \begin{itemize}
+            \item \textbf{Valore Negativo ($< 0$)}: Indica che \texttt{x} (l'oggetto corrente) è più piccolo di \texttt{y} (\texttt{other}). L'oggetto \texttt{x} deve apparire \textit{prima} di \texttt{y}.
+            \item \textbf{Zero ($= 0$)}: Indica che gli oggetti sono equivalenti ai fini dell'ordinamento.
+            \item \textbf{Valore Positivo ($> 0$)}: Indica che \texttt{x} è più grande di \texttt{y}. L'oggetto \texttt{x} deve apparire \textit{dopo} di \texttt{y}.
+        \end{itemize}
+
+\end{itemize}
+
+\subsection{Esempio Pratico: La Classe \texttt{Employee}}
+Supponiamo di voler rendere una classe "ordinabile" tramite i metodi di sistema (come \texttt{Arrays.sort}); essa deve innanzitutto implementare l'interfaccia \texttt{Comparable}: si utilizza la parola chiave \texttt{implements} nella firma della classe per comunicare al compilatore che la classe si impegna a rispettare il contratto di \texttt{Comparable}:
+
+\begin{lstlisting}[language=Java]
+class Employee implements Comparable {
+    // ...
+}
+\end{lstlisting}
+
+La classe deve poi fornire il corpo del metodo \texttt{compareTo}. Supponendo di voler ordinare i dipendenti in base al salario (\texttt{salary}), l'implementazione sarà la seguente:
+
+\begin{lstlisting}[language=Java]
+public int compareTo(Object otherObject) {
+   // Cast obbligatorio: l'interfaccia accetta Object, 
+   // noi dobbiamo trattarlo come Employee
+   Employee other = (Employee) otherObject;
+   
+   // Utilizzo del metodo statico di utilita'
+   return Double.compare(this.salary, other.salary);
+}
+\end{lstlisting}
+
+Da notare come, invece di sottrarre manualmente i salari (operazione rischiosa con i numeri a virgola mobile a causa della precisione), abbiamo usato il metodo statico \texttt{Double.compare(x, y)}. Esso restituisce automaticamente $-1, 0, 1$ rispettando perfettamente il contratto semantico dell'interfaccia.
+
+Grazie a questa implementazione, se avessimo un array di dipendenti chiamato \texttt{staff}, potremmo semplicemente scrivere \texttt{Arrays.sort(staff)}. L'algoritmo di ordinamento chiamerà internamente il metodo \texttt{compareTo} su ogni coppia di dipendenti per decidere come spostarli.
+
+
+\subsection{Evoluzione: l'interfaccia \texttt{Comparable} Generica}
+Sebbene i generics saranno trattati in un capitolo successivo, vale la pena accennarne l'uso nel contesto specifico che stiamo trattando.
+
+Nell'esempio precedente, l'interfaccia \texttt{Comparable} è stata utilizzata in una forma "grezza" (\textit{raw type}), il che comporta alcuni svantaggi significativi in termini di sicurezza dei tipi e leggibilità del codice; nello specifico, poiché il metodo dell'interfaccia accetta un \texttt{Object}, abbiamo dovuto eseguire un cast esplicito a \texttt{Employee} per poter accedere al campo \texttt{salary}. Se avessimo passato un oggetto di tipo diverso (es. una \texttt{String}), il codice avrebbe lanciato una \texttt{ClassCastException}.
+
+A partire da Java 5, l'interfaccia \texttt{Comparable} è stata trasformata in un \textbf{tipo generico}. Questo aggiornamento permette di specificare immediatamente con quale tipo di oggetti la classe è in grado di confrontarsi:
+
+\begin{lstlisting}[language=Java]
+public interface Comparable<T> {
+   int compareTo(T other);
+}
+\end{lstlisting}
+
+Possiamo quindi migliorare la nostra classe \texttt{Employee} implementando la versione generica di \texttt{Comparable}, evitando così il fastidioso downcasting:
+
+\begin{lstlisting}[language=Java]
+class Employee implements Comparable<Employee>
+{
+   public int compareTo(Employee other)
+   {
+      return Double.compare(salary, other.salary);
+   }
+   . . .
+}
+\end{lstlisting}
+
+Il vantaggio principale di questa evoluzione è che il compilatore ora può garantire la coerenza dei tipi durante la compilazione, eliminando la possibilità di errori di tipo a runtime e migliorando la leggibilità del codice.
+
+\begin{important}
+    L'uso di \texttt{Comparable<T>} è oggi lo standard assoluto. La versione non generica (\texttt{raw type}) viene mantenuta solo per compatibilità con il codice scritto prima del 2004, ma il suo utilizzo è fortemente sconsigliato (\textit{deprecated} nella logica di progettazione).
+\end{important}
+
+
+
+
+
+
+% \subsection{Evoluzione delle Interfacce (Java 8+)}
+% Dalle versioni moderne di Java, le interfacce possono contenere implementazioni per favorire l'evoluzione del codice senza rompere la retrocompatibilità:
+
+% \begin{enumerate}
+%     \item \textbf{Default Methods}: Metodi contrassegnati dalla parola chiave \texttt{default} che forniscono un'implementazione standard. Le classi possono decidere se usarla o sovrascriverla.
+%     \item \textbf{Static Methods}: Metodi legati all'interfaccia stessa e non alle istanze delle classi (utili come metodi helper).
+%     \item \textbf{Private Methods} (Java 9+): Utilizzati per incapsulare logica comune tra metodi \texttt{default} o \texttt{static} all'interno dell'interfaccia stessa.
+% \end{enumerate}
