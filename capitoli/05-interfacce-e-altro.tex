@@ -48,7 +48,7 @@ Il "contratto" di questa interfaccia si sviluppa su tre livelli distinti:
 
 \end{itemize}
 
-\subsection{Esempio Pratico: La Classe \texttt{Employee}}
+\subsubsection*{Esempio Pratico: La Classe \texttt{Employee}}
 Supponiamo di voler rendere una classe "ordinabile" tramite i metodi di sistema (come \texttt{Arrays.sort}); essa deve innanzitutto implementare l'interfaccia \texttt{Comparable}: si utilizza la parola chiave \texttt{implements} nella firma della classe per comunicare al compilatore che la classe si impegna a rispettare il contratto di \texttt{Comparable}:
 
 \begin{lstlisting}[language=Java]
@@ -75,7 +75,7 @@ Da notare come, invece di sottrarre manualmente i salari (operazione rischiosa c
 Grazie a questa implementazione, se avessimo un array di dipendenti chiamato \texttt{staff}, potremmo semplicemente scrivere \texttt{Arrays.sort(staff)}. L'algoritmo di ordinamento chiamerà internamente il metodo \texttt{compareTo} su ogni coppia di dipendenti per decidere come spostarli.
 
 
-\subsection{Evoluzione: l'interfaccia \texttt{Comparable} Generica}
+\subsubsection*{Evoluzione: l'interfaccia \texttt{Comparable} Generica}
 Sebbene i generics saranno trattati in un capitolo successivo, vale la pena accennarne l'uso nel contesto specifico che stiamo trattando.
 
 Nell'esempio precedente, l'interfaccia \texttt{Comparable} è stata utilizzata in una forma "grezza" (\textit{raw type}), il che comporta alcuni svantaggi significativi in termini di sicurezza dei tipi e leggibilità del codice; nello specifico, poiché il metodo dell'interfaccia accetta un \texttt{Object}, abbiamo dovuto eseguire un cast esplicito a \texttt{Employee} per poter accedere al campo \texttt{salary}. Se avessimo passato un oggetto di tipo diverso (es. una \texttt{String}), il codice avrebbe lanciato una \texttt{ClassCastException}.
@@ -106,6 +106,71 @@ Il vantaggio principale di questa evoluzione è che il compilatore ora può gara
 \begin{important}
     L'uso di \texttt{Comparable<T>} è oggi lo standard assoluto. La versione non generica (\texttt{raw type}) viene mantenuta solo per compatibilità con il codice scritto prima del 2004, ma il suo utilizzo è fortemente sconsigliato (\textit{deprecated} nella logica di progettazione).
 \end{important}
+
+\subsubsection*{Comparable ed Ereditarietà: Il problema dell'Antisimmetria}
+Il contratto di \texttt{Comparable} impone una regola matematica ferrea definita \textbf{antisimmetria}:
+\begin{equation}
+    sgn(x.compareTo(y)) = -sgn(y.compareTo(x))
+\end{equation}
+In termini semplici: se invertiamo gli addendi del confronto, il segno del risultato deve invertirsi. Se $x < y$, allora deve essere vero che $y > x$.
+\vspace{\baselineskip}
+
+I problemi insorgono quando una sottoclasse (es. \texttt{Manager}) estende una superclasse che implementa \texttt{Comparable} (es. \texttt{Employee}). 
+
+Se \texttt{Manager} esegue l'override di \texttt{compareTo} tentando di confrontare campi specifici dei manager, si rischia di rompere l'antisimmetria:
+\begin{itemize}
+    \item \texttt{impiegato.compareTo(manager)}: Funziona, perché il manager viene trattato come un semplice impiegato (upcasting).
+    \item \texttt{manager.compareTo(impiegato)}: Lancia una \texttt{ClassCastException} se il manager tenta di forzare l'impiegato a essere un manager per leggerne i campi extra.
+\end{itemize}
+\vspace{\baselineskip}
+
+Esistono due strategie per gestire il confronto in una gerarchia di classi, a seconda del requisito di business:
+
+\paragraph{Scenario A: Confronto vietato tra classi diverse}
+Se classi diverse non devono mai essere confrontate tra loro (anche se una è sottoclasse dell'altra), il metodo \texttt{compareTo} deve iniziare con un controllo rigoroso sulla classe di appartenenza:
+\begin{lstlisting}[language=Java]
+if (getClass() != other.getClass()) 
+    throw new ClassCastException();
+\end{lstlisting}
+Questo garantisce che il confronto avvenga solo tra "pari", evitando asimmetrie nel lancio di eccezioni.
+
+\paragraph{Scenario B: Algoritmo di confronto comune}
+Se esiste un modo logico per confrontare oggetti di diverse sottoclassi (es. una gerarchia aziendale), si deve adottare una strategia centralizzata:
+\begin{enumerate}
+    \item Definire il metodo \texttt{compareTo} come \textbf{final} nella superclasse.
+    \item Utilizzare un metodo di supporto (es. \texttt{rank()}) che ogni sottoclasse può sovrascrivere per definire il proprio "peso" o posizione nell'ordinamento.
+\end{enumerate}
+
+\begin{example}
+In una gerarchia \texttt{Employee}, \texttt{Manager}, \texttt{Executive}, si può definire un metodo \texttt{rank()} che restituisce un intero (es. 1 per segretari, 2 per manager, 3 per executive). Il \texttt{compareTo} nella superclasse userà questo valore per stabilire chi "viene prima", garantendo che la regola dei segni sia sempre rispettata.
+\end{example}
+
+\subsection{Variabili di Interfaccia e Polimorfismo}
+
+Sebbene le interfacce non siano classi, esse giocano un ruolo fondamentale nel sistema dei tipi di Java attraverso il polimorfismo.
+
+Un'interfaccia non è una classe concreta, pertanto non può essere istanziata direttamente:
+\begin{lstlisting}[language=Java]
+x = new Comparable(...); // ERRORE DI COMPILAZIONE
+\end{lstlisting}
+
+Tuttavia, è possibile dichiarare variabili il cui tipo è un'interfaccia. Tali variabili possono riferire qualsiasi oggetto di una classe che implementi l'interfaccia stessa:
+\begin{lstlisting}[language=Java]
+Comparable x; // OK
+x = new Employee(...); // OK, purche' Employee implementi Comparable
+\end{lstlisting}
+
+Esiste un parallelismo perfetto tra il comportamento delle classi (visto nel precedente capitolo) e quello delle interfacce:
+
+\begin{itemize}
+    \item \textbf{Polimorfismo}: Così come una variabile \texttt{Employee} può riferirsi a un \texttt{Manager} (\textit{is-a} per ereditarietà), una variabile \texttt{Comparable} può riferirsi a un \texttt{Employee} (\textit{is-a} per implementazione), e quindi anche a una qualunque delle sue sottoclassi.
+    \item \textbf{Controllo dei tipi (\texttt{Pattern Matching})}: Il meccanismo per verificare l'appartenenza a un tipo è identico sia utilizzando \texttt{instanceof} che \texttt{Switch}.
+\end{itemize}
+\vspace{\baselineskip}
+
+Questa analogia è ciò che rende Java un linguaggio flessibile: il codice può "dimenticare" la classe specifica di un oggetto e trattarlo semplicemente attraverso il ruolo definito dall'interfaccia (es. "non mi interessa se sei un Impiegato o un Prodotto, mi basta sapere che sei \textit{Confrontabile}").
+
+
 
 
 
