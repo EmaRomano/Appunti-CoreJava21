@@ -26,6 +26,7 @@ Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \tex
 Oltre alle proprietà standard appena citate, le interfacce moderne presentano caratteristiche avanzate che ne estendono la potenza:
 
 \begin{itemize}
+    \item \textbf{Metodi static o private} (Java 8+): Un'interfaccia può fornire simili metodi di utilità (ovviamente non astratti), ma non possono essere invocati su istanze di classi che implementano l'interfaccia. Devono essere chiamati direttamente sull'interfaccia stessa.
     \item \textbf{Estensione tra interfacce}: Un'interfaccia può estendere una o più altre interfacce utilizzando la parola chiave \texttt{extends}. A differenza delle classi, qui l'ereditarietà multipla è permessa: un'interfaccia "figlia" eredita tutti i contratti delle "madri".
     \item \textbf{Implementazione in Records ed Enum}: Anche i \textbf{records} (introdotti stabilmente in Java 16) e le \textbf{enum} possono implementare interfacce. Questo permette, ad esempio, di definire un comportamento comune per un insieme di costanti o per oggetti che sono puri contenitori di dati.
     \item \textbf{Sealed Interfaces} (Java 17+): È possibile dichiarare un'interfaccia come \texttt{sealed}. In questo caso, lo sviluppatore può specificare esattamente quali classi o interfacce sono autorizzate a implementarla tramite la clausola \texttt{permits}, garantendo un controllo totale sulla gerarchia.
@@ -168,18 +169,61 @@ Se esiste un modo logico per confrontare oggetti di diverse sottoclassi (es. una
 In una gerarchia \texttt{Employee}, \texttt{Manager}, \texttt{Executive}, si può definire un metodo \texttt{rank()} che restituisce un intero (es. 1 per segretari, 2 per manager, 3 per executive). Il \texttt{compareTo} nella superclasse userà questo valore per stabilire chi "viene prima", garantendo che la regola dei segni sia sempre rispettata.
 \end{example}
 
+\subsection{Interfacce vs Classi Astratte}
+
+Una domanda sorge spontanea: perché i progettisti di Java hanno introdotto le interfacce se esistevano già le classi astratte? Non si poteva definire \texttt{Comparable} come una classe astratta?
+
+\begin{lstlisting}[language=Java, caption={Perché questo approccio fallisce}]
+// Se Comparable fosse una classe astratta...
+abstract class Comparable {
+   public abstract int compareTo(Object other);
+}
+
+// ...Employee non potrebbe estenderla se fosse gia figlio di Person
+class Employee extends Person, Comparable // ERRORE DI COMPILAZIONE
+\end{lstlisting}
+
+Il motivo fondamentale è che Java permette a una classe di estendere **una sola** superclasse (ereditarietà singola). Se \texttt{Employee} estende già \texttt{Person}, non può estendere anche \texttt{Comparable}.
 
 
 
+Tuttavia, una classe può implementare un numero arbitrario di interfacce:
+\begin{lstlisting}[language=Java]
+class Employee extends Person implements Comparable, Serializable, Cloneable // OK
+\end{lstlisting}
 
 
+I progettisti di Java (ispirandosi a C++) hanno scelto di non supportare l'ereditarietà multipla tra classi perché rende il linguaggio:
+\begin{itemize}
+    \item \textbf{Complesso}: si pensi al "diamante della morte" in C++ dove non si sa quale metodo della superclasse invocare.
+    \item \textbf{Meno efficiente}: la gestione della memoria e dei puntatori diventa più onerosa.
+\end{itemize}
+Le interfacce offrono quasi tutti i benefici dell'ereditarietà multipla evitando però queste complicazioni, poiché non trasportano \textbf{stato} (variabili di istanza) ma solo \textbf{comportamento}.
+
+\subsubsection*{Guida alla scelta: Classe Astratta o Interfaccia?}
+
+La scelta tra una classe astratta e un'interfaccia non è solo tecnica, ma concettuale. Possiamo riassumere i criteri di scelta in questo modo:
+
+\begin{itemize}
+    \item \textbf{1. Identità vs. Comportamento (Is-a vs. Can-do)}:
+    \begin{itemize}
+        \item \textbf{Classe Astratta (Is-a)}: Si usa quando si vuole definire l'identità core di un oggetto. Una classe astratta risponde alla domanda: \textit{"Che cos'è questo oggetto?"}. Esempio: \texttt{Aereo} è un \texttt{Veicolo}.
+        \item \textbf{Interfaccia (Can-do / Role)}: Si usa per definire un'abilità o un ruolo che un oggetto può ricoprire. Risponde alla domanda: \textit{"Cosa sa fare questo oggetto?"}. Esempio: \texttt{Aereo} è \texttt{Volante}, ma lo è anche un \texttt{Uccello} o un \texttt{Drone}.
+    \end{itemize}
+    \item \textbf{2. Stato vs. Puro Contratto}:
+    \begin{itemize}
+        \item Se hai bisogno di condividere dello \textbf{stato} (variabili di istanza non costanti) o costruttori comuni tra le sottoclassi, la \textbf{classe astratta} è l'unica scelta.
+        \item Se vuoi definire solo un \textbf{contratto} comportamentale senza preoccuparti di come i dati verranno memorizzati, l' \textbf{interfaccia} è la scelta più pulita.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Metodi Default: Evoluzione e Compatibilità}
+ Apartire da Java 8, utilizzando il modificatore \texttt{default} è possibile definire un metodo di istanza all'interno di un'interfaccia che include un'implementazione concreta: le classi che implementano l'interfaccia ereditano automaticamente il metodo senza l'obbligo di sovrascriverlo.
+
+ Ciò permette l'evoluzione delle interfacce (aggiunta di nuovi metodi) senza rompere il codice esistente che le implementa (\textit{Binary Compatibility}). Tuttavia, ciò pone un problema: se una classe implementa due interfacce con metodi \texttt{default} identici (stessa firma), si verifica un conflitto di nomi. Java impone le seguenti regole per risolvere questo scenario:
+\begin{enumerate}
+    \item \textbf{Le classi vincono sulle interfacce}: Se una superclasse fornisce un'implementazione, il metodo \texttt{default} dell'interfaccia viene ignorato.
+    \item \textbf{Override obbligatorio}: Se non c'è una superclasse a risolvere il conflitto, la classe deve obbligatoriamente implementare il metodo, decidendo quale comportamento adottare o fornendone uno nuovo.
+\end{enumerate}
 
 
-% \subsection{Evoluzione delle Interfacce (Java 8+)}
-% Dalle versioni moderne di Java, le interfacce possono contenere implementazioni per favorire l'evoluzione del codice senza rompere la retrocompatibilità:
-
-% \begin{enumerate}
-%     \item \textbf{Default Methods}: Metodi contrassegnati dalla parola chiave \texttt{default} che forniscono un'implementazione standard. Le classi possono decidere se usarla o sovrascriverla.
-%     \item \textbf{Static Methods}: Metodi legati all'interfaccia stessa e non alle istanze delle classi (utili come metodi helper).
-%     \item \textbf{Private Methods} (Java 9+): Utilizzati per incapsulare logica comune tra metodi \texttt{default} o \texttt{static} all'interno dell'interfaccia stessa.
-% \end{enumerate}
