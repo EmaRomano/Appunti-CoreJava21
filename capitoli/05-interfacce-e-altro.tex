@@ -226,6 +226,48 @@ La scelta tra una classe astratta e un'interfaccia non è solo tecnica, ma conce
     \item \textbf{Override obbligatorio}: Se non c'è una superclasse a risolvere il conflitto, la classe deve obbligatoriamente implementare il metodo, decidendo quale comportamento adottare o fornendone uno nuovo.
 \end{enumerate}
 
+\section{Il Pattern Callback: Passare Comportamento}
+Introduciamo ora un concetto che ci permetterà di comprendere appieno le Lambda Expressions: il pattern \textbf{callback}.
+
+Nello studio della programmazione abbiamo imparato a passare dati (primitivi o oggetti) come parametri. Tuttavia, spesso nasce l'esigenza di passare non un dato, ma un \textbf{comportamento} (una funzione). In linguaggi come C o C++ è possibile passare direttamente un \textit{puntatore a funzione}. Si dice al programma: "Esegui il codice che si trova a questo indirizzo di memoria".
+In Java, invece, le funzioni non esistono indipendentemente dalle classi. Per passare un'azione, dobbiamo "impacchettarla" dentro un riferimento a un oggetto. 
+
+Le \textbf{Lambdas} (che vedremo a breve) sono semplicemente una "scorciatoia sintattica" per questo pattern. Senza aver compreso che in Java stiamo passando un \textit{riferimento a un oggetto che implementa un contratto}, la sintassi delle Lambda sembrerebbe magica. Capire la callback significa capire \textit{cosa succede dietro le quinte} di ogni Lambda Expression.
+
+
+\textit{In sintesi: una callback è il modo in cui Java permette di trattare un blocco di codice come se fosse un oggetto, permettendone il passaggio tra diversi moduli del programma.}
+\vspace{\baselineskip}
+
+Il pattern \textbf{callback} (richiamata) si realizza come segue:
+\begin{enumerate}
+    \item Si definisce un'interfaccia con un singolo metodo (il "contratto").
+    \item Si crea un oggetto che implementa quel metodo.
+    \item Si passa il \textbf{riferimento} a tale oggetto.
+\end{enumerate}
+L'oggetto funge quindi da \textit{contenitore} (wrapper) per la funzione che vogliamo eseguire in differita.
+
+\subsection{Un esempio di Callback: l'interfaccia \texttt{Comparator}}
+
+Il pattern callback trova una sua tipica applicazione nella personalizzazione di algoritmi esistenti, come l'ordinamento.
+
+\begin{itemize}
+    \item \textbf{Il problema}: La classe \texttt{String} ha già un ordine naturale (alfabetico) definito tramite \texttt{Comparable}. Se vogliamo ordinare per lunghezza, non possiamo modificare la classe \texttt{String}.
+    \item \textbf{La soluzione Callback}: Utilizziamo il metodo \texttt{Arrays.sort(T[] a, Comparator<? super T> c)}.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption={Comparator come "pacchetto" di una funzione di confronto}]
+// 1. Definiamo il comportamento (la funzione di callback)
+class LengthComparator implements Comparator<String> {
+   public int compare(String first, String second) {
+      return first.length() - second.length();
+   }
+}
+
+// 2. Passiamo l'oggetto/funzione all'algoritmo di sorting
+Arrays.sort(friends, new LengthComparator());
+\end{lstlisting}
+
+Il metodo \texttt{Arrays.sort} è "cieco": sa come ordinare ma non sa \textit{cosa} rende un elemento maggiore di un altro. Passandogli un \texttt{Comparator}, gli stiamo fornendo la "vista" tramite una \textbf{callback}. Ogni volta che l'algoritmo deve confrontare due stringhe, "richiama" il metodo \texttt{compare} dell'oggetto che gli abbiamo fornito.
 
 
 
