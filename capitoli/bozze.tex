@@ -188,3 +188,81 @@ Il comportamento dell'algoritmo cambia a seconda della callback passata.
 \vspace{\baselineskip}
 
 \textit{Osservazione: l'algoritmo di ordinamento è sempre lo stesso, ma il suo comportamento è reso flessibile grazie alla callback. Questo è il cuore del pattern: separare la logica generale dal comportamento specifico.}
+
+\subsubsection*{5. Versione con Lambda Expressions}
+
+A partire da Java 8, la creazione di oggetti anonimi che implementano interfacce con un solo metodo può essere semplificata tramite le \textbf{Lambda Expressions}.
+
+Nel nostro caso, invece di scrivere:
+
+\begin{verbatim}
+IntComparator assoluto = new IntComparator() {
+    public int compare(int a, int b) {
+        return Math.abs(a) - Math.abs(b);
+    }
+};
+\end{verbatim}
+
+possiamo usare una lambda:
+
+\begin{verbatim}
+sort(dati, (a, b) -> Math.abs(a) - Math.abs(b));
+\end{verbatim}
+
+La lambda esprime direttamente il comportamento del metodo \texttt{compare}, senza dover definire esplicitamente una classe o un oggetto anonimo.
+
+\vspace{\baselineskip}
+
+\textit{Osservazione: la lambda non introduce un nuovo meccanismo, ma rende più compatta la sintassi per passare una callback. Il modello concettuale rimane invariato: stiamo sempre passando un comportamento come parametro.}
+
+\subsection{Secondo esempio: filtrare elementi}
+
+Un altro contesto in cui il pattern callback risulta naturale è il \textbf{filtro di una collezione}.
+
+Supponiamo di voler estrarre da un array solo gli elementi che soddisfano una certa condizione (ad esempio: numeri pari, numeri positivi, ecc.). Anche in questo caso possiamo rendere il comportamento flessibile passando la condizione come parametro.
+
+\subsubsection*{1. Definizione dell'interfaccia}
+
+\begin{verbatim}
+public interface IntPredicate {
+    boolean test(int x);
+}
+\end{verbatim}
+
+\subsubsection*{2. Metodo che usa la callback}
+
+\begin{verbatim}
+public static int[] filter(int[] array, IntPredicate pred) {
+    int count = 0;
+
+    for (int x : array) {
+        if (pred.test(x)) {
+            count++;
+        }
+    }
+
+    int[] result = new int[count];
+    int index = 0;
+
+    for (int x : array) {
+        if (pred.test(x)) {
+            result[index++] = x;
+        }
+    }
+
+    return result;
+}
+\end{verbatim}
+
+\subsubsection*{3. Utilizzo con Lambda}
+
+\begin{verbatim}
+int[] dati = {3, -7, 2, -1, 5};
+
+int[] positivi = filter(dati, x -> x > 0);
+int[] pari = filter(dati, x -> x % 2 == 0);
+\end{verbatim}
+
+\vspace{\baselineskip}
+
+\textit{Osservazione: il metodo \texttt{filter} è indipendente dalla condizione specifica. Il comportamento viene deciso dalla callback, rendendo il codice riutilizzabile e modulare.}
