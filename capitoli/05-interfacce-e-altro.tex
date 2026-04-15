@@ -205,12 +205,12 @@ Le interfacce offrono quasi tutti i benefici dell'ereditarietà multipla evitand
 La scelta tra una classe astratta e un'interfaccia non è solo tecnica, ma concettuale. Possiamo riassumere i criteri di scelta in questo modo:
 
 \begin{itemize}
-    \item \textbf{1. Identità vs. Comportamento (Is-a vs. Can-do)}:
+    \item \textbf{Identità vs. Comportamento (Is-a vs. Can-do)}:
     \begin{itemize}
         \item \textbf{Classe Astratta (Is-a)}: Si usa quando si vuole definire l'identità core di un oggetto. Una classe astratta risponde alla domanda: \textit{"Che cos'è questo oggetto?"}. Esempio: \texttt{Aereo} è un \texttt{Veicolo}.
         \item \textbf{Interfaccia (Can-do / Role)}: Si usa per definire un'abilità o un ruolo che un oggetto può ricoprire. Risponde alla domanda: \textit{"Cosa sa fare questo oggetto?"}. Esempio: \texttt{Aereo} è \texttt{Volante}, ma lo è anche un \texttt{Uccello} o un \texttt{Drone}.
     \end{itemize}
-    \item \textbf{2. Stato vs. Puro Contratto}:
+    \item \textbf{Stato vs. Puro Contratto}:
     \begin{itemize}
         \item Se hai bisogno di condividere dello \textbf{stato} (variabili di istanza non costanti) o costruttori comuni tra le sottoclassi, la \textbf{classe astratta} è l'unica scelta.
         \item Se vuoi definire solo un \textbf{contratto} comportamentale senza preoccuparti di come i dati verranno memorizzati, l' \textbf{interfaccia} è la scelta più pulita.
@@ -250,10 +250,12 @@ L'oggetto funge quindi da \textit{contenitore} (wrapper) per la funzione che vog
 
 Il pattern callback trova una sua tipica applicazione nella personalizzazione di algoritmi esistenti, come l'ordinamento.
 
-\begin{itemize}
-    \item \textbf{Il problema}: La classe \texttt{String} ha già un ordine naturale (alfabetico) definito tramite \texttt{Comparable}. Se vogliamo ordinare per lunghezza, non possiamo modificare la classe \texttt{String}.
-    \item \textbf{La soluzione Callback}: Utilizziamo il metodo \texttt{Arrays.sort(T[] a, Comparator<? super T> c)}.
-\end{itemize}
+Consideriamo ad esempio la classe \texttt{String} che ha già un ordine naturale (alfabetico) definito tramite \texttt{Comparable}. Se vogliamo ordinare per lunghezza, non possiamo modificare la classe \texttt{String}. 
+
+
+
+Seguendo il pattern callback, possiamo però definire un'interfaccia con un singolo metodo di confronto (in questo caso, \texttt{Comparator}) e creiamo una classe che implementa questo metodo per confrontare le stringhe in base alla loro lunghezza.
+
 
 \begin{lstlisting}[language=Java, caption={Comparator come "pacchetto" di una funzione di confronto}]
 // 1. Definiamo il comportamento (la funzione di callback)
