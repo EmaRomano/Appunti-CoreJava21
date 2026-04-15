@@ -87,3 +87,104 @@ Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cerc
 java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
+
+\section{Il Pattern Callback: Passare Comportamento}
+Introduciamo ora un concetto che ci permetterà di comprendere appieno le Lambda Expressions: il pattern \textbf{callback}.
+
+Nello studio della programmazione abbiamo imparato a passare dati (primitivi o oggetti) come parametri. Tuttavia, spesso nasce l'esigenza di passare non un dato, ma un \textbf{comportamento} (una funzione). In linguaggi come C o C++ è possibile passare direttamente un \textit{puntatore a funzione}. Si dice al programma: "Esegui il codice che si trova a questo indirizzo di memoria".
+In Java, invece, le funzioni non esistono indipendentemente dalle classi. Per passare un'azione, dobbiamo "impacchettarla" dentro un riferimento a un oggetto. 
+
+Le \textbf{Lambdas} (che vedremo a breve) sono semplicemente una "scorciatoia sintattica" per questo pattern. Senza aver compreso che in Java stiamo passando un \textit{riferimento a un oggetto che implementa un contratto}, la sintassi delle Lambda sembrerebbe magica. Capire la callback significa capire \textit{cosa succede dietro le quinte} di ogni Lambda Expression.
+
+
+\textit{In sintesi: una callback è il modo in cui Java permette di trattare un blocco di codice come se fosse un oggetto, permettendone il passaggio tra diversi moduli del programma.}
+\vspace{\baselineskip}
+
+Il pattern \textbf{callback} (richiamata) si realizza come segue:
+\begin{enumerate}
+    \item Si definisce un'interfaccia con un singolo metodo (il "contratto").
+    \item Si crea un oggetto che implementa quel metodo.
+    \item Si passa il \textbf{riferimento} a tale oggetto.
+\end{enumerate}
+L'oggetto funge quindi da \textit{contenitore} (wrapper) per la funzione che vogliamo eseguire in differita.
+
+\subsection{Esempio: Ordinamento con criterio personalizzato}
+
+Consideriamo il problema di ordinare una lista di numeri interi.  
+L'ordinamento standard (crescente) potrebbe non essere sempre quello desiderato: ad esempio, potremmo voler ordinare i numeri in base al loro valore assoluto.
+
+Per rendere l'algoritmo flessibile, possiamo \textbf{passare il criterio di confronto come callback}.
+
+\subsubsection*{1. Definizione dell'interfaccia (il contratto)}
+
+Definiamo un'interfaccia che rappresenta il comportamento di confronto:
+
+\begin{verbatim}
+public interface IntComparator {
+    int compare(int a, int b);
+}
+\end{verbatim}
+
+Il metodo:
+\begin{itemize}
+    \item restituisce un valore negativo se $a < b$,
+    \item zero se $a = b$,
+    \item positivo se $a > b$.
+\end{itemize}
+
+\subsubsection*{2. Metodo che usa la callback}
+
+Scriviamo un semplice algoritmo di ordinamento che utilizza il comparatore:
+
+\begin{verbatim}
+public static void sort(int[] array, IntComparator comp) {
+    for (int i = 0; i < array.length; i++) {
+        for (int j = i + 1; j < array.length; j++) {
+            if (comp.compare(array[i], array[j]) > 0) {
+                int temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+        }
+    }
+}
+\end{verbatim}
+
+Qui il metodo \texttt{sort} \textbf{non conosce il criterio di ordinamento}:  
+delegata la decisione al metodo \texttt{compare}, cioè alla callback.
+
+\subsubsection*{3. Implementazione della callback}
+
+Possiamo ora definire diversi comportamenti.
+
+\paragraph{Ordinamento standard (crescente):}
+\begin{verbatim}
+IntComparator normale = new IntComparator() {
+    public int compare(int a, int b) {
+        return a - b;
+    }
+};
+\end{verbatim}
+
+\paragraph{Ordinamento per valore assoluto:}
+\begin{verbatim}
+IntComparator assoluto = new IntComparator() {
+    public int compare(int a, int b) {
+        return Math.abs(a) - Math.abs(b);
+    }
+};
+\end{verbatim}
+
+\subsubsection*{4. Utilizzo}
+
+\begin{verbatim}
+int[] dati = {3, -7, 2, -1, 5};
+
+sort(dati, assoluto);
+\end{verbatim}
+
+Il comportamento dell'algoritmo cambia a seconda della callback passata.
+
+\vspace{\baselineskip}
+
+\textit{Osservazione: l'algoritmo di ordinamento è sempre lo stesso, ma il suo comportamento è reso flessibile grazie alla callback. Questo è il cuore del pattern: separare la logica generale dal comportamento specifico.}
