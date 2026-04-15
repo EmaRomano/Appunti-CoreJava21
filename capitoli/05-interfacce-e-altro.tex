@@ -11,15 +11,24 @@ Un'interfaccia viene dichiarata con la parola chiave \texttt{interface}. Per sua
 \begin{itemize}
     \item \textbf{Metodi}: Tutti i metodi dichiarati in un'interfaccia sono implicitamente \texttt{public} e \texttt{abstract} (fino a Java 7). Non è necessario specificare questi modificatori.
     \item \textbf{Campi}: Qualsiasi variabile dichiarata in un'interfaccia è implicitamente \texttt{public}, \texttt{static} e \texttt{final} (costante).
-    \item \textbf{Istanziazione}: Non è possibile creare un'istanza di un'interfaccia tramite \texttt{new}. Tuttavia, un'interfaccia può essere utilizzata come \textbf{tipo di dato} per riferimenti a oggetti di classi che la implementano.
+    \item \textbf{Istanziazione}: Non è possibile creare un'istanza di un'interfaccia tramite \texttt{new}. Tuttavia, un'interfaccia può essere utilizzata come \textbf{tipo di dato} per riferimenti a oggetti di classi che la implementano. In tale contesto, il polimorfismo ed il pattern matching funzionano in modo del tutto analogo a quanto visto nel capitolo precedente.
 \end{itemize}
 \vspace{\baselineskip}
 
 Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \texttt{implements}. 
 
 \begin{itemize}
-    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: essendo i metodi di un'interfaccia implicitamente \texttt{public}), essi devono essere implementati con la stessa visibilità o superiore (non possono essere \texttt{protected} o \texttt{private}).
+    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: essendo i metodi di un'interfaccia implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità o superiore: non possono essere \texttt{protected} o \texttt{private}).
     \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero illimitato di interfacce, risolvendo il problema dell'ereditarietà multipla.
+\end{itemize}
+\vspace{\baselineskip}
+
+Oltre alle proprietà standard appena citate, le interfacce moderne presentano caratteristiche avanzate che ne estendono la potenza:
+
+\begin{itemize}
+    \item \textbf{Estensione tra interfacce}: Un'interfaccia può estendere una o più altre interfacce utilizzando la parola chiave \texttt{extends}. A differenza delle classi, qui l'ereditarietà multipla è permessa: un'interfaccia "figlia" eredita tutti i contratti delle "madri".
+    \item \textbf{Implementazione in Records ed Enum}: Anche i \textbf{records} (introdotti stabilmente in Java 16) e le \textbf{enum} possono implementare interfacce. Questo permette, ad esempio, di definire un comportamento comune per un insieme di costanti o per oggetti che sono puri contenitori di dati.
+    \item \textbf{Sealed Interfaces} (Java 17+): È possibile dichiarare un'interfaccia come \texttt{sealed}. In questo caso, lo sviluppatore può specificare esattamente quali classi o interfacce sono autorizzate a implementarla tramite la clausola \texttt{permits}, garantendo un controllo totale sulla gerarchia.
 \end{itemize}
 
 
@@ -47,6 +56,20 @@ Il "contratto" di questa interfaccia si sviluppa su tre livelli distinti:
         \end{itemize}
 
 \end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Nota: Il Contratto Semantico]
+Il \textbf{contratto semantico} rappresenta l'insieme di vincoli e assunzioni sul comportamento di un modulo che non possono essere espressi tramite la sintassi del linguaggio (il "contratto sintattico").
+
+In Java, molte librerie sono scritte assumendo che lo sviluppatore conosca e rispetti queste convenzioni. Un esempio classico è il legame tra \texttt{equals()} e \texttt{hashCode()}:
+\begin{itemize}
+    \item Se due oggetti sono uguali secondo \texttt{equals()}, \textbf{devono} restituire lo stesso \texttt{hashCode()}.
+\end{itemize}
+La violazione di questo contratto non genera errori di compilazione, ma porta a comportamenti imprevedibili e bug logici difficili da individuare (es. oggetti "scomparsi" da una \texttt{HashSet}).
+
+Per quanto riguarda le interfacce, in Java sono lo strumento principale per definire il contratto sintattico, ma la documentazione Javadoc è il luogo dove viene sancito il contratto semantico.
+\end{tcolorbox}
+
+
 
 \subsubsection*{Esempio Pratico: La Classe \texttt{Employee}}
 Supponiamo di voler rendere una classe "ordinabile" tramite i metodi di sistema (come \texttt{Arrays.sort}); essa deve innanzitutto implementare l'interfaccia \texttt{Comparable}: si utilizza la parola chiave \texttt{implements} nella firma della classe per comunicare al compilatore che la classe si impegna a rispettare il contratto di \texttt{Comparable}:
@@ -144,31 +167,6 @@ Se esiste un modo logico per confrontare oggetti di diverse sottoclassi (es. una
 \begin{example}
 In una gerarchia \texttt{Employee}, \texttt{Manager}, \texttt{Executive}, si può definire un metodo \texttt{rank()} che restituisce un intero (es. 1 per segretari, 2 per manager, 3 per executive). Il \texttt{compareTo} nella superclasse userà questo valore per stabilire chi "viene prima", garantendo che la regola dei segni sia sempre rispettata.
 \end{example}
-
-\subsection{Variabili di Interfaccia e Polimorfismo}
-
-Sebbene le interfacce non siano classi, esse giocano un ruolo fondamentale nel sistema dei tipi di Java attraverso il polimorfismo.
-
-Un'interfaccia non è una classe concreta, pertanto non può essere istanziata direttamente:
-\begin{lstlisting}[language=Java]
-x = new Comparable(...); // ERRORE DI COMPILAZIONE
-\end{lstlisting}
-
-Tuttavia, è possibile dichiarare variabili il cui tipo è un'interfaccia. Tali variabili possono riferire qualsiasi oggetto di una classe che implementi l'interfaccia stessa:
-\begin{lstlisting}[language=Java]
-Comparable x; // OK
-x = new Employee(...); // OK, purche' Employee implementi Comparable
-\end{lstlisting}
-
-Esiste un parallelismo perfetto tra il comportamento delle classi (visto nel precedente capitolo) e quello delle interfacce:
-
-\begin{itemize}
-    \item \textbf{Polimorfismo}: Così come una variabile \texttt{Employee} può riferirsi a un \texttt{Manager} (\textit{is-a} per ereditarietà), una variabile \texttt{Comparable} può riferirsi a un \texttt{Employee} (\textit{is-a} per implementazione), e quindi anche a una qualunque delle sue sottoclassi.
-    \item \textbf{Controllo dei tipi (\textbf{Pattern Matching})}: Il meccanismo per verificare l'appartenenza a un tipo è identico sia utilizzando \texttt{instanceof} che \texttt{Switch}.
-\end{itemize}
-\vspace{\baselineskip}
-
-Questa analogia è ciò che rende Java un linguaggio flessibile: il codice può "dimenticare" la classe specifica di un oggetto e trattarlo semplicemente attraverso il ruolo definito dall'interfaccia (es. "non mi interessa se sei un Impiegato o un Prodotto, mi basta sapere che sei \textit{Confrontabile}").
 
 
 
