@@ -256,6 +256,41 @@ Consideriamo ad esempio la classe \texttt{String} che ha già un ordine naturale
 
 Seguendo il pattern callback, possiamo però definire un'interfaccia con un singolo metodo di confronto (in questo caso, \texttt{Comparator}) e creiamo una classe che implementa questo metodo per confrontare le stringhe in base alla loro lunghezza.
 
+L'interfaccia \texttt{Comparator} contiene contiene il metodo astratto \texttt{compare} che accetta due oggetti dello stesso tipo e restituisce un intero che indica l'ordine relativo tra di essi:
+
+\begin{lstlisting}[language=Java, caption={il metodo compare di Comparator}]
+public interface Comparator<T> {
+   int compare(T first, T second);
+}
+\end{lstlisting}
+
+Quando implementiamo il metodo \texttt{int compare(T o1, T o2)}, stiamo definendo una relazione di \textbf{ordine totale}. La documentazione ufficiale (JDK 21) impone tre vincoli logici (il \textbf{contratto semantico} di cui abbiamo già parlato) che garantiscono la stabilità degli algoritmi di ordinamento:
+\vspace{\baselineskip}
+\begin{enumerate}
+    \item \textbf{Antisimmetria}: 
+    \[ \text{sgn}(\texttt{compare(x, y)}) == -\text{sgn}(\texttt{compare(y, x)}) \]
+    Se $x > y$, allora necessariamente $y < x$. Se il primo confronto lancia un'eccezione, deve farlo anche il secondo.
+    
+    \item \textbf{Transitività}: 
+    \[ (\texttt{compare(x, y)} > 0 \land \texttt{compare(y, z)} > 0) \implies \texttt{compare(x, z)} > 0 \]
+    Se $x$ è maggiore di $y$ e $y$ è maggiore di $z$, allora $x$ deve essere maggiore di $z$. È il pilastro che permette agli algoritmi di evitare cicli infiniti.
+    
+    \item \textbf{Coerenza dell'Uguaglianza}: 
+    \[ \texttt{compare(x, y)} == 0 \implies \text{sgn}(\texttt{compare(x, z)}) == \text{sgn}(\texttt{compare(y, z)}) \]
+    Se due oggetti sono considerati "uguali" dal comparatore, devono comportarsi allo stesso modo rispetto a un terzo oggetto $z$.
+\end{enumerate}
+
+\begin{observation}[Consistenza con Equals]
+    Il punto 3. non è \textbf{strettamente richiesto}, ma è caldamente raccomandato. 
+\begin{itemize}
+    \item Un comparatore che viola questa condizione è detto \textit{"inconsistent with equals"}.
+    \item \textbf{Il rischio}: Collezioni ordinate come \texttt{TreeSet} o \texttt{TreeMap} usano \texttt{compare} (e non \texttt{equals}) per gestire i duplicati. Se il comparatore dice che due oggetti sono uguali ma \texttt{equals} dice di no, la collezione violerà il contratto generale dei \texttt{Set}, rifiutando l'inserimento del secondo oggetto. Quando un programmatore non rispetta questa coerenza, dovrebbe indicarlo chiaramente nella documentazione del comparatore per evitare confusione agli utenti.
+\end{itemize}
+\end{observation}
+
+\vspace{\baselineskip}
+
+Seguendo il pattern callback, creiamo una classe che implementa \texttt{Comparator<String>} per confrontare le stringhe in base alla loro lunghezza:
 
 \begin{lstlisting}[language=Java, caption={Comparator come "pacchetto" di una funzione di confronto}]
 // 1. Definiamo il comportamento (la funzione di callback)
@@ -269,7 +304,62 @@ class LengthComparator implements Comparator<String> {
 Arrays.sort(friends, new LengthComparator());
 \end{lstlisting}
 
-Il metodo \texttt{Arrays.sort} è "cieco": sa come ordinare ma non sa \textit{cosa} rende un elemento maggiore di un altro. Passandogli un \texttt{Comparator}, gli stiamo fornendo la "vista" tramite una \textbf{callback}. Ogni volta che l'algoritmo deve confrontare due stringhe, "richiama" il metodo \texttt{compare} dell'oggetto che gli abbiamo fornito.
+Per utilizzare il comparatore personalizzato, la classe \texttt{Arrays} fornisce un metodo specifico che sfrutta il polimorfismo delle interfacce:
+
+\begin{center}
+    \texttt{public static <T> void sort(T[] a, Comparator<? super T> c)}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Parametro \texttt{a}}: L'array di oggetti da ordinare.
+    \item \textbf{Parametro \texttt{c}}: Il riferimento all'oggetto che implementa la callback di confronto. La sintassi \texttt{? super T} indica che il comparatore può essere di tipo $T$ oppure un supertipo di $T$, garantendo così una maggiore flessibilità.
+\end{itemize}
+
+\subsubsection*{Conclusioni}
+Una volta compreso che un'interfaccia può essere usata per passare un comportamento (callback), si apre una vasta gamma di possibilità, ad esempio:
+\begin{itemize}
+    \item \textbf{Ordinamenti multipli}: Fornire criteri diversi per la stessa classe senza modificarne l'ordine naturale.
+    \item \textbf{Filtraggio dinamico}: Passare logiche di selezione diverse a un unico metodo di ricerca.
+\end{itemize}
+Tuttavia, implementare manualmente ogni singola logica tramite classi dedicate risulterebbe eccessivamente verboso. In Java moderno, questa potenza viene sfruttata appieno tramite le \textbf{Lambda Expressions} spiegate a seguire, che permettono di definire queste callback "al volo", mantenendo il codice conciso, leggibile ed elegante.
+
+\section{Lambda Expressions}
+\subsection{Introduzione e Motivazioni}
+
+Le \textit{Lambda Expressions} nascono dalla necessità di passare blocchi di codice in modo conciso. In precedenza, Java imponeva un approccio puramente \textit{Object-Oriented}, richiedendo la creazione di classi e oggetti anche per frammenti di logica minimi.
+
+\begin{itemize}
+    \item \textbf{Codice per dopo}: Il cuore delle Lambda è la possibilità di definire un'azione ora per eseguirla in futuro (callback).
+    \item \textbf{Evoluzione del linguaggio}: L'introduzione delle Lambda segna l'ingresso ufficiale di Java nel mondo della \textit{Programmazione Funzionale}, permettendo di scrivere API molto più espressive e consistenti.
+\end{itemize}
+\vspace{\baselineskip}
+Per anni, i progettisti di Java hanno evitato questa funzione per mantenere il linguaggio semplice. Tuttavia, il confronto con altri linguaggi ha dimostrato che la possibilità di manipolare blocchi di codice rende lo sviluppo molto più efficiente e meno prono a errori di "boilerplate".
+
+\subsection{Sintassi delle Lambda}
+
+La sintassi si adatta alla complessità del compito. Ecco uno schema riassuntivo:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Scenario} & \textbf{Esempio di Sintassi} \\ \hline
+Standard (2+ parametri) & \texttt{(a, b) -> Integer.compare(a, b)} \\ \hline
+Parametro singolo & \texttt{x -> x * x} \\ \hline
+Senza parametri & \texttt{() -> System.out.println("Hello")} \\ \hline
+Blocco multi-riga & \texttt{(x, y) -> \{ int sum = x + y; return sum; \}} \\ \hline
+Parametro ignorato & \texttt{\_ -> System.out.println("Evento loggato")} \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{warning}
+    Se il corpo della Lambda ha dei rami condizionali (\texttt{if/else}), è \textbf{illegale} che alcuni rami restituiscano un valore e altri no. 
+Esempio errato: \texttt{(int x) -> \{ if (x >= 0) return 1; \}} 
+Il compilatore darà errore perché manca il valore di ritorno per il caso \texttt{x < 0}.
+\end{warning}
+
+
+
 
 
 

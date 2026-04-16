@@ -1283,6 +1283,8 @@ INPUT ./capitoli/05-interfacce-e-altro.tex
 INPUT capitoli/05-interfacce-e-altro.tex
 INPUT ./capitoli/05-interfacce-e-altro.tex
 INPUT capitoli/05-interfacce-e-altro.tex
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtt8.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmtt8.tfm
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
