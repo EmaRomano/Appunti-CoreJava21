@@ -87,32 +87,3 @@ Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cerc
 java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
-
-\section{Lambda Expressions}
-
-Le \textbf{Lambda Expressions} rappresentano uno dei cambiamenti più radicali nella storia di Java, introducendo elementi di \textit{programmazione funzionale} in un linguaggio puramente orientato agli oggetti.
-
-\subsection{Definizione e Motivazione}
-Una Lambda expression è essenzialmente un blocco di codice che può essere passato come argomento a un metodo, affinché venga eseguito in un secondo momento (callback). 
-
-Il vantaggio principale è l'eliminazione del \textbf{boilerplate code}: non è più necessario dichiarare esplicitamente una classe o una classe anonima per implementare un'interfaccia funzionale.
-
-\subsection{Sintassi delle Lambda}
-La sintassi base è composta da tre elementi:
-\begin{center}
-    \texttt{(parametri) -> \{ corpo \}}
-\end{center}
-
-Esistono diverse varianti semplificate:
-\begin{itemize}
-    \item \textbf{Senza parametri}: \texttt{() -> System.out.println("Ciao")}
-    \item \textbf{Parametro singolo} (senza parentesi): \texttt{event -> System.out.println(event)}
-    \item \textbf{Tipo inferito}: Non è necessario specificare il tipo dei parametri (es. \texttt{String s}), Java lo deduce dal contesto.
-    \item \textbf{Corpo a riga singola}: Se l'azione è una sola istruzione, si possono omettere le graffe e la parola chiave \texttt{return}.
-\end{itemize}
-
-
-
-\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Curiosità: Da dove viene il nome?]
-Il termine deriva dal \textbf{Calcolo Lambda} ($ \lambda $-calculus), un sistema formale sviluppato dal matematico Alonzo Church negli anni '30 per studiare la computabilità attraverso le funzioni.
-\end{tcolorbox}
