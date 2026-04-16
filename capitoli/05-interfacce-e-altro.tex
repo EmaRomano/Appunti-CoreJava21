@@ -462,6 +462,45 @@ Oltre alla compatibilità sintattica (che controlla il compilatore), resta a car
 Per evitare errori, si usa spesso l'annotazione \texttt{@FunctionalInterface} sopra la definizione dell'interfaccia funzionale. Non è obbligatoria, ma serve a dire al compilatore: "Avvisami se per sbaglio aggiungo un secondo metodo astratto a questa interfaccia, perché romperei tutte le lambda che la usano".
 \end{tcolorbox}
 
+\subsection{Interfacce Funzionali Standard}
+
+Per promuovere il riutilizzo del codice e non costringere il programmatore a definire nuove interfacce per ogni necessità, Java fornisce il pacchetto \texttt{java.util.function}. Esso contiene una serie di interfacce funzionali predefinite che coprono il 
+99\% dei casi d'uso comuni, soprattutto quelli legati alla manipolazione di collezioni e flussi di dati. Possono essere ricondotte a uno di questi quattro modelli:
+
+\begin{description}
+    \item[\texttt{Predicate<T>}] (Il Filtro): Accetta un argomento e restituisce un \texttt{boolean}. Viene usato per testare condizioni.
+    \item[\texttt{Consumer<T>}] (L'Esecutore): Accetta un argomento e non restituisce nulla (\texttt{void}). Viene usato per operazioni con "side-effect" (es. stampa a video).
+    \item[\texttt{Function<T, R>}] (Il Trasformatore): Accetta un argomento di tipo $T$ e restituisce un risultato di tipo $R$. 
+    \item[\texttt{Supplier<T>}] (Il Generatore): Non accetta argomenti e restituisce un oggetto di tipo $T$.
+\end{description}
+\vspace{\baselineskip}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Interfaccia} & \textbf{Metodo} & \textbf{Ritorno} & \textbf{Scopo Tipico} \\ \hline
+\texttt{Predicate<T>} & \texttt{test(T)} & \texttt{boolean} & Filtrare o validare dati. \\ \hline
+\texttt{Consumer<T>} & \texttt{accept(T)} & \texttt{void} & Eseguire un'azione sull'input. \\ \hline
+\texttt{Function<T, R>} & \texttt{apply(T)} & \texttt{R} & Trasformare $T$ in $R$. \\ \hline
+\texttt{Supplier<T>} & \texttt{get()} & \texttt{T} & Creare o fornire un valore. \\ \hline
+\end{tabular}
+\caption{Sintesi delle interfacce funzionali standard.}
+\end{table}
+
+Ognuna di queste è di per sé un'interfaccia funzionale, ma anche "capostipite" (in senso concettuale: non c'è ereditarietà) di una famiglia di varianti ottimizzate per tipi primitivi (evitando il costo computazionale dei wrapper) e multi-argomento. 
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Capostipite} & \textbf{Variante Primitiva} & \textbf{Variante Multi-argomento} \\ \hline
+\texttt{Predicate<T>} & \texttt{IntPredicate, LongPredicate} & \texttt{BiPredicate<T, U>} \\ \hline
+\texttt{Consumer<T>} & \texttt{DoubleConsumer, IntConsumer} & \texttt{BiConsumer<T, U>} \\ \hline
+\texttt{Function<T, R>} & \texttt{IntToDoubleFunction, ...} & \texttt{BiFunction<T, U, R>} \\ \hline
+\texttt{Supplier<T>} & \texttt{BooleanSupplier, IntSupplier} & // \\ \hline
+\end{tabular}
+\end{table}
+
 
 
 
