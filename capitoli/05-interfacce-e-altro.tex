@@ -335,28 +335,80 @@ Le \textit{Lambda Expressions} nascono dalla necessità di passare blocchi di co
 \vspace{\baselineskip}
 Per anni, i progettisti di Java hanno evitato questa funzione per mantenere il linguaggio semplice. Tuttavia, il confronto con altri linguaggi ha dimostrato che la possibilità di manipolare blocchi di codice rende lo sviluppo molto più efficiente e meno prono a errori di "boilerplate".
 
-\subsection{Sintassi delle Lambda}
+\subsection{Sintassi delle Lambda Expressions}
 
-La sintassi si adatta alla complessità del compito. Ecco uno schema riassuntivo:
+La sintassi delle \textit{lambdas} ricorda molto da vicino il simbolo matematico utilizzato per definire una funzione di più variabili:
+\[ (x_1, \dots, x_n) \to f(x_1, \dots, x_n) \]
 
-\begin{table}[ht]
-\centering
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Scenario} & \textbf{Esempio di Sintassi} \\ \hline
-Standard (2+ parametri) & \texttt{(a, b) -> Integer.compare(a, b)} \\ \hline
-Parametro singolo & \texttt{x -> x * x} \\ \hline
-Senza parametri & \texttt{() -> System.out.println("Hello")} \\ \hline
-Blocco multi-riga & \texttt{(x, y) -> \{ int sum = x + y; return sum; \}} \\ \hline
-Parametro ignorato & \texttt{\_ -> System.out.println("Evento loggato")} \\ \hline
-\end{tabular}
-\end{table}
+In Java, la sintassi standard nel caso più generale ed esplicito rispecchia fedelmente questa struttura ed è la seguente:
+
+\begin{center}
+    \texttt{(Tipo1 p1, Tipo2 p2, ..., TipoN pN) -> \{ // corpo della lambda \}}
+\end{center}
+
+Il blocco di codice racchiuso tra parentesi graffe \texttt{\{\}} può contenere più istruzioni. Se il corpo della lambda è costituito da una singola espressione, è possibile omettere le parentesi graffe e la parola chiave \texttt{return} (se presente), rendendo la sintassi ancora più compatta.
+
+\begin{lstlisting}[language=Java, caption={Esempi di sintassi delle Lambda Expressions}]
+(String first, String second) ->
+   first.length() - second.length()
+
+(String first, String second) ->
+{
+    if (first.length() < second.length()) return -1;
+    else if (first.length() > second.length()) return 1;
+    else return 0;
+}
+
+\end{lstlisting}
+
+Se non ci sono parametri, si usano le parentesi vuote (proprio come nei metodi):
+\begin{lstlisting}[language=Java, caption={}]
+() -> { for (int i = 100; i >= 0; i--) System.out.println(i); }
+\end{lstlisting}
+
+Se i tipi dei parametri possono essere dedotti dal contesto (\textit{inferenza dei tipi}), è possibile ometterli (vedremo a breve questo tipo di espressione):
+
+\begin{lstlisting}[language=Java, caption={}]
+Comparator<String> comp =
+   (first, second) -> first.length() - second.length();
+\end{lstlisting}
+
+ Se e solo se è presente un unico parametro e il suo tipo è omesso per inferenza, le parentesi diventano facoltative (N.B.: se si decide di dichiarare esplicitamente il tipo, le parentesi tornano obbligatorie):
+
+\begin{lstlisting}[language=Java, caption={}]
+// Forma completa:
+(Double x) -> x * x
+
+// Forma minimalista:
+x -> x * x
+\end{lstlisting}
+
+\begin{observation}
+    Al contrario dei metodi, nelle Lambda il tipo di ritorno è sempre dedotto dal contesto e non può essere dichiarato esplicitamente.
+\end{observation}
 
 \begin{warning}
     Se il corpo della Lambda ha dei rami condizionali (\texttt{if/else}), è \textbf{illegale} che alcuni rami restituiscano un valore e altri no. 
 Esempio errato: \texttt{(int x) -> \{ if (x >= 0) return 1; \}} 
 Il compilatore darà errore perché manca il valore di ritorno per il caso \texttt{x < 0}.
 \end{warning}
+
+A partire da Java 21, è stata introdotta la possibilità di utilizzare il carattere \textbf{underscore} (\texttt{\_}) per denotare parametri di una Lambda expression che non vengono mai utilizzati nel corpo della funzione (abbiamo già incontrato questo tipo di sintassi nel pattern matching con \texttt{switch} o \texttt{instanceof}).
+
+\begin{lstlisting}[language=Java, caption={Esempi di Unnamed Parameters}]
+// Caso 1: ActionListener (ignora l'oggetto Event)
+ActionListener listener = _ -> System.out.println("Evento rilevato alle " + Instant.now());
+
+// Caso 2: Comparator (ignora entrambi i parametri, ad esempio per un ordinamento neutro)
+Comparator<String> comp = (_, _) -> 0; 
+\end{lstlisting}
+
+
+\begin{observation}
+    Sebbene nel testo venga citata come \textit{preview feature} di Java 21, l'uso dell'underscore per variabili e parametri non utilizzati è diventato uno standard nelle versioni successive, riducendo i warning del compilatore relativi a variabili dichiarate ma mai lette.
+\end{observation}
+
+
 
 
 
