@@ -408,6 +408,57 @@ Comparator<String> comp = (_, _) -> 0;
     Sebbene nel testo venga citata come \textit{preview feature} di Java 21, l'uso dell'underscore per variabili e parametri non utilizzati è diventato uno standard nelle versioni successive, riducendo i warning del compilatore relativi a variabili dichiarate ma mai lette.
 \end{observation}
 
+\subsection{Uso corretto delle Lambda Expressions}
+A questo punto abbiamo capito il concetto di Lambda come "funzione" e ne abbiamo visto la sintassi; ora vedremo cosa rappresenta esattamente e come si usa. 
+
+In Java, una lambda expression non può esistere in isolamento; essa deve essere associata a una \textbf{Interfaccia Funzionale}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Definizione]
+Un'interfaccia si dice \textbf{funzionale} se dichiara esattamente \textbf{un solo metodo astratto} che non abbia la stessa firma di un metodo di \texttt{java.lang.Object}.
+Esempi classici che abbiamo già incontrato:
+\begin{itemize}
+    \item \texttt{Comparator} (metodo \texttt{compare})
+    \item \texttt{ActionListener} (metodo \texttt{actionPerformed})
+    \item \texttt{Runnable} (metodo \texttt{run})
+\end{itemize}
+\end{tcolorbox}
+
+\begin{observation}
+    L'interfaccia \texttt{Comparable} contiene i due metodi astratti \texttt{compareTo} e \texttt{equals}, ma il secondo è un metodo di \texttt{Object}, dunque è un'interfaccia funzionale.
+\end{observation}
+
+\textit{Possiamo usare una lambda ogni volta che ci si aspetta un riferimento ad un oggetto di una classe che implementa un'interfaccia funzionale (e questo è l'unico caso in cui possiamo usare una lambda)}.
+\vspace{\baselineskip}
+
+Il seguente esempio mostra come l'uso della lambda eviti la verbosità di dover creare una classe dedicata (come abbiamo fatto con \texttt{LengthComparator} nel paragrafo del callback); dall'esempio è anche chiaro cosa succeda quando si usa una lambda e perché il metodo dell'interfaccia debba essere uno solo:
+
+\begin{lstlisting}[language=Java, caption={La Lambda come "implementazione al volo"}]
+// Il compilatore vede che Arrays.sort vuole un Comparator.
+// Comparator ha un solo metodo: int compare(T o1, T o2).
+// Quindi "mappa" la lambda su quel metodo:
+// tratta i parametri come se fossero quelli di compare 
+// e il corpo come se fosse una sua implementazione.
+Arrays.sort(words, (first, second) -> first.length() - second.length());
+\end{lstlisting}
+
+Quello che succede "sotto il cofano" è che il compilatore genera una classe sintetica che implementa l'interfaccia e ne crea un'istanza. Per il programmatore, però, è come se passasse direttamente la funzione. 
+
+A fronte di questa comodità, però, chi usa una lambda deve \textit{conoscere bene l'interfaccia funzionale ed il metodo astratto che sta implicitamente implementando}. 
+Infatti, affinché una \textit{lambda expression} sia valida, deve essere \textbf{assegnabile} al tipo dell'interfaccia funzionale richiesta. Questo implica una corrispondenza esatta su tre livelli:
+
+\begin{description}
+    \item[Parametri]: Il numero e l'ordine dei parametri della lambda devono coincidere con quelli del metodo astratto. I tipi possono essere omessi (inferenza), ma devono essere logicamente corretti.
+    \item[Tipo di Ritorno]: Se il metodo dell'interfaccia non è \texttt{void}, il corpo della lambda deve produrre un valore di tipo compatibile.
+    \item[Eccezioni]: La lambda non può lanciare eccezioni \textit{checked} che non siano già dichiarate nella clausola \texttt{throws} del metodo dell'interfaccia.
+\end{description}
+\vspace{\baselineskip}
+
+Oltre alla compatibilità sintattica (che controlla il compilatore), resta a carico del programmatore il rispetto del \textbf{contratto semantico}. Ad esempio, scrivendo una lambda per un \texttt{Comparator}, bisogna assicurarsi che la logica implementata sia transitiva e antisimmetrica, anche se la sintassi è corretta.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: L'annotazione @FunctionalInterface]
+Per evitare errori, si usa spesso l'annotazione \texttt{@FunctionalInterface} sopra la definizione dell'interfaccia funzionale. Non è obbligatoria, ma serve a dire al compilatore: "Avvisami se per sbaglio aggiungo un secondo metodo astratto a questa interfaccia, perché romperei tutte le lambda che la usano".
+\end{tcolorbox}
+
 
 
 
