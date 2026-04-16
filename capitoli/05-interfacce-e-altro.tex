@@ -307,6 +307,7 @@ Arrays.sort(friends, new LengthComparator());
 Per utilizzare il comparatore personalizzato, la classe \texttt{Arrays} fornisce un metodo specifico che sfrutta il polimorfismo delle interfacce:
 
 \begin{center}
+    \label{firma Array.sort}
     \texttt{public static <T> void sort(T[] a, Comparator<? super T> c)}
 \end{center}
 
@@ -415,7 +416,7 @@ In Java, una lambda expression non può esistere in isolamento; essa deve essere
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Definizione]
 Un'interfaccia si dice \textbf{funzionale} se dichiara esattamente \textbf{un solo metodo astratto} che non abbia la stessa firma di un metodo di \texttt{java.lang.Object}.
-Esempi classici che abbiamo già incontrato:
+Esempi classici:
 \begin{itemize}
     \item \texttt{Comparator} (metodo \texttt{compare})
     \item \texttt{ActionListener} (metodo \texttt{actionPerformed})
@@ -454,6 +455,8 @@ Infatti, affinché una \textit{lambda expression} sia valida, deve essere \textb
 \vspace{\baselineskip}
 
 Oltre alla compatibilità sintattica (che controlla il compilatore), resta a carico del programmatore il rispetto del \textbf{contratto semantico}. Ad esempio, scrivendo una lambda per un \texttt{Comparator}, bisogna assicurarsi che la logica implementata sia transitiva e antisimmetrica, anche se la sintassi è corretta.
+
+ Infine, bisogna essere consapevoli di dove si sta passando la lambda: se la si passa a un metodo che si aspetta un certo tipo di interfaccia funzionale, non se ne potrà usare un'altra. Ad esempio, non si può passare una lambda che implementa \texttt{Runnable} a un metodo che si aspetta un \texttt{Comparator} (come \texttt{Arrays.sort} di cui abbiamo visto la firma qui \ref{firma Array.sort}), anche se la sintassi della lambda è corretta per entrambi i casi.
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: L'annotazione @FunctionalInterface]
 Per evitare errori, si usa spesso l'annotazione \texttt{@FunctionalInterface} sopra la definizione dell'interfaccia funzionale. Non è obbligatoria, ma serve a dire al compilatore: "Avvisami se per sbaglio aggiungo un secondo metodo astratto a questa interfaccia, perché romperei tutte le lambda che la usano".
