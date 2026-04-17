@@ -531,6 +531,7 @@ Nel secondo caso, passiamo un'interfaccia \texttt{Supplier<T>}. Il codice della 
 LocalDate hireDay = Objects.requireNonNullElseGet(day, () -> LocalDate.of(1970, 1, 1));
 \end{lstlisting}
 
+
 \subsection{Method e Constructor References}
 
 I method references forniscono una sintassi ancora più concisa delle lambda expression quando queste si limitano a invocare un singolo metodo già esistente, senza effettuare operazioni aggiuntive. L'operatore principale è il doppio due punti (\texttt{::}). Si può usare un \textit{method reference} solo se la firma del metodo esistente è \textbf{perfettamente compatibile} con i parametri dell'interfaccia funzionale attesa (Regola di Sostituzione); perciò non è nemmeno necessario specificare i parametri: vengono mappati automaticamente.
@@ -578,6 +579,43 @@ List<String> nomi = stream.map(String::new).toList();
 int[] numeri = IntFunction<int[]>.apply(10); // lambda: n -> new int[n]
 int[] numeriRef = int[]::new;
 \end{lstlisting}
+
+\subsection{Accesso alle variabili (Variable Capture)}
+
+Le lambda expression possono accedere alle variabili locali del blocco di codice in cui sono definite. Tuttavia, tali variabili devono essere \textbf{effectively final}.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip:La regola dell'Effectively Final]
+Una variabile si dice \textit{effectively final} se non viene mai modificata dopo la sua inizializzazione. Se provi a modificare una variabile locale all'interno di una lambda, o se la modifichi fuori dopo che la lambda l'ha "catturata", il codice non compilera'.
+\end{tcolorbox}
+
+\begin{lstlisting}[language=Java]
+int counter = 0;
+// ERRORE: non puoi modificare counter dentro la lambda
+Runnable r = () -> { counter++; }; 
+
+String prefix = "Log: ";
+// OK: prefix non cambia mai, quindi e' effectively final
+Consumer<String> printer = s -> System.out.println(prefix + s);
+\end{lstlisting} 
+
+Perché questa restrizione? Sebbene i dettagli verranno approfonditi con lo studio della \textbf{concorrenza}, è bene anticipare che le lambda vengono spesso eseguite in momenti diversi o su \textbf{thread} diversi rispetto a dove sono state create. 
+
+Le variabili locali vivono nello \textbf{stack}; se la lambda potesse modificarle liberamente, si creerebbero gravi problemi di sincronizzazione e instabilità dei dati. Imponendo che la variabile sia una "costante nel tempo", Java garantisce la sicurezza del thread (\textit{thread-safety}).
+
+
+Se è assolutamente necessario modificare un valore all'interno di una lambda (es. un contatore), non potendo usare un tipo primitivo locale, si deve spostare il dato dallo \textbf{stack} allo \textbf{heap}.
+
+\begin{lstlisting}[language=Java, caption={Aggirare il vincolo con un array}]
+// counter[0] e' memorizzato nello heap, non nello stack locale
+int[] counter = { 0 }; 
+button.addActionListener(e -> counter[0]++); 
+\end{lstlisting}
+
+
+
+\begin{warning}
+\textbf{Nota di cautela}: L'uso di array di un solo elemento o di "wrapper" per aggirare l'impossibilità di modificare variabili locali è un \textit{workaround} che va usato con \textbf{estrema cautela}. In ambienti multi-thread, questa pratica espone il codice a \textit{race conditions} se non opportunamente sincronizzata.
+\end{warning}
 
 
 
