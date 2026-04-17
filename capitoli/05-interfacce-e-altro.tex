@@ -531,7 +531,7 @@ Nel secondo caso, passiamo un'interfaccia \texttt{Supplier<T>}. Il codice della 
 LocalDate hireDay = Objects.requireNonNullElseGet(day, () -> LocalDate.of(1970, 1, 1));
 \end{lstlisting}
 
-\subsection{Method References}
+\subsection{Method e Constructor References}
 
 I method references forniscono una sintassi ancora più concisa delle lambda expression quando queste si limitano a invocare un singolo metodo già esistente, senza effettuare operazioni aggiuntive. L'operatore principale è il doppio due punti (\texttt{::}). Si può usare un \textit{method reference} solo se la firma del metodo esistente è \textbf{perfettamente compatibile} con i parametri dell'interfaccia funzionale attesa (Regola di Sostituzione); perciò non è nemmeno necessario specificare i parametri: vengono mappati automaticamente.
 \vspace{\baselineskip}
