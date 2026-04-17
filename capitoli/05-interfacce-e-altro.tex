@@ -501,6 +501,86 @@ Ognuna di queste è di per sé un'interfaccia funzionale, ma anche "capostipite"
 \end{tabular}
 \end{table}
 
+\begin{observation}
+    (Inferenza dell'Overload) Quando un metodo ha più overload che accettano interfacce funzionali diverse, il compilatore sceglie automaticamente quale lambda è compatibile con quale interfaccia, basandosi sulla sintassi e sul contesto in cui la lambda viene usata. Ad esempio:
+
+    \begin{lstlisting}[language=Java]
+        var values = new int[100];
+        Arrays.setAll(values, i -> i * i);
+    \end{lstlisting}
+
+    Qui l'overload di \texttt{setAll} che accetta un  \texttt{int[]} usa \texttt{IntUnaryOperator} come secondo parametro, che lavora con gli interi evitando l'autoboxing. Dunque spesso si usano le lambda senza nemmeno pensare a questi dettagli. Il compilatore si occupa di mappare la lambda sull'interfaccia funzionale corretta, garantendo così prestazioni ottimali.
+
+\end{observation}
+
+\subsubsection{Esempio: Valutazione Eager vs. Lazy}
+
+Le interfacce \texttt{Supplier<T>} sono spesso usate per permettere di passare da una valutazione immediata (\textbf{Eager Evaluation}) a una valutazione differita o "pigra" (\textbf{Lazy Evaluation}), come mostriamo nel seguente esempio. 
+
+Nel primo caso, il valore di default viene calcolato \textbf{sempre}, prima ancora che il metodo venga eseguito:
+
+\begin{lstlisting}[language=Java]
+// EAGER: La data viene istanziata anche se 'day' non e' null
+LocalDate hireDay = Objects.requireNonNullElse(day, LocalDate.of(1970, 1, 1));
+\end{lstlisting}
+
+Nel secondo caso, passiamo un'interfaccia \texttt{Supplier<T>}. Il codice della lambda verrà eseguito solo se necessario:
+
+\begin{lstlisting}[language=Java]
+// LAZY: La lambda viene eseguita SOLO se 'day == null'
+LocalDate hireDay = Objects.requireNonNullElseGet(day, () -> LocalDate.of(1970, 1, 1));
+\end{lstlisting}
+
+\subsection{Method References}
+
+I method references forniscono una sintassi ancora più concisa delle lambda expression quando queste si limitano a invocare un singolo metodo già esistente, senza effettuare operazioni aggiuntive. L'operatore principale è il doppio due punti (\texttt{::}). Si può usare un \textit{method reference} solo se la firma del metodo esistente è \textbf{perfettamente compatibile} con i parametri dell'interfaccia funzionale attesa (Regola di Sostituzione); perciò non è nemmeno necessario specificare i parametri: vengono mappati automaticamente.
+\vspace{\baselineskip}
+
+\begin{description}
+    \item[\texttt{Class::staticMethod}] Corrisponde a una lambda che passa i suoi argomenti a un metodo statico.Esempio:
+    \begin{lstlisting}[language=Java]
+        //senza method reference:
+        x -> Math.sqrt(x);
+        //con method reference:
+        Math::sqrt;
+    \end{lstlisting}
+
+    \item[\texttt{object::instanceMethod}] Corrisponde a una lambda che invoca un metodo su un oggetto esistente. Esempio:
+     \begin{lstlisting}[language=Java]
+        //senza method reference:
+        x -> System.out.println(x);
+        //con method reference:
+        System.out::println;
+    \end{lstlisting}
+
+    \item[\texttt{Class::instanceMethod}] Il primo parametro della lambda diventa il \textit{target} del metodo e gli altri parametri vengono passati come argomenti. Esempio:
+     \begin{lstlisting}[language=Java]
+        //senza method reference:
+        (s1, s2) -> s1.compareToIgnoreCase(s2);
+        //con method reference:
+        String::compareToIgnoreCase;
+    \end{lstlisting}
+\end{description}
+
+\subsection{Constructor References}
+
+Esiste una variante speciale dei \textit{method references} dedicata alla creazione di nuovi oggetti. La sintassi utilizza la parola chiave \texttt{new}.
+
+\begin{itemize}
+    \item \textbf{Sintassi}: \texttt{NomeClasse::new}
+    \item \textbf{Esempio}: \texttt{ArrayList::new} equivale alla lambda \texttt{() -> new ArrayList<>()}.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption={Uso dei Constructor References}]
+// Creazione di una lista di stringhe partendo da una lista di oggetti
+List<String> nomi = stream.map(String::new).toList();
+
+// Creazione di array (sintassi particolare)
+int[] numeri = IntFunction<int[]>.apply(10); // lambda: n -> new int[n]
+int[] numeriRef = int[]::new;
+\end{lstlisting}
+
+
 
 
 
