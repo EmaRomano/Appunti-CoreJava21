@@ -82,7 +82,7 @@ public double getSalary() {
 }
 \end{lstlisting}
 Anche se \texttt{Manager} è una sottoclasse, deve rispettare l'incapsulamento e usare l'interfaccia pubblica della superclasse.
-Un errore altro comune è chiamare il metodo per nome sperando che Java "capisca" di voler usare quello del padre:
+Un altro errore comune è chiamare il metodo per nome sperando che Java "capisca" di voler usare quello del padre:
 \begin{lstlisting}[language=Java]
 public double getSalary() {
     double baseSalary = getSalary(); // ERRORE: chiama se stesso all'infinito
@@ -434,7 +434,7 @@ Il casting dice a Java: "Togli gli occhiali da Employee e metti quelli da Manage
         \item Quel metodo dovrebbe forse far parte della superclasse?
         \item Sto usando la struttura dati corretta o dovrei avere una lista separata di soli \texttt{Manager}?
     \end{enumerate}
-    Il casting dovrebbe essere l'eccezione, non la regola: l'abuso del casting spesso è un segnale di un'architettura debole
+    Il casting dovrebbe essere l'eccezione, non la regola: l'abuso del casting spesso è il segnale di un'architettura debole
 \end{tip}
 
 \section{Evoluzione di \texttt{instanceof}: Pattern Matching}
@@ -787,7 +787,7 @@ Come approfondito nella sezione teorica in appendice (cfr. \ref{app:hashing}), l
 L'intero restituito da \texttt{hashCode()} è calcolato in modo da minimizzare la probabilità che due oggetti diversi abbiano lo stesso valore. Mentre l'implementazione predefinita di \texttt{Object} deriva questo numero dall'indirizzo di memoria dell'istanza (identità), nelle classi che rappresentano dati esso viene sovrascritto per riflettere lo stato dell'oggetto.
 
 
-In Java, l'utilizzo principale di questo metodo avviene all'interno delle \textbf{Collezioni} (come \texttt{HashSet} e \texttt{HashMap}), dove l'hash viene usato come indice per distribuire gli oggetti in diversi "compartimenti" (\textit{buckets}), rendendo le operazioni di ricerca quasi istantanee.Riprenderemo questo concetto nel capitolo sulle collections, ma è importante capire fin da ora che un'implementazione errata di \texttt{hashCode()} può portare a prestazioni disastrose e a comportamenti imprevedibili quando gli oggetti vengono inseriti in queste strutture dati.
+In Java, l'utilizzo principale di questo metodo avviene all'interno delle \textbf{Collezioni} (come \texttt{HashSet} e \texttt{HashMap}), dove l'hash viene usato come indice per distribuire gli oggetti in diversi "compartimenti" (\textit{buckets}), rendendo le operazioni di ricerca quasi istantanee. Riprenderemo questo concetto nel capitolo sulle collections, ma è importante capire fin da ora che un'implementazione errata di \texttt{hashCode()} può portare a prestazioni disastrose e a comportamenti imprevedibili quando gli oggetti vengono inseriti in queste strutture dati.
 
 Esiste una regola fondamentale che ogni sviluppatore Java deve rispettare: \textbf{se due oggetti sono uguali secondo il metodo \texttt{equals()}, devono necessariamente avere lo stesso \texttt{hashCode()}.}
 

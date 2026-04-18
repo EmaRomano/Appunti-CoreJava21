@@ -19,7 +19,7 @@ Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \tex
 
 \begin{itemize}
     \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: essendo i metodi di un'interfaccia implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità o superiore: non possono essere \texttt{protected} o \texttt{private}).
-    \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero illimitato di interfacce, risolvendo il problema dell'ereditarietà multipla.
+    \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero arbitrario di interfacce, risolvendo il problema dell'ereditarietà multipla.
 \end{itemize}
 \vspace{\baselineskip}
 
@@ -435,7 +435,8 @@ Il seguente esempio mostra come l'uso della lambda eviti la verbosità di dover 
 
 \begin{lstlisting}[language=Java, caption={La Lambda come "implementazione al volo"}]
 // Il compilatore vede che Arrays.sort vuole un Comparator.
-// Comparator ha un solo metodo: int compare(T o1, T o2).
+// Comparator ha un solo metodo astratto (che non sia di Object):
+// int compare(T o1, T o2).
 // Quindi "mappa" la lambda su quel metodo:
 // tratta i parametri come se fossero quelli di compare 
 // e il corpo come se fosse una sua implementazione.
@@ -509,7 +510,7 @@ Ognuna di queste è di per sé un'interfaccia funzionale, ma anche "capostipite"
         Arrays.setAll(values, i -> i * i);
     \end{lstlisting}
 
-    Qui l'overload di \texttt{setAll} che accetta un  \texttt{int[]} usa \texttt{IntUnaryOperator} come secondo parametro, che lavora con gli interi evitando l'autoboxing. Dunque spesso si usano le lambda senza nemmeno pensare a questi dettagli. Il compilatore si occupa di mappare la lambda sull'interfaccia funzionale corretta, garantendo così prestazioni ottimali.
+    Qui l'overload di \texttt{setAll} che accetta un  \texttt{int[]} usa \texttt{IntUnaryOperator} come secondo parametro, che lavora con gli interi evitando l'autoboxing. Spesso si usano le lambda senza nemmeno pensare a questi dettagli. Il compilatore si occupa di mappare la lambda sull'interfaccia funzionale corretta, garantendo così prestazioni ottimali.
 
 \end{observation}
 
@@ -535,10 +536,12 @@ LocalDate hireDay = Objects.requireNonNullElseGet(day, () -> LocalDate.of(1970, 
 \subsection{Method e Constructor References}
 
 I method references forniscono una sintassi ancora più concisa delle lambda expression quando queste si limitano a invocare un singolo metodo già esistente, senza effettuare operazioni aggiuntive. L'operatore principale è il doppio due punti (\texttt{::}). Si può usare un \textit{method reference} solo se la firma del metodo esistente è \textbf{perfettamente compatibile} con i parametri dell'interfaccia funzionale attesa (Regola di Sostituzione); perciò non è nemmeno necessario specificare i parametri: vengono mappati automaticamente.
+
+ Questo tipo di sintassi ha tre forme:
 \vspace{\baselineskip}
 
 \begin{description}
-    \item[\texttt{Class::staticMethod}] Corrisponde a una lambda che passa i suoi argomenti a un metodo statico.Esempio:
+    \item[\texttt{Class::staticMethod}] Corrisponde a una lambda che passa i suoi argomenti a un metodo statico. Esempio:
     \begin{lstlisting}[language=Java]
         //senza method reference:
         x -> Math.sqrt(x);
