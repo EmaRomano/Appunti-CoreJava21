@@ -173,7 +173,7 @@ Indipendentemente da quanti \texttt{this()} vengano usati, l'ultimo anello della
 
 \section{Polimorfismo}
 
-Il polimorfismo è la capacità di un oggetto di essere trattato come un'istanza della sua superclasse. Questo concetto si basa sul \textbf{Principio di Sostituzione}.
+Il polimorfismo è la capacità di un oggetto di essere trattato come un'istanza della sua superclasse. Questo concetto si basa sul \textbf{Principio di Sostituzione di Liskov}.
 
 Il principio afferma che è sempre possibile utilizzare un oggetto di una sottoclasse in qualsiasi contesto in cui sia attesa una superclasse. Questo perché, per la relazione \textit{is-a}, una sottoclasse possiede tutte le caratteristiche della superclasse.
 
@@ -624,7 +624,8 @@ public class Employee
 
       // 3. Confronto delle classi:
       // Se le classi non coincidono esattamente, gli oggetti non sono uguali.
-      // Si usa getClass() per garantire la simmetria nelle gerarchie.
+      // Si usa getClass() per garantire la simmetria nelle gerarchie:
+      // se a.equals(b) e' true, allora b.equals(a) deve essere true.
       if (getClass() != otherObject.getClass())
          return false;
 

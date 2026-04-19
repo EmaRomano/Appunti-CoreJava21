@@ -18,7 +18,7 @@ Un'interfaccia viene dichiarata con la parola chiave \texttt{interface}. Per sua
 Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \texttt{implements}. 
 
 \begin{itemize}
-    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: essendo i metodi di un'interfaccia implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità o superiore: non possono essere \texttt{protected} o \texttt{private}).
+    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.:i metodi di un'interfaccia devono essere implementati con visibilità non inferiore; essendo implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità).
     \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero arbitrario di interfacce, risolvendo il problema dell'ereditarietà multipla.
 \end{itemize}
 \vspace{\baselineskip}
@@ -284,7 +284,7 @@ Quando implementiamo il metodo \texttt{int compare(T o1, T o2)}, stiamo definend
     Il punto 3. non è \textbf{strettamente richiesto}, ma è caldamente raccomandato. 
 \begin{itemize}
     \item Un comparatore che viola questa condizione è detto \textit{"inconsistent with equals"}.
-    \item \textbf{Il rischio}: Collezioni ordinate come \texttt{TreeSet} o \texttt{TreeMap} usano \texttt{compare} (e non \texttt{equals}) per gestire i duplicati. Se il comparatore dice che due oggetti sono uguali ma \texttt{equals} dice di no, la collezione violerà il contratto generale dei \texttt{Set}, rifiutando l'inserimento del secondo oggetto. Quando un programmatore non rispetta questa coerenza, dovrebbe indicarlo chiaramente nella documentazione del comparatore per evitare confusione agli utenti.
+    \item \textbf{Il rischio}: Collezioni ordinate come \texttt{TreeSet} o \texttt{TreeMap} usano \texttt{compare} (e non \texttt{equals}) per gestire i duplicati. Se \texttt{compare} dice che due oggetti sono uguali ma \texttt{equals} dice di no, la collezione violerà il contratto generale dei \texttt{Set}, rifiutando l'inserimento del secondo oggetto. Quando un programmatore non rispetta questa coerenza, dovrebbe indicarlo chiaramente nella documentazione del comparatore per evitare confusione agli utenti.
 \end{itemize}
 \end{observation}
 
