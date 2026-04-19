@@ -964,6 +964,7 @@ public sealed class Shape permits Circle, Square, Triangle {
 
 I motivi principali per utilizzare le classi sigillate sono:
 \begin{itemize}
+    \item creare gerarchie "customizzate" e controllate, evitando che chiunque possa estendere una classe e potenzialmente rompere l'integrità del design.
     \item \textbf{Controllo del Dominio}: Utile quando si modella una struttura dati "finita" (come i tipi di un formato dati come JSON).
     \item \textbf{Analisi Esaustiva}: Il compilatore può verificare se in uno \texttt{switch} abbiamo coperto tutti i casi possibili della gerarchia, rendendo superfluo il ramo \texttt{default}.
 \end{itemize}
