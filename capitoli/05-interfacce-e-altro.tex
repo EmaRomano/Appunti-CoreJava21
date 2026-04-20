@@ -614,12 +614,104 @@ int[] counter = { 0 };
 button.addActionListener(e -> counter[0]++); 
 \end{lstlisting}
 
-
-
 \begin{warning}
 \textbf{Nota di cautela}: L'uso di array di un solo elemento o di "wrapper" per aggirare l'impossibilità di modificare variabili locali è un \textit{workaround} che va usato con \textbf{estrema cautela}. In ambienti multi-thread, questa pratica espone il codice a \textit{race conditions} se non opportunamente sincronizzata.
 \end{warning}
 
+\section{Inner Classes}
+
+Una \textbf{Inner Class} è una classe definita all'interno di un'altra. La sua caratteristica distintiva è il legame con l'istanza della classe esterna (\textit{Outer Class}).
+
+Caratteristiche principali:
+\begin{itemize}
+    \item \textbf{Accesso Privilegiato}: I metodi della classe interna possono accedere a tutti i campi della classe esterna, inclusi quelli dichiarati \texttt{private}.
+    \item \textbf{Visibilità Controllata}: Può essere dichiarata \texttt{private}, diventando invisibile a tutte le altre classi del pacchetto (impossibile per le classi top-level).
+    \item \textbf{Riferimento Implicito}: Ogni istanza di una classe interna mantiene un riferimento invisibile all'oggetto della classe esterna che l'ha generata.
+\end{itemize}
+\vspace{\baselineskip}
+
+Le Inner Classes esistono dalle prime versioni di Java e sono state ampiamente utilizzate per implementare il pattern callback prima dell'introduzione delle Lambda.
+Prima di Java 8, quando si voleva gestire un click di un bottone, si doveva scrivere un'intera Inner Class. Oggi basta una riga di Lambda.
+
+Tuttavia, le Inner Classes restano superiori quando:
+\begin{itemize}
+    \item si deve implementare un'interfaccia con molti metodi (le Lambda funzionano solo con le interfacce funzionali, che hanno un solo metodo).
+    \item la logica da implementare è complessa e richiede più di poche righe di codice.
+    \item si ha bisogno di mantenere uno stato interno complesso (variabili di istanza) che non può essere gestito efficacemente con variabili locali "catturate" da una lambda.
+\end{itemize}
+
+\subsection{Struttura e Accesso allo Stato}
+
+Spiegheremo il concetto con un esempio artificiale, per puri scopi didattici. Consideriamo un \texttt{BankAccount} (classe esterna) che affida il calcolo degli interessi a un \texttt{InterestProcessor} (classe interna). Quest'ultimo ha bisogno di modificare il saldo, che però deve rimanere segreto al resto del mondo.
+
+\begin{lstlisting}[language=Java, caption={Esempio di Inner Class per l'incapsulamento}]
+public class BankAccount {
+    private double balance; // Campo privato della classe esterna
+    private String owner;
+
+    public BankAccount(String owner, double initialBalance) {
+        this.owner = owner;
+        this.balance = initialBalance;
+    }
+
+    // CLASSE INTERNA: Definita dentro BankAccount
+    private class InterestProcessor {
+        public void updateBalance(double rate) {
+            // NOTA: 'balance' non e' definito qui, ma appartiene a BankAccount!
+            double interest = balance * (rate / 100);
+            balance += interest; 
+            System.out.println("Interessi calcolati per " + owner);
+        }
+    }
+
+    public void startInterestProcess(double rate) {
+        // La classe esterna crea un oggetto della interna
+        InterestProcessor processor = new InterestProcessor();
+        processor.updateBalance(rate);
+    }
+
+}
+\end{lstlisting}
+
+
+\texttt{InterestProcessor} non ha un campo \texttt{balance}, eppure lo modifica. Come è possibile?
+
+Il compilatore modifica implicitamente tutti i costruttori della classe interna per accettare un riferimento alla classe esterna, aggiungendo un campo nascosto che memorizza questo riferimento. Nel nostro esempio, il costruttore di \texttt{InterestProcessor} è un no-args-constructor di default che implicitamente diventa qualcosa del genere:
+
+\begin{lstlisting}[language=Java, caption={Costruttore implicito della classe interna}]
+public InterestProcessor(BankAccount bankAccount) {
+    outer = bankAccount; /* N.B.: 'outer' non e' una parola chiave di Java, ma il nome che abbiamo dato al campo nascosto creato dal compilatore */
+}
+\end{lstlisting}
+
+In questo modo, ogni istanza di \texttt{InterestProcessor} è automaticamente collegata a un'istanza specifica di \texttt{BankAccount}, permettendo l'accesso diretto ai suoi campi e metodi, anche quelli privati. Quando viene istanziato un oggetto della classe interna, il compilatore si assicura che venga passato un riferimento all'istanza della classe esterna che lo contiene, cioè l'oggetto "this" della classe esterna, quindi implicitamente avviene questo passaggio:
+
+\begin{lstlisting}[language=Java, caption={Creazione di un'istanza della classe interna}]
+InterestProcessor processor = new InterestProcessor(this);
+ // 'this' si riferisce all'istanza di BankAccount
+\end{lstlisting}
+
+\begin{observation}
+    Abbiamo dichiarato la classe interna come privata, rendendola completamente invisibile al mondo esterno. In questo modo, nessun altro codice al di fuori di \texttt{BankAccount} può creare un'istanza di \texttt{InterestProcessor} o accedere direttamente alla sua logica. Questo è il caso d'uso più comune per le classi interne, ma parleremo comunque a breve anche del caso di classi interne pubbliche.
+\end{observation}
+
+Abbiamo chiamato \texttt{outer} il riferimento nascosto alla classe esterna, ma in realtà la sintassi corretta per denotare il riferimento all'oggetto esterno e'una sintassi "all'indietro": per i campi interni ad una classe uso \texttt{this.campo}, ma poiché ci si riferisce ad una classe definita all'esterno, la classe esterna va prefissata:
+\[ \texttt{NomeClasseEsterna.this} \]
+Ad esempio, il riferimento a \texttt{balance} all'interno di \texttt{InterestProcessor} è in realtà \texttt{BankAccount.this.balance}, ma poiché non c'è ambiguità, si può omettere la parte \texttt{BankAccount.this} e scrivere semplicemente \texttt{balance}. Se invece ci fosse un campo \texttt{balance} anche nella classe interna, allora sarebbe necessario usare la sintassi completa per risolvere l'ambiguità (shadowing).
+
+Viceversa, quando la classe esterna vuole riferirsi a quella interna, la sintassi è esattamente la stessa di quella di un suo campo pubblico (anche se la classe interna è privata) e si può eventualmente usare anche la forma con this (ma quasi sempre è ridondante); anche il costruttore si può pensare come un normale metodo:
+
+\begin{lstlisting}[language=Java, caption={Creazione di un'istanza della classe interna}]
+InterestProcessor proc = new InterestProcessor(); 
+// Oppure, per essere espliciti (ma ridondanti):
+InterestProcessor proc = this.new InterestProcessor();
+\end{lstlisting}
+
+Infine, nel caso in cui la classe interna sia pubblica, dal punto di vista di un codice esterno alla classe esterna, la classe interna va pensata come un campo pubblico della classe esterna; in tal caso la classe interna diventa una classe a cui non è possibile accedere direttamente, ma solo attraverso un'istanza della classe esterna.
+\begin{lstlisting}[language=Java, caption={Riferimento alla classe interna da un contesto esterno}]
+Outer esterna = new Outer();
+Outer.Inner interna = esterna.new Inner();
+\end{lstlisting}
 
 
 
