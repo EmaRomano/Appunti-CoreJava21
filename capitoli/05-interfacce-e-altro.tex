@@ -768,6 +768,35 @@ public void createLogger() {
 }
 \end{lstlisting}
 
+\subsection{Classi Anonime}
+Usando una classe locale, se si vuole creare un solo oggetto di quella classe, si può evitare di darle un nome. In questo caso, si parla di \textbf{Classi Anonime}. La sintassi generale è la seguente:
+
+\begin{lstlisting}[language=Java, caption={Sintassi di una classe anonima}]
+new SuperTipo(parametri_costruttore_supertipo) {
+    // campi e metodi della classe anonima
+};
+\end{lstlisting}
+
+ \texttt{SuperTipo} può essere un'interfaccia o una classe:
+ \begin{itemize}
+    \item Se \texttt{SuperTipo} è un'\textbf{interfaccia}, le parentesi devono essere ovviamente vuote.
+    \item Se \texttt{SuperTipo} è una \textbf{classe}, i parametri passati a \texttt{new SuperTipo(...)} vengono inoltrati al costruttore della classe madre: come ben sappiamo, se la superclasse non ha un costruttore di default, è necessario fornire esplicitamente i parametri richiesti; di fatto, questi parametri servono esclusivamente a questo scopo. Non è possibile fare altrimenti, perché la classe anonima non può definire un costruttore proprio (non avendo un nome, non può essere richiamato da nessuna parte).
+\end{itemize}
+\vspace{\baselineskip}
+Tecnicamente, un'anonima definita in un metodo è una \textit{local class} senza nome; tipicamente è proprio in questo contesto che vengono utilizzate. Tuttavia, è possibile dichiarare classi anonime anche a livello membro, o addirittura come argomenti di un metodo (anche se quest'ultimo caso è piuttosto raro). Vale anche la pena osservare che in ogni caso hanno le seguenti caratteristiche:
+\begin{itemize}
+    \item \textbf{Cattura delle variabili}: Segue esattamente la stessa meccanica di "Variable Capture" descritta per le classi locali (necessità di variabili \textit{effectively final}).
+    \item\textbf{Limite di Estensione}: Una classe anonima può fare solo una cosa: o estendere una classe (una sola) o implementare un'interfaccia (una sola). Non può fare entrambe le cose contemporaneamente, né implementare più interfacce.
+\end{itemize}
+
+
+
+
+
+
+
+
+
 
 
 
