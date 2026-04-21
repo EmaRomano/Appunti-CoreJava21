@@ -601,7 +601,9 @@ String prefix = "Log: ";
 Consumer<String> printer = s -> System.out.println(prefix + s);
 \end{lstlisting} 
 
-Perché questa restrizione? Sebbene i dettagli verranno approfonditi con lo studio della \textbf{concorrenza}, è bene anticipare che le lambda vengono spesso eseguite in momenti diversi o su \textbf{thread} diversi rispetto a dove sono state create. 
+Perché questa restrizione? Il motivo principale è il meccanismo di funzionamento della variable capture, che sarà spiegato nel paragrafo \ref{sec:variable-capture} (ad essere precisi le lambdas funzionano in modo leggermente diverso da quel caso, ma la logica è identica). 
+
+C'è anche un altro motivo; sebbene i dettagli verranno approfonditi con lo studio della \textbf{concorrenza}, è bene anticipare che le lambda vengono spesso eseguite in momenti diversi o su \textbf{thread} diversi rispetto a dove sono state create. 
 
 Le variabili locali vivono nello \textbf{stack}; se la lambda potesse modificarle liberamente, si creerebbero gravi problemi di sincronizzazione e instabilità dei dati. Imponendo che la variabile sia una "costante nel tempo", Java garantisce la sicurezza del thread (\textit{thread-safety}).
 
@@ -713,6 +715,58 @@ Outer esterna = new Outer();
 Outer.Inner interna = esterna.new Inner();
 \end{lstlisting}
 
+ \subsection{Local Inner Classes}
+
+ Si possono dichiarare classi interne anche dentro un metodo (o più in generale qualsiasi blocco di codice); queste sono chiamate \textbf{Local Inner Classes} (le classi interne "normali" sono dette invece \textbf{Member Inner Classes}). Le classi interne locali hanno le seguenti caratteristiche:
+
+\begin{itemize}
+    \item \textbf{Nessun modificatore di accesso}: Non possono essere \texttt{public} o \texttt{private}, perché la loro visibilità è già limitata al blocco di codice in cui si trovano.
+    \item \textbf{Invisibilità alla classe esterna}: hanno accesso a tutti i campi e metodi della classe esterna ma, a differenza delle member inner classes, la loro visibilità è limitata al blocco di codice in cui sono dichiarate.
+    \item \textbf{Variable Capture}: Come le Lambda, possono accedere alle variabili locali del metodo in cui sono dichiarate, ma solo se sono \textbf{effectively final}. 
+\end{itemize}
+\vspace{\baselineskip}
+
+Oggi le \textit{Local Classes} sono rare perché le Lambda coprono quasi tutti i loro casi d'uso. Si usano ancora se si ha bisogno di:
+\begin{enumerate}
+    \item Definire \textbf{più metodi} o un costruttore complesso (cosa impossibile per una Lambda).
+    \item Implementare \textbf{più interfacce} contemporaneamente.
+\end{enumerate}
+
+
+\subsection{Meccanica della Variable Capture}
+\label{sec:variable-capture}
+
+Il termine \textbf{Variable Capture} descrive il processo mediante il quale una classe locale (o anonima) accede alle variabili del blocco di codice in cui è definita. Il meccanismo \textbf{si aggiunge} a quello del passaggio del riferimento alla classe esterna (descritto in precedenza): il compilatore non solo passa il riferimento all'oggetto esterno (\texttt{this}), ma "inietta" nel costruttore anche una copia del valore di ogni variabile locale catturata.
+
+Infatti, quando si scrive una classe locale, il compilatore Java fa un lavoro nascosto di "sartoria"; per ogni variabile locale che si "cattura":
+\begin{itemize}
+    \item Crea un \textbf{campo privato e final} dentro la classe interna per memorizzare quel valore (o quel riferimento, se si tratta di un oggetto).
+    \item Aggiunge un parametro al costruttore per ricevere tale dato.
+    \item Nel momento in cui si invoca \texttt{new MiaClasseLocale()}, passa silenziosamente i valori correnti al costruttore.
+\end{itemize}
+
+Se il metodo potesse modificare la variabile dopo che è stata catturata, si avrebbe un problema di \textbf{incoerenza dei dati}: le variabili locali risiedono nello \textit{stack}, dunque cessano di esistere al termine del metodo, mentre l'oggetto della classe interna risiede nello \textit{heap} e potrebbe sopravvivere più a lungo. Poiché l'oggetto lavora su una \textbf{copia locale} (il campo interno generato dal compilatore), se l'originale nello stack cambiasse, l'oggetto non se ne accorgerebbe mai. Java impone il vincolo \textbf{effectively final} proprio per garantire che l'originale e la copia siano sempre identici.
+
+Immaginiamo che Java ci permettesse di modificare le variabili catturate. Ecco il caos che ne deriverebbe:
+
+\begin{lstlisting}[language=Java, caption={Perche' non possiamo modificare le variabili locali}]
+public void createLogger() {
+    int level = 1; // Variabile locale
+
+    class Logger {
+        void log() { 
+            // Se potessi leggere level, leggerei la COPIA fatta al momento del "new"
+            System.out.println("Livello: " + level); 
+        }
+    }
+
+    Logger myLogger = new Logger(); // Qui viene fatta la "fotocopia" di level (1)
+    
+    level = 2; // Supponiamo di poterlo cambiare...
+    
+    myLogger.log(); // Cosa dovrebbe stampare? 1 o 2?
+}
+\end{lstlisting}
 
 
 
