@@ -820,6 +820,14 @@ In realtà, c'è un motivo molto più valido per dichiarare una classe interna c
 \end{observation}
 
 
+\begin{observation}
+    :
+    \begin{itemize}
+        \item Records, enumeratori e interfacce dichiarati all'interno di classi o interfacce, sono implicitamente \texttt{static};
+        \item classi dichiarate all'interno di interfacce sono implicitamente \texttt{static} e \texttt{public}.
+    \end{itemize}
+\end{observation}
+
 \subsection{Il Pericolo del Memory Leak nelle Inner Classes}
 
 Esiste un problema importante che nasce dal riferimento implicito di una classe interna (non statica) a quella esterna. Immaginiamo questo scenario:
