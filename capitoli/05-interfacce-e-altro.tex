@@ -789,6 +789,83 @@ Tecnicamente, un'anonima definita in un metodo è una \textit{local class} senza
     \item\textbf{Limite di Estensione}: Una classe anonima può fare solo una cosa: o estendere una classe (una sola) o implementare un'interfaccia (una sola). Non può fare entrambe le cose contemporaneamente, né implementare più interfacce.
 \end{itemize}
 
+\subsection{Classi Statiche}
+Talvolta si ha bisogno di una classe interna che non abbia un riferimento all'oggetto esterno; in questo caso, si può dichiarare la classe interna come \textbf{static}.
+
+Uno dei motivi per dichiarare una classe interna come statica è perché la si vuole istanziare in un contesto statico, come ad esempio un metodo statico: come ben sappiamo, i metodi statici possono usare solo membri statici; le classi interne non fanno eccezione. Esempio:
+
+\begin{lstlisting}[language=Java, caption={Esempio di classe interna statica}]
+public class Outer {
+    private static classInner{...}
+
+    public static void doSomething() {
+        Inner inner = new Inner(); // OK: Inner e' statica
+    }
+}
+\end{lstlisting}
+
+In questo esempio, se \texttt{Inner} non fosse statica, ne risulterebbe un errore in fase di compilazione sul tentativo di instanziare la classe interna: questa, come ormai ben sappiamo, contiene un riferimento implicito alla classe esterna, ma di quest'ultima non esiste ancora un'istanza. Dichiarando \texttt{Inner} come statica, si elimina il legame con l'istanza esterna, permettendo così la sua istanziazione anche in contesti statici.
+
+In realtà, c'è un motivo molto più valido per dichiarare una classe interna come statica; ne parleremo nel prossimo paragrafo, perché si tratta di un argomento di per sé importante. 
+
+\begin{observation}
+    Le classi statiche non sono "vere" classi interne, ma piuttosto classi normali che vengono dichiarate all'interno di un'altra classe per motivi di organizzazione del codice. Non hanno accesso ai membri d'istanza della classe esterna e non mantengono alcun riferimento ad essa. Con modificatore di accesso pubblico, dichiararle in un file a parte e usarle come campo nella classe esterna sarebbe perfettamente equivalente, ma di solito si preferisce tenerle "sotto lo stesso tetto" per ragioni di coesione e incapsulamento logico.
+
+    In effetti, la distinzione ufficiale della documentazione Java è:
+    \begin{itemize}
+        \item \textbf{Nested Classes}: termine generico che include tutti i tipi di classe dichiarate dentro un'altra. 
+        \item \textbf{Inner Classes}: tutte le classi non-statiche dichiarate all'interno di un'altra classe.
+        \item \textbf{Static Classes}: classi statiche, necessariamente "nested".
+    \end{itemize}
+\end{observation}
+
+
+\subsection{Il Pericolo del Memory Leak nelle Inner Classes}
+
+Esiste un problema importante che nasce dal riferimento implicito di una classe interna (non statica) a quella esterna. Immaginiamo questo scenario:
+\begin{itemize}
+    \item hai una classe esterna molto "pesante" (magari un DatabaseManager o una Activity con molte immagini).
+    \item all'interno crei una Inner Class (non-statica) e ne generi un'istanza.
+    \item passi questo piccolo oggetto a qualcuno che "vive" a lungo, ad esempio un servizio che gira in background o una lista static.
+\end{itemize}
+Il disastro: Quando il DatabaseManager non serve più e dovrebbe essere eliminato dal Garbage Collector (GC), il GC vede che l'oggetto interno è ancora vivo. E poiché l'oggetto interno ha il riferimento invisibile Outer.this, il GC è costretto a tenere in memoria anche il DatabaseManager.
+In pratica, un piccolo oggetto di pochi byte tiene in ostaggio un oggetto enorme, impedendo a Java di liberare memoria. È come se non potessi buttare via un intero camion solo perché c'è un portachiavi attaccato al cruscotto che vuoi tenere.
+
+\begin{lstlisting}[language=Java, caption={Esempio di memory leak}]
+    public class Pesante {
+    private byte[] dati = new byte[1024 * 1024 * 10]; // 10 MB di dati
+
+    public void avviaTask() {
+        // Classe anonima (inner) passata a un thread che dura ore
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // Fai qualcosa per 2 ore...
+                // Anche se l'oggetto 'Pesante' finisce il suo lavoro, 
+                // resta in memoria finche' questo thread non muore!
+            }
+        }).start();
+    }
+}
+\end{lstlisting}
+
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Meccanica del Leak]
+Ogni istanza di una classe interna (non-statica) contiene un riferimento nascosto a quella esterna. 
+Se l'istanza interna viene passata a un contesto a lungo termine (es. Thread, Static Collection, Singleton), l'intera istanza \texttt{OuterClass} rimane bloccata nello \textit{Heap}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: Strategie di prevenzione del leak]
+    \begin{enumerate}
+        \item \textbf{Preferire Static Classes}: Se non e' richiesto l'accesso ai campi d'istanza della classe esterna, usare \texttt{static class}.
+        \item \textbf{Weak References}: In casi estremi, se si ha bisogno dell'accesso ma si vuole evitare il leak, si puo' usare un \texttt{WeakReference<OuterClass>} all'interno di una classe statica.(parleremo di questo argomento altrove)
+        \item \textbf{Pulizia dei Callback}: Assicurarsi di rimuovere listener o annullare task in background quando l'oggetto \texttt{Outer} viene distrutto.
+    \end{enumerate}
+\end{tcolorbox}
+
+\begin{warning}
+Le \textbf{classi anonime} sono le piu' pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.
+\end{warning}
 
 
 
