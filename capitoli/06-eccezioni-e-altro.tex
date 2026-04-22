@@ -50,8 +50,7 @@ Come vedremo presto, qui entra in gioco il meccanismo di \textit{throw}; quando 
 \end{tcolorbox}
 
 \subsection{La Gerarchia delle Eccezioni}
-
-In Java, la gestione degli errori è organizzata in una gerarchia rigorosa. Di seguito è riportata la struttura standard UML, ottimizzata per la leggibilità e la precisione dei collegamenti.
+In Java, ogni oggetto eccezione è un'istanza di una classe derivata da \texttt{Throwable}; la gerarchia si divide immediatamente in due rami: \texttt{Error} ed \texttt{Exception}.
 
 \begin{figure}[ht]
 \centering
@@ -84,14 +83,14 @@ In Java, la gestione degli errori è organizzata in una gerarchia rigorosa. Di s
 \node[runtime_main, below=0.2cm of sql] (runtime) {RuntimeException};
 
 % --- LIVELLO 4: Figli di RuntimeException ---
-\node[unchecked, below=0.8cm of runtime, xshift=0.0cm] (arith) {ArithmeticException};
-\node[unchecked, below=0.2cm of arith] (npe) {NullPointerException};
-\node[unchecked, below=0.2cm of npe] (nfe) {NumberFormatException};
-\node[unchecked, below=0.2cm of nfe] (iobe) {IndexOutOfBoundsException};
+% \node[unchecked, below=0.8cm of runtime, xshift=0.0cm] (arith) {ArithmeticException};
+% \node[unchecked, below=0.2cm of arith] (npe) {NullPointerException};
+% \node[unchecked, below=0.2cm of npe] (nfe) {NumberFormatException};
+% \node[unchecked, below=0.2cm of nfe] (iobe) {IndexOutOfBoundsException};
 
 % --- LIVELLO 5: Figli di IndexOutOfBounds ---
-\node[unchecked, below=0.8cm of iobe, xshift=0.0cm] (aiobe) {ArrayIndexOutOfBounds...};
-\node[unchecked, below=0.2cm of aiobe] (siobe) {StringIndexOutOfBounds...};
+% \node[unchecked, below=0.8cm of iobe, xshift=0.0cm] (aiobe) {ArrayIndexOutOfBounds...};
+% \node[unchecked, below=0.2cm of aiobe] (siobe) {StringIndexOutOfBounds...};
 
 % --- LIVELLO 3 (Bis): Figli di Error ---
 \node[error_node, below=0.8cm of error, xshift=0.0cm] (vme) {VirtualMachineError};
@@ -119,20 +118,20 @@ In Java, la gestione degli errori è organizzata in una gerarchia rigorosa. Di s
 \draw[thick] (runtime.west) -- (E_spine |- runtime.west);
 
 % 4. Famiglia RuntimeException
-\coordinate (R_spine) at ([xshift=-0.5cm]arith.west);
-\draw[thick] (R_spine |- arith.west) -- (R_spine |- iobe.west);
-\draw[->, thick] (R_spine |- arith.west) |- (runtime.west);
-\draw[thick] (arith.west) -- (R_spine |- arith.west);
-\draw[thick] (npe.west) -- (R_spine |- npe.west);
-\draw[thick] (nfe.west) -- (R_spine |- nfe.west);
-\draw[thick] (iobe.west) -- (R_spine |- iobe.west);
+% \coordinate (R_spine) at ([xshift=-0.5cm]arith.east);
+% \draw[thick] (R_spine |- arith.west) -- (R_spine |- iobe.west);
+% \draw[->, thick] (R_spine |- arith.east) |- (runtime.east);
+% \draw[thick] (arith.east) -- (R_spine |- arith.east);
+% \draw[thick] (npe.east) -- (R_spine |- npe.east);
+% \draw[thick] (nfe.east) -- (R_spine |- nfe.east);
+% \draw[thick] (iobe.east) -- (R_spine |- iobe.east);
 
-% 5. Famiglia IndexOutOfBounds
-\coordinate (I_spine) at ([xshift=-0.5cm]aiobe.west);
-\draw[thick] (I_spine |- aiobe.west) -- (I_spine |- siobe.west);
-\draw[->, thick] (I_spine |- aiobe.west) |- (iobe.west);
-\draw[thick] (aiobe.west) -- (I_spine |- aiobe.west);
-\draw[thick] (siobe.west) -- (I_spine |- siobe.west);
+% % 5. Famiglia IndexOutOfBounds
+% \coordinate (I_spine) at ([xshift=-0.5cm]aiobe.west);
+% \draw[thick] (I_spine |- aiobe.west) -- (I_spine |- siobe.west);
+% \draw[->, thick] (I_spine |- aiobe.west) |- (iobe.west);
+% \draw[thick] (aiobe.west) -- (I_spine |- aiobe.west);
+% \draw[thick] (siobe.west) -- (I_spine |- siobe.west);
 
 % 6. Famiglia Error
 \coordinate (Err_spine) at ([xshift=-0.5cm]vme.west);
@@ -143,8 +142,80 @@ In Java, la gestione degli errori è organizzata in una gerarchia rigorosa. Di s
 \draw[thick] (soe.west) -- (Err_spine |- soe.west);
 
 \end{tikzpicture}
-\caption{Gerarchia delle eccezioni in Java (Dettaglio UML)}
+\caption{Gerarchia delle eccezioni in Java}
 \label{fig:eccezioni_vettoriale_uml}
 \end{figure}
+
+È fondamentale capire che in Java la differenza tra le eccezioni non è solo gerarchica, ma riguarda soprattutto il modo in cui il compilatore impone di gestirle. La distinzione principale è tra \textit{checked} e \textit{unchecked}:
+
+\begin{itemize}
+    \item \textbf{Checked}: il compilatore obbliga il programmatore a gestirle (a breve vedremo come). In genere rappresentano problemi esterni o situazioni recuperabili, come errori di I/O, rete o database.
+    
+    \item \textbf{Unchecked}: il compilatore non obbliga a gestirle né a dichiararle. Sono spesso dovute a errori logici del programmatore (ad esempio \texttt{NullPointerException}, indici fuori range, argomenti non validi), oppure guasti gravi della JVM o del sistema.
+\end{itemize}
+
+\vspace{\baselineskip}
+
+Tutti i \texttt{Throwable} che derivano da \texttt{Error} o da \texttt{RuntimeException} sono unchecked, tutti gli altri sono \textit{checked exceptions}.
+
+\vspace{\baselineskip}
+
+Possiamo liquidare rapidamente il ramo della gerarchia relativa agli \texttt{Error}: si tratta di errori talmente critici (come errori interni e situazioni di esaurimento delle risorse all'interno del sistema di runtime Java) che non si dovrebbe mai tentare di gestire. In questi casi, il programmatore ha poche possibilità di intervento: l'unica azione sensata è solitamente informare l'utente e terminare il programma in modo consono. Fortunatamente, queste situazioni sono abbastanza rare nella pratica.
+
+Da questo momento in poi ci occuperemo quindi del ramo \texttt{Exception} della gerarchia, ovvero della classe dei problemi gestibili.
+
+\subsection{Checked Exceptions}
+Da quanto detto finora, sono \textit{Checked Exceptions} tutte le \texttt{Exception} che non siano figlie di \texttt{RunTimeException}; abbiamo anche detto che il compilatore ci obbliga a \textit{gestire} questo tipo di eccezioni: vediamo cosa vuol dire.  
+
+Il compilatore Java agisce come un guardiano rigoroso per le \textit{Checked Exceptions}, applicando la regola del \textbf{Catch or Declare}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Regola del Catch-or-Declare]
+Se un metodo X ne invoca un altro che lancia una checked exception, il codice \textbf{non compila} finché non si soddisfa una di queste due condizioni:
+\begin{enumerate}
+    \item \textbf{Catch}: Si circonda l'istruzione con un blocco \texttt{try-catch} per gestire l'errore.
+    \item \textbf{Declare}: Si aggiunge la clausola \texttt{throws} alla firma del metodo X per delegare la responsabilità a chiunque lo invochi.
+\end{enumerate}
+\end{tcolorbox}
+
+Le \textbf{Unchecked Exceptions} ignorano questa regola: il compilatore assume che tu scriva codice corretto per evitarle (ad esempio controllando che un oggetto non sia \texttt{null} prima di usarlo), quindi non ti obbliga a usare blocchi \texttt{try-catch}.
+
+\section{Dichiarare e Lanciare Eccezioni}
+
+Un metodo Java può terminare in due modi: restituendo un valore o "esplodendo" con un'eccezione. Se un metodo non è in grado di gestire una situazione anomala, deve dichiarare questa possibilità al mondo esterno. La sintassi per dichiarare e \textit{lanciare} un'eccezione è illustrata nel seguente esempio elementare: 
+
+\begin{lstlisting}[caption={Esempio di metodo che lancia un'eccezione}]
+public void setAge(int age) throws IllegalArgumentException {
+    if (age < 0) {
+        // Creiamo l'oggetto eccezione e lo lanciamo
+        throw new IllegalArgumentException("age cannot be negative: " + age);
+    }
+    this.age = age;
+}
+\end{lstlisting}
+
+È fondamentale non confondere queste due parole chiave, simili ma con scopi diversi:
+\begin{itemize}
+    \item \textbf{\texttt{throws}} (al plurale): Si usa nella \textbf{firma del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
+    \item \textbf{\texttt{throw}} (al singolare): Si usa nel \textbf{corpo del metodo} per lanciare effettivamente l'oggetto eccezione.
+\end{itemize}
+
+
+\begin{observation}
+Cosa succede quando viene eseguita l'istruzione \texttt{throw}?
+\begin{enumerate}
+    \item L'esecuzione del metodo si interrompe \textbf{immediatamente}.
+    \item Le istruzioni successive (come l'assegnamento \texttt{this.eta = eta}) non vengono eseguite.
+    \item Il controllo passa al chiamante, cercando il primo blocco \texttt{try-catch} disponibile che sappia gestire \texttt{IllegalArgumentException}.
+\end{enumerate}
+\end{observation}
+
+\begin{tip}
+In questo esempio abbiamo usato \texttt{IllegalArgumentException}, che è una \textbf{Unchecked Exception}. Per questo motivo, la clausola \texttt{throws} nella firma del metodo sarebbe tecnicamente opzionale per il compilatore, ma è considerata un'ottima pratica di documentazione per avvisare chi userà il tuo metodo.
+\end{tip}
+
+
+
+
+
 
 
