@@ -88,3 +88,105 @@ Se la JVM deve caricare la classe \texttt{com.horstmann.corejava.Employee}, cerc
 java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
+
+\section{bozze eccezioni}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice: Eccezioni vs Performance]
+\textbf{1. Usa le eccezioni solo dove necessario}: Non utilizzare mai le eccezioni per gestire il normale flusso di controllo del programma (es. per uscire da un loop). Creare un'eccezione è "costoso" per la JVM perché deve catturare l'intero \textit{stack trace} (lo stato di tutte le chiamate ai metodi in quel momento).
+
+\textbf{2. Preferisci metodi che lanciano eccezioni}: Quando esplori le API di Java, preferisci sempre i metodi che segnalano errori tramite eccezioni rispetto a quelli che restituiscono codici di errore (come \texttt{null} o \texttt{-1}).
+\begin{itemize}
+\item Un'eccezione \textbf{non può essere ignorata}: se non la gestisci, il programma si ferma, impedendo al bug di propagarsi silenziosamente.
+\item Un codice di errore richiede un \texttt{if} manuale: se il programmatore si dimentica di scriverlo, il programma continuerà a girare in uno stato instabile.
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice]
+Affidarsi esclusivamente al \textit{Default Exception Handler} della JVM come strategia ordinaria di gestione degli errori è generalmente una cattiva pratica. Una progettazione solida deve mirare alla robustezza e alla resilienza del software.
+
+Le eccezioni dovrebbero essere intercettate nel livello più basso che sia effettivamente in grado di gestirle in modo corretto; in caso contrario, è preferibile propagarle verso livelli superiori che dispongano del contesto necessario per decidere come reagire.
+\end{tcolorbox}
+
+\subsection{Checked Exceptions}
+Da quanto detto finora, sono \textit{Checked Exceptions} tutte le \texttt{Exception} che non siano figlie di \texttt{RunTimeException}; abbiamo anche detto che il compilatore ci obbliga a \textit{gestire} questo tipo di eccezioni: vediamo cosa vuol dire.  
+
+Il compilatore Java agisce come un guardiano rigoroso per le \textit{Checked Exceptions}, applicando la regola del \textbf{Catch or Declare}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Regola del Catch-or-Declare]
+Se un metodo X ne invoca un altro che lancia una checked exception, il codice \textbf{non compila} finché non si soddisfa una di queste due condizioni:
+\begin{enumerate}
+    \item \textbf{Catch}: Si circonda l'istruzione con un blocco \texttt{try-catch} per gestire l'errore.
+    \item \textbf{Declare}: Si aggiunge la clausola \texttt{throws} alla firma del metodo X per delegare la responsabilità a chiunque lo invochi.
+\end{enumerate}
+\end{tcolorbox}
+
+Le \textbf{Unchecked Exceptions} ignorano questa regola: il compilatore assume che tu scriva codice corretto per evitarle (ad esempio controllando che un oggetto non sia \texttt{null} prima di usarlo), quindi non ti obbliga a usare blocchi \texttt{try-catch}.
+
+\subsection{Dichiarare e Lanciare Eccezioni}
+
+Un metodo Java può terminare in due modi: restituendo un valore o "esplodendo" con un'eccezione. Se un metodo non è in grado di gestire una situazione anomala, deve dichiarare questa possibilità al mondo esterno. La sintassi per dichiarare e \textit{lanciare} un'eccezione è illustrata nel seguente esempio elementare: 
+
+\begin{lstlisting}[caption={Esempio di metodo che lancia un'eccezione}]
+public void setAge(int age) throws IllegalArgumentException {
+    if (age < 0) {
+        // Creiamo l'oggetto eccezione e lo lanciamo
+        throw new IllegalArgumentException("age cannot be negative: " + age);
+    }
+    this.age = age;
+}
+\end{lstlisting}
+
+È fondamentale non confondere queste due parole chiave, simili ma con scopi diversi:
+\begin{itemize}
+    \item \textbf{\texttt{throws}} (al plurale): Si usa nella \textbf{firma del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
+    \item \textbf{\texttt{throw}} (al singolare): Si usa nel \textbf{corpo del metodo} per lanciare effettivamente l'oggetto eccezione.
+\end{itemize}
+
+
+\begin{observation}
+Cosa succede quando viene eseguita l'istruzione \texttt{throw}?
+\begin{enumerate}
+    \item L'esecuzione del metodo si interrompe \textbf{immediatamente}.
+    \item Le istruzioni successive (come l'assegnamento \texttt{this.eta = eta}) non vengono eseguite.
+    \item Il controllo passa al chiamante, cercando il primo blocco \texttt{try-catch} disponibile che sappia gestire \texttt{IllegalArgumentException}.
+\end{enumerate}
+\end{observation}
+
+\begin{tip}
+In questo esempio abbiamo usato \texttt{IllegalArgumentException}, che è una \textbf{Unchecked Exception}. Per questo motivo, la clausola \texttt{throws} nella firma del metodo sarebbe tecnicamente opzionale per il compilatore, ma è considerata un'ottima pratica di documentazione per avvisare chi userà il tuo metodo.
+\end{tip}
+
+\subsection{Quando usare la clausola \texttt{throws}}
+
+Non è necessario dichiarare ogni possibile oggetto \texttt{Throwable} che il tuo metodo potrebbe lanciare. Per capire cosa va inserito nella clausola \texttt{throws}, dobbiamo distinguere quattro situazioni in cui può verificarsi un'eccezione:
+
+\begin{enumerate}
+    \item \textbf{Chiamata a un metodo che lancia una checked exception}: ad esempio, l'apertura di un file tramite il costruttore di \texttt{FileInputStream}.
+    \item \textbf{Rilevamento di un errore esplicito}: quando decidi di lanciare una checked exception usando l'istruzione \texttt{throw}.
+    \item \textbf{Errore di programmazione (Bug)}: ad esempio un accesso a un indice errato \texttt{a[-1] = 0} (genera una \texttt{ArrayIndexOutOfBoundsException} - \textit{unchecked}).
+    \item \textbf{Errore interno della JVM}: ad esempio l'esaurimento della memoria (\texttt{Error} - \textit{unchecked}).
+\end{enumerate}
+
+\begin{important}
+Devi dichiarare nella firma del metodo (tramite \texttt{throws}) solo le eccezioni appartenenti ai primi due scenari (\textbf{Checked Exceptions}).
+\end{important}
+
+
+
+\subsection{Metodi come "Trappole Mortali"}
+
+Horstmann definisce i metodi che lanciano eccezioni non dichiarate come potenziali "trappole mortali". Se un'eccezione viene lanciata e nessun \textit{handler} la cattura, il thread di esecuzione corrente termina immediatamente.
+
+\begin{lstlisting}[caption={Esempio di propagazione (Death Trap)}]
+// Poiche' FileInputStream lancia una FileNotFoundException (checked),
+// siamo OBBLIGATI a dichiararla con 'throws'
+public void leggiFile(String nome) throws FileNotFoundException {
+    FileInputStream f = new FileInputStream(nome);
+    // ... logica di lettura ...
+}
+\end{lstlisting}
+
+\begin{warning}
+Se ometti la clausola \texttt{throws} in presenza di una checked exception, il compilatore Java genererà un errore. Al contrario, non dovresti mai dichiarare le \texttt{RuntimeException} (bug tuoi) o gli \texttt{Error} (guasti JVM), poiché sono fuori dal controllo della normale logica di gestione degli errori.
+\end{warning}
+
