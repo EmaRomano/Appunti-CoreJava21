@@ -1,0 +1,150 @@
+\chapter{Eccezioni, Asserzioni e Logging}
+
+\section{Gestione delle Eccezioni}
+
+Il passaggio dalla programmazione accademica a quella professionale coincide con la consapevolezza che il codice deve operare in un ambiente ostile (dati errati, bug, risorse esterne indisponibili).
+
+In presenza di un'anomalia, il software deve garantire tre requisiti minimi:
+\begin{enumerate}
+    \item \textbf{Notifica}: Informare l'utilizzatore del problema occorso.
+    \item \textbf{Persistenza}: Salvare lo stato corrente per evitare la perdita di dati.
+    \item \textbf{Terminazione Controllata}: Consentire una chiusura del programma che rilasci correttamente le risorse impegnate.
+\end{enumerate}
+\vspace{\baselineskip}
+
+Storicamente, i metodi segnalavano il fallimento tramite valori sentinella (\texttt{null}, \texttt{-1}, \texttt{false}). Questo approccio è oggi considerato \textbf{pericoloso} e \textbf{poco informativo}.
+
+Confrontiamo l'evoluzione delle API Java per capire il vantaggio delle eccezioni:
+
+\begin{itemize}
+    \item \textbf{Vecchio Stile (Legacy)}: \texttt{file.delete()} restituisce \texttt{false} se fallisce. 
+    \begin{itemize}
+        \item \textit{Problema}: Perché e' fallito? Permessi negati? File inesistente? Disco protetto? Non lo sapremo mai.
+    \end{itemize}
+    \item \textbf{Nuovo Stile (NIO)}: \texttt{Files.delete(path)} lancia un'eccezione, ad esempio: 
+    \begin{center}
+        \texttt{NoSuchFileException}, \texttt{AccessDeniedException}, ecc...
+    \end{center}
+    
+    \begin{itemize}
+        \item \textit{Vantaggio}: L'errore e' auto-esplicativo e costringe il programmatore a decidere come gestirlo.
+    \end{itemize}
+\end{itemize}
+\vspace{\baselineskip}
+
+Come vedremo presto, qui entra in gioco il meccanismo di \textit{throw}; quando un metodo lancia un'eccezione:
+\begin{enumerate}
+    \item Non viene restituito alcun valore al chiamante.
+    \item Il controllo passa immediatamente al meccanismo di gestione delle eccezioni della JVM.
+    \item La JVM cerca un \textit{handler} compatibile risalendo la catena delle chiamate (\textit{unwinding the stack}).
+\end{enumerate}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice: Eccezioni vs Performance]
+\textbf{1. Usa le eccezioni solo dove necessario}: Non utilizzare mai le eccezioni per gestire il normale flusso di controllo del programma (es. per uscire da un loop). Creare un'eccezione è "costoso" per la JVM perché deve catturare l'intero \textit{stack trace} (lo stato di tutte le chiamate ai metodi in quel momento).
+
+\textbf{2. Preferisci metodi che lanciano eccezioni}: Quando esplori le API di Java, preferisci sempre i metodi che segnalano errori tramite eccezioni rispetto a quelli che restituiscono codici di errore (come \texttt{null} o \texttt{-1}).
+\begin{itemize}
+\item Un'eccezione \textbf{non può essere ignorata}: se non la gestisci, il programma si ferma, impedendo al bug di propagarsi silenziosamente.
+\item Un codice di errore richiede un \texttt{if} manuale: se il programmatore si dimentica di scriverlo, il programma continuerà a girare in uno stato instabile.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{La Gerarchia delle Eccezioni}
+
+In Java, la gestione degli errori è organizzata in una gerarchia rigorosa. Di seguito è riportata la struttura standard UML, ottimizzata per la leggibilità e la precisione dei collegamenti.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    node distance=0.4cm and 1.5cm,
+    >= {Triangle[open, length=7pt, width=7pt]}, % Freccia UML standard (vuota)
+    % Stili dei blocchi
+    base/.style={rectangle, rounded corners=1pt, draw=none, thick, minimum width=3.8cm, minimum height=0.7cm, align=center, font=\sffamily\bfseries\scriptsize, drop shadow},
+    pkg/.style={base, fill=magenta, text=white, minimum width=2.5cm},
+    root/.style={base, fill=blue!30!black, text=white},
+    checked/.style={base, fill=green!45!black, text=white},
+    runtime_main/.style={base, fill=blue!60!black, text=white},
+    unchecked/.style={base, fill=cyan!70!black, text=white},
+    error_node/.style={base, fill=red!70!black, text=white}
+]
+
+% --- LIVELLO 1: Radice ---
+\node[pkg] (java) {java.lang};
+\node[root, below=0.3cm of java] (object) {Object};
+\node[root, below=0.6cm of object] (throwable) {Throwable};
+
+% --- LIVELLO 2: Rami Principali ---
+\node[root, below left=1.2cm and 1.0cm of throwable] (exception) {Exception};
+\node[root, below right=1.2cm and 1.0cm of throwable] (error) {Error};
+
+% --- LIVELLO 3: Figli di Exception (Checked) ---
+\node[checked, below=0.8cm of exception, xshift=0.0cm] (ioe) {IOException};
+\node[checked, below=0.2cm of ioe] (cnf) {ClassNotFoundException};
+\node[checked, below=0.2cm of cnf] (sql) {SQLException};
+\node[runtime_main, below=0.2cm of sql] (runtime) {RuntimeException};
+
+% --- LIVELLO 4: Figli di RuntimeException ---
+\node[unchecked, below=0.8cm of runtime, xshift=0.0cm] (arith) {ArithmeticException};
+\node[unchecked, below=0.2cm of arith] (npe) {NullPointerException};
+\node[unchecked, below=0.2cm of npe] (nfe) {NumberFormatException};
+\node[unchecked, below=0.2cm of nfe] (iobe) {IndexOutOfBoundsException};
+
+% --- LIVELLO 5: Figli di IndexOutOfBounds ---
+\node[unchecked, below=0.8cm of iobe, xshift=0.0cm] (aiobe) {ArrayIndexOutOfBounds...};
+\node[unchecked, below=0.2cm of aiobe] (siobe) {StringIndexOutOfBounds...};
+
+% --- LIVELLO 3 (Bis): Figli di Error ---
+\node[error_node, below=0.8cm of error, xshift=0.0cm] (vme) {VirtualMachineError};
+\node[error_node, below=0.2cm of vme] (oom) {OutOfMemoryError};
+\node[error_node, below=0.2cm of oom] (soe) {StackOverflowError};
+
+% --- CONNESSIONI (Logica UML Rigorosa) ---
+
+% 1. Throwable -> Object
+\draw[->, thick] (throwable.north) -- (object.south);
+
+% 2. Exception & Error -> Throwable (Connessione a T)
+\coordinate (T_joint) at ([yshift=-0.5cm]throwable.south);
+\draw[thick] (exception.north) |- (T_joint);
+\draw[thick] (error.north) |- (T_joint);
+\draw[->, thick] (T_joint) -- (throwable.south);
+
+% 3. Famiglia Exception (Linee a cascata)
+\coordinate (E_spine) at ([xshift=-0.5cm]ioe.west);
+\draw[thick] (E_spine |- ioe.west) -- (E_spine |- runtime.west); % Spina verticale
+\draw[->, thick] (E_spine |- ioe.west) |- (exception.west);     % Attacco al genitore
+\draw[thick] (ioe.west) -- (E_spine |- ioe.west);
+\draw[thick] (cnf.west) -- (E_spine |- cnf.west);
+\draw[thick] (sql.west) -- (E_spine |- sql.west);
+\draw[thick] (runtime.west) -- (E_spine |- runtime.west);
+
+% 4. Famiglia RuntimeException
+\coordinate (R_spine) at ([xshift=-0.5cm]arith.west);
+\draw[thick] (R_spine |- arith.west) -- (R_spine |- iobe.west);
+\draw[->, thick] (R_spine |- arith.west) |- (runtime.west);
+\draw[thick] (arith.west) -- (R_spine |- arith.west);
+\draw[thick] (npe.west) -- (R_spine |- npe.west);
+\draw[thick] (nfe.west) -- (R_spine |- nfe.west);
+\draw[thick] (iobe.west) -- (R_spine |- iobe.west);
+
+% 5. Famiglia IndexOutOfBounds
+\coordinate (I_spine) at ([xshift=-0.5cm]aiobe.west);
+\draw[thick] (I_spine |- aiobe.west) -- (I_spine |- siobe.west);
+\draw[->, thick] (I_spine |- aiobe.west) |- (iobe.west);
+\draw[thick] (aiobe.west) -- (I_spine |- aiobe.west);
+\draw[thick] (siobe.west) -- (I_spine |- siobe.west);
+
+% 6. Famiglia Error
+\coordinate (Err_spine) at ([xshift=-0.5cm]vme.west);
+\draw[thick] (Err_spine |- vme.west) -- (Err_spine |- soe.west);
+\draw[->, thick] (Err_spine |- vme.west) |- (error.west);
+\draw[thick] (vme.west) -- (Err_spine |- vme.west);
+\draw[thick] (oom.west) -- (Err_spine |- oom.west);
+\draw[thick] (soe.west) -- (Err_spine |- soe.west);
+
+\end{tikzpicture}
+\caption{Gerarchia delle eccezioni in Java (Dettaglio UML)}
+\label{fig:eccezioni_vettoriale_uml}
+\end{figure}
+
+
