@@ -91,38 +91,6 @@ java -cp "/home/user/libs/*:." MiaClasse
 
 \section{bozze eccezioni}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice: Eccezioni vs Performance]
-\textbf{1. Usa le eccezioni solo dove necessario}: Non utilizzare mai le eccezioni per gestire il normale flusso di controllo del programma (es. per uscire da un loop). Creare un'eccezione è "costoso" per la JVM perché deve catturare l'intero \textit{stack trace} (lo stato di tutte le chiamate ai metodi in quel momento).
-
-\textbf{2. Preferisci metodi che lanciano eccezioni}: Quando esplori le API di Java, preferisci sempre i metodi che segnalano errori tramite eccezioni rispetto a quelli che restituiscono codici di errore (come \texttt{null} o \texttt{-1}).
-\begin{itemize}
-\item Un'eccezione \textbf{non può essere ignorata}: se non la gestisci, il programma si ferma, impedendo al bug di propagarsi silenziosamente.
-\item Un codice di errore richiede un \texttt{if} manuale: se il programmatore si dimentica di scriverlo, il programma continuerà a girare in uno stato instabile.
-\end{itemize}
-\end{tcolorbox}
-
-
-
-
-
-\subsection{Quando usare la clausola \texttt{throws}}
-
-Non è necessario dichiarare ogni possibile oggetto \texttt{Throwable} che il tuo metodo potrebbe lanciare. Per capire cosa va inserito nella clausola \texttt{throws}, dobbiamo distinguere quattro situazioni in cui può verificarsi un'eccezione:
-
-\begin{enumerate}
-    \item \textbf{Chiamata a un metodo che lancia una checked exception}: ad esempio, l'apertura di un file tramite il costruttore di \texttt{FileInputStream}.
-    \item \textbf{Rilevamento di un errore esplicito}: quando decidi di lanciare una checked exception usando l'istruzione \texttt{throw}.
-    \item \textbf{Errore di programmazione (Bug)}: ad esempio un accesso a un indice errato \texttt{a[-1] = 0} (genera una \texttt{ArrayIndexOutOfBoundsException} - \textit{unchecked}).
-    \item \textbf{Errore interno della JVM}: ad esempio l'esaurimento della memoria (\texttt{Error} - \textit{unchecked}).
-\end{enumerate}
-
-\begin{important}
-Devi dichiarare nella firma del metodo (tramite \texttt{throws}) solo le eccezioni appartenenti ai primi due scenari (\textbf{Checked Exceptions}).
-\end{important}
-
-
-
-
 \subsection{Rilanciare ed Incapsulare Eccezioni (Chaining)}
 
 A volte non vogliamo gestire un'eccezione direttamente, ma vogliamo "impacchettarla" in un'eccezione più significativa per chi usa il nostro codice. Questo processo si chiama \textit{Exception Chaining}.
