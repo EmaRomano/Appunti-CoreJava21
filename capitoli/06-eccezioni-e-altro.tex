@@ -169,7 +169,7 @@ In Java, ogni oggetto eccezione è un'istanza di una classe derivata da \texttt{
 È fondamentale capire che in Java la differenza tra le eccezioni non è solo gerarchica, ma riguarda soprattutto il modo in cui il compilatore impone di gestirle. La distinzione principale è tra \textit{checked} e \textit{unchecked}:
 
 \begin{itemize}
-    \item \textbf{Checked}: il compilatore obbliga il programmatore a gestirle (cioè: a catturarle localmente oppure rilanciarle). In genere rappresentano problemi esterni o situazioni recuperabili, come errori di I/O, rete o database.
+    \item \textbf{Checked}: il compilatore obbliga il programmatore a gestirle (vedremo a breve in dettaglio cosa questo voglia dire). In genere rappresentano problemi esterni o situazioni recuperabili, come errori di I/O, rete o database.
     
     \item \textbf{Unchecked}: il compilatore non obbliga a gestirle né a dichiararle. Sono spesso dovute a errori logici del programmatore (ad esempio \texttt{NullPointerException}, indici fuori range, argomenti non validi), oppure guasti gravi della JVM o del sistema.
 \end{itemize}
@@ -184,7 +184,39 @@ Possiamo liquidare rapidamente il ramo della gerarchia relativa agli \texttt{Err
 
 Da questo momento in poi ci occuperemo quindi del ramo \texttt{Exception} della gerarchia, ovvero della classe dei problemi gestibili.
 
-\subsection{Il Blocco \texttt{try-catch}}
+\subsection{Dichiarare e Lanciare Eccezioni}
+
+Un metodo Java può terminare in due modi: restituendo un valore o "esplodendo" con un'eccezione. Se un metodo non è in grado di gestire una situazione anomala, deve dichiarare questa possibilità al mondo esterno. La sintassi per dichiarare e \textit{lanciare} un'eccezione è illustrata nel seguente esempio elementare: 
+
+\begin{lstlisting}[caption={Esempio di metodo che lancia un'eccezione}]
+public void setAge(int age) throws IllegalArgumentException {
+    if (age < 0) {
+        // Creiamo l'oggetto eccezione e lo lanciamo
+        throw new IllegalArgumentException("age cannot be negative: " + age);
+    }
+    this.age = age;
+}
+\end{lstlisting}
+
+È fondamentale non confondere queste due parole chiave, simili ma con scopi diversi:
+\begin{itemize}
+    \item \textbf{\texttt{throws}}: Si usa nella \textbf{firma del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
+    \item \textbf{\texttt{throw}}: Si usa nel \textbf{corpo del metodo} per lanciare effettivamente l'oggetto eccezione.
+\end{itemize}
+\vspace{\baselineskip}
+Quando viene eseguita l'istruzione \texttt{throw}:
+\begin{enumerate}
+    \item L'esecuzione del metodo si interrompe \textbf{immediatamente}.
+    \item Le istruzioni successive (come l'assegnamento \texttt{this.age = age}) non vengono eseguite.
+    \item Il controllo passa al chiamante, cercando il primo blocco \texttt{try-catch} disponibile che sappia gestire \texttt{IllegalArgumentException}.
+\end{enumerate}
+
+\begin{tip}
+Quando l'eccezione lanciata è \textit{checked}, è \textbf{obbligatorio} dichiararla nella testata del metodo. In questo esempio abbiamo invece usato \texttt{IllegalArgumentException}, che è una \textbf{Unchecked Exception}, quindi la clausola \texttt{throws} nella firma del metodo è in tal caso opzionale.
+\end{tip}
+
+
+\subsection{Il Blocco \texttt{try-catch}: gestione locale}
 
 Come abbiamo visto, se si verifica un'eccezione che non viene catturata in alcun luogo, il programma termina e stampa un messaggio sulla console (lo \textit{stack trace}). Per evitare questo e permettere al programma di continuare o chiudersi in maniera controllata, usiamo il blocco \texttt{try-catch}.
 
@@ -219,15 +251,68 @@ Il flusso di esecuzione è il seguente:
     \end{itemize}
 \end{enumerate}
 
-\begin{important}
-L'ordine dei blocchi \texttt{catch} e' fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, devi sempre mettere le eccezioni **piu specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **piu generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la piu specifica non verra' mai raggiunta.
-\end{important}
+\begin{warning}
+L'ordine dei blocchi \texttt{catch} e' fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, si devono sempre mettere le eccezioni **più specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **più generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la più specifica non verrà mai raggiunta.
+\end{warning}
 
-Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia delle risorse (chiudere file, connessioni database, socket). La sua caratteristica unica e' che viene eseguito \textbf{anche se} nel blocco \texttt{try} o \texttt{catch} era presente un'istruzione \texttt{return}.
+A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identico modo, non è più necessario scrivere blocchi \texttt{catch} duplicati: basta usare la sintassi \textit{multi-catch} separando le classi con l'operatore \textit{pipe} (\texttt{|})
+\begin{lstlisting}[caption={Esempio di multi-catch}]
+    catch (FileNotFoundException | UnknownHostException e) {
+    // Gestione comune per entrambi i problemi
+    logger.error("Errore di connessione o file: " + e.getMessage());
+}
+\end{lstlisting}
+N.B.: quando si usa il multi-catch, la variabile dell'eccezione (\texttt{e}) è implicitamente \textbf{final}. Non si può riassegnarla all'interno del blocco.\vspace{\baselineskip}
 
-\begin{observation}
-L'unica situazione in cui \texttt{finally} potrebbe non essere eseguito e' se la JVM si arresta bruscamente (es. \texttt{System.exit(0)}) o se si verifica un \texttt{Error} catastrofico dell'hardware.
-\end{observation}
+Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia delle risorse (chiudere file, connessioni database, socket). La sua caratteristica unica è che viene eseguito \textbf{anche se} nel blocco \texttt{try} o \texttt{catch} era presente un'istruzione \texttt{return}.
+
+L'unica situazione in cui \texttt{finally} potrebbe non essere eseguito è se la JVM si arresta bruscamente (es. \texttt{System.exit(0)}) o se si verifica un \texttt{Error} catastrofico dell'hardware.
+
+
+\begin{warning}
+Sebbene il \texttt{finally} sia fondamentale per la chiusura delle risorse, bisogna stare attenti a un errore comune: inserire istruzioni che alterano il flusso di controllo (come \texttt{return} o \texttt{throw}) all'interno del \texttt{finally}.
+Se un blocco \texttt{finally} contiene un \texttt{return}, questo "sovrascriverà" qualsiasi valore di ritorno o eccezione lanciata nei blocchi \texttt{try} o \texttt{catch}. Analogamente per i \texttt{throw}.
+\end{warning}
+
+\subsection{La clausola \texttt{throws}: gestione delegata}
+
+Non sempre gestire un'eccezione localmente con un \texttt{try-catch} è la scelta migliore. Spesso, il metodo che rileva l'errore non sa come risolverlo (ad esempio, un metodo di basso livello che legge un file non sa se deve mostrare un messaggio di errore all'utente o riprovare). In questi casi, è preferibile \textbf{propagare} l'eccezione al metodo chiamante.
+
+Per delegare la gestione, si omette il blocco \texttt{try-catch} e si aggiunge la clausola \texttt{throws} nella firma (testata) del metodo. Questo avverte il compilatore che chiunque chiamerà questo metodo dovrà assumersi la responsabilità di gestire l'eventuale "esplosione".
+
+\begin{lstlisting}[caption={Esempio di delega dell'eccezione}]
+// Il metodo non gestisce l'errore, ma "avvisa" il chiamante
+public void leggiFileConfigurazione(String percorso) throws FileNotFoundException {
+    // Se il file non esiste, il costruttore lancia FileNotFoundException
+    FileInputStream fis = new FileInputStream(percorso); 
+    // ... logica di lettura ...
+}
+\end{lstlisting}
+
+Questo tipo di delega segue le seguenti regole:
+\begin{itemize}
+    \item \textbf{Per le Checked Exceptions}: La delega tramite \texttt{throws} è \textbf{obbligatoria} se non si usa un \texttt{try-catch}. Se dimentichi di dichiararla, il codice non compila.
+    \item \textbf{Per le Unchecked Exceptions}: La delega è \textbf{facoltativa}.
+    \item \textbf{Passaggio di consegne}: Se il metodo A chiama il metodo B (che lancia un'eccezione), il metodo A ha di nuovo le stesse due opzioni: catturarla con un \texttt{try-catch} o dichiararla a sua volta con \texttt{throws}, passandola al metodo superiore.
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice]
+Le eccezioni dovrebbero essere intercettate nel livello più basso che sia effettivamente in grado di gestirle in modo corretto; in caso contrario, è preferibile propagarle verso livelli superiori che dispongano del contesto necessario per decidere come reagire.
+\end{tcolorbox}
+
+Sebbene ormai il meccanismo di gestione locale o delega dovrebbe essere chiaro anche nel caso particolare delle \textit{checked exceptions}, evidenziamo la seguente regola del \textbf{Catch or Declare}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Regola del Catch-or-Declare]
+Se un metodo X ne invoca un altro che lancia una checked exception, il codice \textbf{non compila} finché non si soddisfa una di queste due condizioni:
+\begin{enumerate}
+    \item \textbf{Catch}: Si intercetta l'eccezione con un blocco \texttt{try-catch} per gestirla.
+    \item \textbf{Declare}: Si aggiunge la clausola \texttt{throws} alla firma del metodo X per delegare la responsabilità a chiunque lo invochi.
+\end{enumerate}
+\end{tcolorbox}
+
+
+
+
 
 
 

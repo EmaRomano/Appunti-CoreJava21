@@ -101,60 +101,9 @@ java -cp "/home/user/libs/*:." MiaClasse
 \end{itemize}
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice]
-Affidarsi esclusivamente al \textit{Default Exception Handler} della JVM come strategia ordinaria di gestione degli errori è generalmente una cattiva pratica. Una progettazione solida deve mirare alla robustezza e alla resilienza del software.
-
-Le eccezioni dovrebbero essere intercettate nel livello più basso che sia effettivamente in grado di gestirle in modo corretto; in caso contrario, è preferibile propagarle verso livelli superiori che dispongano del contesto necessario per decidere come reagire.
-\end{tcolorbox}
-
-\subsection{Checked Exceptions}
-Da quanto detto finora, sono \textit{Checked Exceptions} tutte le \texttt{Exception} che non siano figlie di \texttt{RunTimeException}; abbiamo anche detto che il compilatore ci obbliga a \textit{gestire} questo tipo di eccezioni: vediamo cosa vuol dire.  
-
-Il compilatore Java agisce come un guardiano rigoroso per le \textit{Checked Exceptions}, applicando la regola del \textbf{Catch or Declare}:
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Regola del Catch-or-Declare]
-Se un metodo X ne invoca un altro che lancia una checked exception, il codice \textbf{non compila} finché non si soddisfa una di queste due condizioni:
-\begin{enumerate}
-    \item \textbf{Catch}: Si circonda l'istruzione con un blocco \texttt{try-catch} per gestire l'errore.
-    \item \textbf{Declare}: Si aggiunge la clausola \texttt{throws} alla firma del metodo X per delegare la responsabilità a chiunque lo invochi.
-\end{enumerate}
-\end{tcolorbox}
-
-Le \textbf{Unchecked Exceptions} ignorano questa regola: il compilatore assume che tu scriva codice corretto per evitarle (ad esempio controllando che un oggetto non sia \texttt{null} prima di usarlo), quindi non ti obbliga a usare blocchi \texttt{try-catch}.
-
-\subsection{Dichiarare e Lanciare Eccezioni}
-
-Un metodo Java può terminare in due modi: restituendo un valore o "esplodendo" con un'eccezione. Se un metodo non è in grado di gestire una situazione anomala, deve dichiarare questa possibilità al mondo esterno. La sintassi per dichiarare e \textit{lanciare} un'eccezione è illustrata nel seguente esempio elementare: 
-
-\begin{lstlisting}[caption={Esempio di metodo che lancia un'eccezione}]
-public void setAge(int age) throws IllegalArgumentException {
-    if (age < 0) {
-        // Creiamo l'oggetto eccezione e lo lanciamo
-        throw new IllegalArgumentException("age cannot be negative: " + age);
-    }
-    this.age = age;
-}
-\end{lstlisting}
-
-È fondamentale non confondere queste due parole chiave, simili ma con scopi diversi:
-\begin{itemize}
-    \item \textbf{\texttt{throws}} (al plurale): Si usa nella \textbf{firma del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
-    \item \textbf{\texttt{throw}} (al singolare): Si usa nel \textbf{corpo del metodo} per lanciare effettivamente l'oggetto eccezione.
-\end{itemize}
 
 
-\begin{observation}
-Cosa succede quando viene eseguita l'istruzione \texttt{throw}?
-\begin{enumerate}
-    \item L'esecuzione del metodo si interrompe \textbf{immediatamente}.
-    \item Le istruzioni successive (come l'assegnamento \texttt{this.eta = eta}) non vengono eseguite.
-    \item Il controllo passa al chiamante, cercando il primo blocco \texttt{try-catch} disponibile che sappia gestire \texttt{IllegalArgumentException}.
-\end{enumerate}
-\end{observation}
 
-\begin{tip}
-In questo esempio abbiamo usato \texttt{IllegalArgumentException}, che è una \textbf{Unchecked Exception}. Per questo motivo, la clausola \texttt{throws} nella firma del metodo sarebbe tecnicamente opzionale per il compilatore, ma è considerata un'ottima pratica di documentazione per avvisare chi userà il tuo metodo.
-\end{tip}
 
 \subsection{Quando usare la clausola \texttt{throws}}
 
@@ -173,20 +122,48 @@ Devi dichiarare nella firma del metodo (tramite \texttt{throws}) solo le eccezio
 
 
 
-\subsection{Metodi come "Trappole Mortali"}
 
-Horstmann definisce i metodi che lanciano eccezioni non dichiarate come potenziali "trappole mortali". Se un'eccezione viene lanciata e nessun \textit{handler} la cattura, il thread di esecuzione corrente termina immediatamente.
+\subsection{Rilanciare ed Incapsulare Eccezioni (Chaining)}
 
-\begin{lstlisting}[caption={Esempio di propagazione (Death Trap)}]
-// Poiche' FileInputStream lancia una FileNotFoundException (checked),
-// siamo OBBLIGATI a dichiararla con 'throws'
-public void leggiFile(String nome) throws FileNotFoundException {
-    FileInputStream f = new FileInputStream(nome);
-    // ... logica di lettura ...
+A volte non vogliamo gestire un'eccezione direttamente, ma vogliamo "impacchettarla" in un'eccezione più significativa per chi usa il nostro codice. Questo processo si chiama \textit{Exception Chaining}.
+
+\begin{important}
+Il compilatore controlla la coerenza tra ciò che lanci con \texttt{throw} e ciò che dichiari con \texttt{throws}. Se nel \texttt{catch} lanci una \textbf{nuova checked exception}, devi dichiararla nella firma del metodo, anche se l'eccezione originale era diversa.
+\end{important}
+
+\subsubsection{Esempio 1: Conversione in Checked Exception}
+In questo caso, catturiamo una \texttt{SQLException} (molto tecnica) e la trasformiamo in una \texttt{DataAccessException} (più generica). Poiché la nuova eccezione è \textit{checked}, dobbiamo aggiornare il \texttt{throws}.
+
+\begin{lstlisting}[caption={Cambio della firma per nuova Checked Exception}]
+// Il metodo dichiara la NUOVA eccezione, non quella originale
+public void salvaDati() throws DataAccessException { 
+    try {
+        // ... codice che lancia SQLException ...
+    } catch (SQLException e) {
+        // Lanciamo una nuova eccezione 'impacchettando' l'originale
+        throw new DataAccessException("Errore salvataggio", e);
+    }
 }
 \end{lstlisting}
 
-\begin{warning}
-Se ometti la clausola \texttt{throws} in presenza di una checked exception, il compilatore Java genererà un errore. Al contrario, non dovresti mai dichiarare le \texttt{RuntimeException} (bug tuoi) o gli \texttt{Error} (guasti JVM), poiché sono fuori dal controllo della normale logica di gestione degli errori.
-\end{warning}
+
+
+\subsubsection{Esempio 2: Conversione in Unchecked Exception}
+Molti programmatori preferiscono trasformare le \textit{checked} in \textit{unchecked} per non appesantire la firma del metodo. In questo caso, il \texttt{throws} sparisce del tutto.
+
+\begin{lstlisting}[caption={Conversione a Unchecked (firma pulita)}]
+// Non serve piu il 'throws' perche' lanciamo una RuntimeException
+public void leggiConfigurazione() {
+    try {
+        // ... codice che lancia IOException ...
+    } catch (IOException e) {
+        // Trasformiamo in RuntimeException (Unchecked)
+        throw new RuntimeException("Configurazione mancante!", e);
+    }
+}
+\end{lstlisting}
+
+\begin{observation}
+Passare l'eccezione originale \texttt{e} come secondo parametro nel costruttore della nuova eccezione (\texttt{new NuovaExc("msg", e)}) è fondamentale: permette di non perdere lo \textit{stack trace} originale, facilitando il debugging.
+\end{observation}
 
