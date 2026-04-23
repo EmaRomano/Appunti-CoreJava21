@@ -211,10 +211,19 @@ Quando viene eseguita l'istruzione \texttt{throw}:
     \item Il controllo passa al chiamante, cercando il primo blocco \texttt{try-catch} disponibile che sappia gestire \texttt{IllegalArgumentException}.
 \end{enumerate}
 
-\begin{tip}
+\begin{tip}[]
 Quando l'eccezione lanciata è \textit{checked}, è \textbf{obbligatorio} dichiararla nella testata del metodo. In questo esempio abbiamo invece usato \texttt{IllegalArgumentException}, che è una \textbf{Unchecked Exception}, quindi la clausola \texttt{throws} nella firma del metodo è in tal caso opzionale.
+
+In generale, intercettare eccezioni \textit{unchecked} (e ancor più gli \texttt{Error}) non dovrebbe essere la strategia ordinaria: spesso tali eccezioni segnalano errori di programmazione o uso scorretto delle API, che andrebbero prevenuti scrivendo codice robusto e validando correttamente gli input. Tuttavia, in alcuni contesti può essere sensato intercettarle per effettuare logging, traduzione dell'errore o gestione centralizzata.
+
+Horstmann riassume efficacemente l'idea con una frase suggestiva: \textit{"se si verifica un'eccezione unchecked, spesso il problema è nel codice, non in un evento imprevedibile"}.
 \end{tip}
 
+
+
+\begin{observation}
+    Ciò che diremo per i metodi varrà anche per i costruttori. Un metodo o un costruttore può lanciare più di un tipo di eccezione; in questo caso basta elencarle dopo lo specificatore \texttt{throws} separate da virgole (se necessario).
+\end{observation}
 
 \subsection{Il Blocco \texttt{try-catch}: gestione locale}
 
@@ -241,12 +250,12 @@ try {
 Il flusso di esecuzione è il seguente:
 
 \begin{enumerate}
-    \item \textbf{Se non ci sono errori}: Viene eseguito tutto il blocco \texttt{try}, i blocchi \texttt{catch} vengono saltati, e viene eseguito il \texttt{finally} (se presente).
+    \item \textbf{Se non ci sono errori}: Viene eseguito tutto il blocco \texttt{try}, i blocchi \texttt{catch} vengono saltati, viene eseguito il \texttt{finally} (se presente) e si continua con l'esecuzione del metodo.
     \item \textbf{Se si verifica un errore}: 
     \begin{itemize}
         \item L'esecuzione nel \texttt{try} si ferma alla riga che ha generato l'eccezione.
         \item La JVM cerca un blocco \texttt{catch} compatibile con il tipo di eccezione lanciata.
-        \item Se lo trova, esegue il codice nel \texttt{catch} e poi passa al \texttt{finally} (se presente).
+        \item Se lo trova, esegue il codice nel \texttt{catch}, passa al \texttt{finally} (se presente) e continua con l'esecuzione del metodo. 
         \item Se NON lo trova, viene eseguito l'eventuale \texttt{finally}, il metodo termina e l'eccezione "risale" verso il chiamante.
     \end{itemize}
 \end{enumerate}
@@ -255,14 +264,19 @@ Il flusso di esecuzione è il seguente:
 L'ordine dei blocchi \texttt{catch} e' fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, si devono sempre mettere le eccezioni **più specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **più generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la più specifica non verrà mai raggiunta.
 \end{warning}
 
-A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identico modo, non è più necessario scrivere blocchi \texttt{catch} duplicati: basta usare la sintassi \textit{multi-catch} separando le classi con l'operatore \textit{pipe} (\texttt{|})
+A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identico modo, non è più necessario scrivere blocchi \texttt{catch} duplicati: basta usare la sintassi \textit{multi-catch} separando le classi con l'operatore \textit{pipe} (\texttt{|}). Oltre a rendere il codice più leggibile, questa pratica è più efficiente: il compilatore genera un unico blocco di \textit{bytecode} per le eccezioni condivise, riducendo la dimensione del file compilato.
 \begin{lstlisting}[caption={Esempio di multi-catch}]
     catch (FileNotFoundException | UnknownHostException e) {
     // Gestione comune per entrambi i problemi
     logger.error("Errore di connessione o file: " + e.getMessage());
 }
 \end{lstlisting}
-N.B.: quando si usa il multi-catch, la variabile dell'eccezione (\texttt{e}) è implicitamente \textbf{final}. Non si può riassegnarla all'interno del blocco.\vspace{\baselineskip}
+
+\begin{warning}
+    Quando si usa il multi-catch con l'operatore | , la variabile dell'eccezione (\texttt{e}) è implicitamente \textbf{final}: non si può riassegnarla all'interno del blocco.
+
+    Un altro dettaglio tecnico importante è che il tipo di \texttt{e} nel multi-catch non è un "tipo unione" (anche quando l'IDE ci dice che è così). Il compilatore assegna a \texttt{e} il tipo della \textbf{superclasse comune più vicina} (\textit{LUD: least upper bound}) tra quelle elencate. In genere questo non è un problema ma, in caso contrario, probabilmente è meglio tornare a usare blocchi \texttt{catch} separati. Il codice risulterà molto più pulito e meno propenso a errori.
+\end{warning}
 
 Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia delle risorse (chiudere file, connessioni database, socket). La sua caratteristica unica è che viene eseguito \textbf{anche se} nel blocco \texttt{try} o \texttt{catch} era presente un'istruzione \texttt{return}.
 
@@ -296,19 +310,217 @@ Questo tipo di delega segue le seguenti regole:
     \item \textbf{Passaggio di consegne}: Se il metodo A chiama il metodo B (che lancia un'eccezione), il metodo A ha di nuovo le stesse due opzioni: catturarla con un \texttt{try-catch} o dichiararla a sua volta con \texttt{throws}, passandola al metodo superiore.
 \end{itemize}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Best Practice]
+\begin{bestpractice}[Best Practice]
 Le eccezioni dovrebbero essere intercettate nel livello più basso che sia effettivamente in grado di gestirle in modo corretto; in caso contrario, è preferibile propagarle verso livelli superiori che dispongano del contesto necessario per decidere come reagire.
-\end{tcolorbox}
+\end{bestpractice}
 
 Sebbene ormai il meccanismo di gestione locale o delega dovrebbe essere chiaro anche nel caso particolare delle \textit{checked exceptions}, evidenziamo la seguente regola del \textbf{Catch or Declare}:
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Regola del Catch-or-Declare]
+\begin{tip}[Regola del Catch-or-Declare]
 Se un metodo X ne invoca un altro che lancia una checked exception, il codice \textbf{non compila} finché non si soddisfa una di queste due condizioni:
 \begin{enumerate}
     \item \textbf{Catch}: Si intercetta l'eccezione con un blocco \texttt{try-catch} per gestirla.
     \item \textbf{Declare}: Si aggiunge la clausola \texttt{throws} alla firma del metodo X per delegare la responsabilità a chiunque lo invochi.
 \end{enumerate}
-\end{tcolorbox}
+\end{tip}
+
+\subsection{Ereditarietà ed Eccezioni}
+
+Se un metodo della sottoclasse sovrascrive un metodo della superclasse, valgono le seguenti regole:
+
+\begin{itemize}
+    \item \textbf{Non può} dichiarare eccezioni checked più generiche di quelle previste nel metodo originale.
+    \item \textbf{Non può} aggiungere nuove eccezioni checked incompatibili con la testata del metodo ereditato.
+    \item \textbf{Può} dichiarare eccezioni più specifiche (sottoclassi di quelle originali).
+    \item \textbf{Può} decidere di non dichiarare alcuna eccezione.
+\end{itemize}
+
+In particolare, se il metodo della superclasse non dichiara alcuna eccezione checked, allora il metodo sovrascritto nella sottoclasse \textbf{non può propagarne nessuna}. Può comunque usare codice che genera checked exceptions, ma in tal caso deve gestirle localmente mediante \texttt{try-catch}.
+
+Queste restrizioni riguardano solo le \textit{checked exceptions}. Le \textit{unchecked exceptions} possono invece essere lanciate liberamente anche se non vengono lanciate nel metodo della superclasse.
+
+\begin{bestpractice}
+Quando progetti una gerarchia di classi, valuta con attenzione quali eccezioni inserire nella clausola \texttt{throws} della superclasse. Una firma troppo restrittiva può rendere più difficile l'implementazione delle sottoclassi che interagiscono con risorse esterne o operazioni fallibili.
+\end{bestpractice}
+
+\subsection{Creare Classi di Eccezione Personalizzate}
+
+Sebbene Java offra una vasta gamma di classi di eccezione, potresti imbatterti in problemi che non sono descritti adeguatamente da quelle standard. In questi casi, basta creare un'eccezione personalizzata: è sufficiente estendere la classe \texttt{Exception} (per creare una \textit{checked exception}) o una sua sottoclasse (come \texttt{IOException}). Se invece si desidera una \textit{unchecked exception}, si deve estendere \texttt{RuntimeException}.
+
+È consuetudine fornire almeno due costruttori:
+\begin{enumerate}
+    \item Un costruttore predefinito senza argomenti.
+    \item Un costruttore che accetta una stringa descrittiva del problema.
+\end{enumerate}
+
+\begin{lstlisting}[caption={Definizione di una classe di eccezione personalizzata}]
+class FileFormatException extends IOException {
+   public FileFormatException() {}
+   
+   public FileFormatException(String messaggio) {
+      // Passiamo il messaggio al costruttore della superclasse
+      super(messaggio);
+   }
+}
+\end{lstlisting}
+
+\begin{bestpractice}
+Fornire sempre entrambi i costruttori standard. Quello che accetta una stringa è fondamentale perché il metodo \texttt{toString} di \texttt{Throwable} (la superclasse di tutte le eccezioni) restituirà proprio quel messaggio, facilitando enormemente il debugging.
+\end{bestpractice}
+
+Una volta definita, la tua eccezione è pronta per essere lanciata all'interno dei tuoi metodi esattamente come un'eccezione di sistema.
+
+\begin{lstlisting}[caption={Lancio di un'eccezione personalizzata}]
+public String leggiDati(Scanner in) throws FileFormatException {
+   // ... logica di lettura ...
+   while (...) {
+      if (ch == -1) { // Fine del file inattesa
+         if (n < len)
+            throw new FileFormatException("Il file termina inaspettatamente");
+      }
+      // ...
+   }
+   return s;
+}
+\end{lstlisting}
+
+\begin{tip}
+Quando estendi \texttt{Exception}, stai creando una \textbf{Checked Exception}: il compilatore obbligherà chiunque usi il tuo metodo a gestirla o a dichiararla. Se vuoi che la tua eccezione sia più "leggera" e non obbligatoria da gestire, estendi \texttt{RuntimeException}.
+\end{tip}
+
+\subsection{Exceptions Chaining}
+
+A volte, all'interno di un blocco \texttt{catch}, potresti voler lanciare una nuova eccezione. Questo si fa solitamente per "astrarre" il problema: chi usa il tuo codice non deve conoscere i dettagli tecnici (come un errore del database), ma deve sapere che il tuo sottosistema ha avuto un problema.
+
+Invece di lanciare una nuova eccezione perdendo traccia di quella originale, la pratica migliore è \textbf{incatenarle (chaining)}. In questo modo, l'eccezione originale viene salvata come "causa" della nuova.
+
+\begin{lstlisting}[caption={Esempio di Exception Chaining}]
+try {
+    // Tentativo di prelievo dal database
+    eseguiQueryPrelievo(); 
+} catch (SQLException originale) {
+    // Creiamo una nuova eccezione di alto livello
+    // Passiamo l'eccezione originale come "causa" (secondo parametro)
+    var e = new BankServiceException("Errore durante il prelievo", originale);
+    throw e;
+}
+\end{lstlisting}
+
+\begin{tip}
+Quasi tutte le classi di eccezione standard hanno un costruttore che accetta la "causa". Se una classe non lo prevede, puoi usare il metodo \texttt{e.initCause(originale)} prima di lanciarla. Chi riceve l'eccezione potrà poi risalire all'errore iniziale con \texttt{e.getCause()}.
+\end{tip}
+
+Un altro uso comune di questa tecnica è quando ti trovi in un metodo che \textbf{non può} lanciare checked exceptions (ad esempio a causa di un override), ma il codice al suo interno ne genera una.
+
+\begin{lstlisting}[caption={Da Checked a Unchecked}]
+public void stampaDocumento() { // Non dichiara throws
+    try {
+        generaPDF(); // Questo metodo lancia IOException (checked)
+    } catch (IOException e) {
+        // La impacchettiamo in una RuntimeException (unchecked)
+        // Cosi il compilatore e' soddisfatto e non perdiamo l'errore
+        throw new RuntimeException("Fallimento critico durante la stampa", e);
+    }
+}
+\end{lstlisting}
+
+\begin{bestpractice}
+L'incatenamento è caldamente raccomandato. Permette di mantenere un'interfaccia pulita verso l'alto (eccezioni di alto livello) senza sacrificare i dettagli tecnici necessari per il debugging (lo \textit{stack trace} mostrerà tutta la catena delle cause).
+\end{bestpractice}
+
+\subsection{\texttt{try-with-resources}}
+
+La chiusura delle risorse (file, connessioni, socket) è una delle operazioni più critiche. Se una risorsa non viene chiusa, si rischia un \textit{resource leak} che può bloccare il sistema.
+
+È possibile usare il blocco \texttt{finally} anche senza il \texttt{catch}. Questo serve a garantire che una risorsa venga chiusa indipendentemente dal fatto che si verifichi un'eccezione o meno.
+
+\begin{lstlisting}[caption={Utilizzo di try-finally per la chiusura risorse}]
+InputStream in = ...;
+try {
+    // codice che potrebbe lanciare eccezioni
+} finally {
+    in.close(); // Eseguito sempre
+}
+\end{lstlisting}
+
+Tuttavia, per una gestione perfetta, è preferibile separare le responsabilità usando blocchi \texttt{try} annidati: uno interno per garantire la chiusura e uno esterno per gestire/segnalare gli errori.
+\begin{lstlisting}[caption={un tipico pattern di \texttt{try} annidati}]
+InputStream in = . . .;
+try
+{
+   try
+   {
+      code that might throw exceptions
+   }
+   finally
+   {
+      in.close();
+   }
+}
+catch (IOException e)
+{
+   show error message
+}
+\end{lstlisting}
+
+Per evitare la complessità dei blocchi annidati, esiste il \texttt{try-with-resources}. Questa sintassi può essere usata con qualsiasi classe che implementi l'interfaccia \textbf{\texttt{AutoCloseable}} (o la sua sottointerfaccia \texttt{Closeable}); essa ha un unico metodo \texttt{void close()} che può lanciare una \texttt{IOException}.
+
+\begin{lstlisting}[caption={Sintassi del try-with-resources}]
+// La risorsa viene dichiarata tra le parentesi del try
+try (var in = new Scanner(Path.of("input.txt"))) {
+    while (in.hasNext())
+        System.out.println(in.next());
+} // in.close() viene chiamato AUTOMATICAMENTE qui
+\end{lstlisting}
+
+\begin{tip}
+Puoi gestire più risorse contemporaneamente separandole con un punto e virgola:
+\texttt{try (var in = ...; var out = ...) \{ ... \}}. Verranno chiuse tutte in ordine inverso rispetto alla dichiarazione.
+\end{tip}
+
+\begin{tip}
+Usa sempre il \texttt{try-with-resources} quando lavori con oggetti che richiedono una chiusura. Scrivere manualmente la logica di chiusura con i \texttt{finally} annidati è complicato e porta spesso a bug silenziosi.
+\end{tip}
+
+Un blocco \texttt{try-with-resources} può avere i propri blocchi \texttt{catch} e \texttt{finally}. L'ordine di esecuzione è:
+\begin{enumerate}
+    \item Viene eseguito il corpo del \texttt{try}.
+    \item Vengono chiuse le risorse dichiarate nell'intestazione.
+    \item Vengono eseguiti eventuali blocchi \texttt{catch} e il blocco \texttt{finally}.
+\end{enumerate}
+Questo significa che i \texttt{catch} possono catturare anche le eccezioni avvenute durante la chiusura automatica delle risorse.
+
+\subsubsection*{Eccezioni Soppresse}
+Uno dei vantaggi principali del \texttt{try-with-resources} è come gestisce il conflitto tra eccezioni. Come abbiamo visto, nel \texttt{finally} classico un'eccezione durante la chiusura "nascondeva" quella principale.
+
+Anche quando usiamo il \texttt{try-with-resources}, può capitare un "conflitto di eccezioni": un errore durante l'esecuzione del codice (\textit{primary exception}) e uno o più errori durante la chiusura automatica delle risorse (\textit{suppressed exceptions}). Il costrutto però gestisce in modo automatico il conflitto. 
+
+Un'eccezione si dice \textbf{soppressa} quando viene catturata silenziosamente dalla JVM e allegata all'eccezione principale invece di essere lanciata autonomamente. Questo evita che l'errore di chiusura "mascheri" l'errore originale che ha causato il fallimento del programma.
+
+Con il \texttt{try-with-resources}, se sia il blocco \texttt{try} che il metodo \texttt{close()} lanciano un'eccezione:
+\begin{enumerate}
+    \item L'eccezione originale del \texttt{try} viene lanciata regolarmente.
+    \item Le eccezioni lanciate dal metodo \texttt{close()} vengono "soppresse" e aggiunte a quella principale.
+    \item È possibile recuperarle in un secondo momento usando il metodo \texttt{e.getSuppressed()}.
+\end{enumerate}
+
+\begin{lstlisting}[caption={Recupero delle eccezioni soppresse}]
+try (var out = new PrintWriter("file.txt")) {
+    throw new IllegalStateException("Errore nel corpo del try");
+} catch (IllegalStateException e) {
+    System.err.println("Errore primario: " + e.getMessage());
+    
+    // Recuperiamo l'array delle eccezioni "nascoste"
+    Throwable[] suppressed = e.getSuppressed();
+    for (Throwable t : suppressed) {
+        System.err.println("Eccezione soppressa: " + t.getMessage());
+    }
+}
+\end{lstlisting}
+
+\begin{tip}
+Non devi preoccuparti di gestire manualmente le eccezioni soppresse nel 99\% dei casi. La cosa fondamentale è che, guardando lo \textit{stack trace} nella console, Java te le mostrerà automaticamente sotto la dicitura \texttt{Suppressed: ...}, permettendoti di vedere l'intera catena del disastro.
+\end{tip}
 
 
 

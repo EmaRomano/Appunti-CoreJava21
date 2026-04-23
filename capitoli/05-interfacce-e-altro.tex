@@ -858,18 +858,18 @@ In pratica, un piccolo oggetto di pochi byte tiene in ostaggio un oggetto enorme
 \end{lstlisting}
 
 
-\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Meccanica del Leak]
+\begin{danger}[Meccanica del Leak]
 Ogni istanza di una classe interna (non-statica) contiene un riferimento nascosto a quella esterna. 
 Se l'istanza interna viene passata a un contesto a lungo termine (es. Thread, Static Collection, Singleton), l'intera istanza \texttt{OuterClass} rimane bloccata nello \textit{Heap}.
-\end{tcolorbox}
+\end{danger}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: Strategie di prevenzione del leak]
+\begin{tip}[Strategie di prevenzione del leak]
     \begin{enumerate}
         \item \textbf{Preferire Static Classes}: Se non e' richiesto l'accesso ai campi d'istanza della classe esterna, usare \texttt{static class}.
         \item \textbf{Weak References}: In casi estremi, se si ha bisogno dell'accesso ma si vuole evitare il leak, si puo' usare un \texttt{WeakReference<OuterClass>} all'interno di una classe statica.(parleremo di questo argomento altrove)
         \item \textbf{Pulizia dei Callback}: Assicurarsi di rimuovere listener o annullare task in background quando l'oggetto \texttt{Outer} viene distrutto.
     \end{enumerate}
-\end{tcolorbox}
+\end{tip}
 
 \begin{warning}
 Le \textbf{classi anonime} sono le piu' pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.

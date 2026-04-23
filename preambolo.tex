@@ -90,28 +90,78 @@
 \newtheorem*{important}{\color{red}IMPORTANTE}
 
 % 3. Per sicurezza, definiamo anche warning se non lo avevi fatto prima
-\newtheorem*{warning}{\color{orange}ATTENZIONE}
+% \newtheorem*{warning}{\color{orange}ATTENZIONE} 
 
-% --- Definizione Ambiente Tip (Coerente con tcolorbox) ---
-\newtcolorbox{tip}[1][]{
-  colback=blue!5!white,
-  colframe=blue!75!black,
-  fonttitle=\bfseries,
-  title=Tip: #1,
-  arc=2mm,
-  outer arc=2mm,
-  before skip=10pt,
-  after skip=10pt
+% % --- Definizione Ambiente Tip (Coerente con tcolorbox) ---
+% \newtcolorbox{tip}[1][]{
+%   colback=blue!5!white,
+%   colframe=blue!75!black,
+%   fonttitle=\bfseries,
+%   title=Tip: #1,
+%   arc=2mm,
+%   outer arc=2mm,
+%   before skip=10pt,
+%   after skip=10pt
+% }
+
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome5}
+
+% --- DEFINIZIONE COLORI ---
+\definecolor{bestprac-color}{RGB}{0, 150, 136} % Teal/Verde scuro
+\definecolor{tip-color}{RGB}{33, 150, 243}      % Azzurro
+\definecolor{warning-color}{RGB}{255, 152, 0}   % Arancione
+\definecolor{danger-color}{RGB}{244, 67, 54}    % Rosso
+
+% --- STILE BASE (Comune a tutti) ---
+\tcbset{
+    manualstyle/.style={
+        enhanced,
+        breakable,
+        before skip=15pt,
+        after skip=15pt,
+        left=10mm, % Spazio per l'icona
+        right=2mm,
+        top=2mm,
+        bottom=2mm,
+        sharp corners,
+        boxrule=0pt,
+        frame hidden,
+        borderline west={1.5mm}{0pt}{#1}, % Linea colorata a sinistra
+        colback=#1!5!white,               % Sfondo chiarissimo del colore scelto
+        fonttitle=\bfseries\sffamily,
+        coltitle=#1,
+        attach title to upper,
+        after title={\par\smallskip},
+    }
 }
 
-% --- Definizione Ambiente Pending (Cose in sospeso) ---
-\newtcolorbox{pending}[1][]{
-  colback=orange!5!white,
-  colframe=orange!75!black,
-  fonttitle=\bfseries,
-  title=In Sospeso: #1,
-  arc=2mm,
-  outer arc=2mm,
-  before skip=10pt,
-  after skip=10pt
+% --- DEFINIZIONE AMBIENTI ---
+
+% 1. Best Practice (Icona: Check)
+\newtcolorbox{bestpractice}[1][Best Practice]{
+    manualstyle=bestprac-color,
+    title=#1,
+    overlay={\node[anchor=north west, xshift=2.5mm, yshift=-2.5mm] at (frame.north west) {\textcolor{bestprac-color}{\faCheckCircle}};}
+}
+
+% 2. Tip (Icona: Lampadina)
+\newtcolorbox{tip}[1][Tip]{
+    manualstyle=tip-color,
+    title=#1,
+    overlay={\node[anchor=north west, xshift=3mm, yshift=-2.5mm] at (frame.north west) {\textcolor{tip-color}{\faLightbulb}};}
+}
+
+% 3. Warning (Icona: Triangolo attenzione)
+\newtcolorbox{warning}[1][Attenzione]{
+    manualstyle=warning-color,
+    title=#1,
+    overlay={\node[anchor=north west, xshift=2.5mm, yshift=-2.5mm] at (frame.north west) {\textcolor{warning-color}{\faExclamationTriangle}};}
+}
+
+% 4. Danger (Icona: Stop/Esclamazione cerchiata)
+\newtcolorbox{danger}[1][Pericolo]{
+    manualstyle=danger-color,
+    title=#1,
+    overlay={\node[anchor=north west, xshift=2.5mm, yshift=-2.5mm] at (frame.north west) {\textcolor{danger-color}{\faExclamationCircle}};}
 }
