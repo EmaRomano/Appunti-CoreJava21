@@ -58,7 +58,7 @@ Il "contratto" di questa interfaccia si sviluppa su tre livelli distinti:
 
 \end{itemize}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Nota: Il Contratto Semantico]
+\begin{tip}[Il Contratto Semantico]
 Il \textbf{contratto semantico} rappresenta l'insieme di vincoli e assunzioni sul comportamento di un modulo che non possono essere espressi tramite la sintassi del linguaggio (il "contratto sintattico").
 
 In Java, molte librerie sono scritte assumendo che lo sviluppatore conosca e rispetti queste convenzioni. Un esempio classico è il legame tra \texttt{equals()} e \texttt{hashCode()}:
@@ -68,7 +68,7 @@ In Java, molte librerie sono scritte assumendo che lo sviluppatore conosca e ris
 La violazione di questo contratto non genera errori di compilazione, ma porta a comportamenti imprevedibili e bug logici difficili da individuare (es. oggetti "scomparsi" da una \texttt{HashSet}).
 
 Per quanto riguarda le interfacce, in Java sono lo strumento principale per definire il contratto sintattico, ma la documentazione Javadoc è il luogo dove viene sancito il contratto semantico.
-\end{tcolorbox}
+\end{tip}
 
 
 
@@ -99,7 +99,7 @@ Da notare come, invece di sottrarre manualmente i salari (operazione rischiosa c
 Grazie a questa implementazione, se avessimo un array di dipendenti chiamato \texttt{staff}, potremmo semplicemente scrivere \texttt{Arrays.sort(staff)}. L'algoritmo di ordinamento chiamerà internamente il metodo \texttt{compareTo} su ogni coppia di dipendenti per decidere come spostarli.
 
 
-\subsubsection*{Evoluzione: l'interfaccia \texttt{Comparable} Generica}
+\subsubsection*{Evoluzione: l'interfaccia \texttt{Comparable} generica}
 Sebbene i generics saranno trattati in un capitolo successivo, vale la pena accennarne l'uso nel contesto specifico che stiamo trattando.
 
 Nell'esempio precedente, l'interfaccia \texttt{Comparable} è stata utilizzata in una forma "grezza" (\textit{raw type}), il che comporta alcuni svantaggi significativi in termini di sicurezza dei tipi e leggibilità del codice; nello specifico, poiché il metodo dell'interfaccia accetta un \texttt{Object}, abbiamo dovuto eseguire un cast esplicito a \texttt{Employee} per poter accedere al campo \texttt{salary}. Se avessimo passato un oggetto di tipo diverso (es. una \texttt{String}), il codice avrebbe lanciato una \texttt{ClassCastException}.
@@ -127,9 +127,9 @@ class Employee implements Comparable<Employee>
 
 Il vantaggio principale di questa evoluzione è che il compilatore ora può garantire la coerenza dei tipi durante la compilazione, eliminando la possibilità di errori di tipo a runtime e migliorando la leggibilità del codice.
 
-\begin{important}
+\begin{warning}
     L'uso di \texttt{Comparable<T>} è oggi lo standard assoluto. La versione non generica (\texttt{raw type}) viene mantenuta solo per compatibilità con il codice scritto prima del 2004, ma il suo utilizzo è fortemente sconsigliato (\textit{deprecated} nella logica di progettazione).
-\end{important}
+\end{warning}
 
 \subsubsection*{Comparable ed Ereditarietà: Il problema dell'Antisimmetria}
 Il contratto di \texttt{Comparable} impone una regola matematica ferrea definita \textbf{antisimmetria}:
@@ -414,7 +414,7 @@ A questo punto abbiamo capito il concetto di Lambda come "funzione" e ne abbiamo
 
 In Java, una lambda expression non può esistere in isolamento; essa deve essere associata a una \textbf{Interfaccia Funzionale}.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Definizione]
+\begin{tip}[Definizione: interfaccia funzionale]
 Un'interfaccia si dice \textbf{funzionale} se dichiara esattamente \textbf{un solo metodo astratto} che non abbia la stessa firma di un metodo di \texttt{java.lang.Object}.
 Esempi classici:
 \begin{itemize}
@@ -422,13 +422,15 @@ Esempi classici:
     \item \texttt{ActionListener} (metodo \texttt{actionPerformed})
     \item \texttt{Runnable} (metodo \texttt{run})
 \end{itemize}
-\end{tcolorbox}
+\end{tip}
 
 \begin{observation}
     L'interfaccia \texttt{Comparable} contiene i due metodi astratti \texttt{compareTo} e \texttt{equals}, ma il secondo è un metodo di \texttt{Object}, dunque è un'interfaccia funzionale.
 \end{observation}
 
-\textit{Possiamo usare una lambda ogni volta che ci si aspetta un riferimento ad un oggetto di una classe che implementa un'interfaccia funzionale (e questo è l'unico caso in cui possiamo usare una lambda)}.
+\begin{tip}
+    \textit{Possiamo usare una lambda ogni volta che ci si aspetta un riferimento ad un oggetto di una classe che implementa un'interfaccia funzionale (e questo è l'unico caso in cui possiamo usare una lambda)}.
+\end{tip}
 \vspace{\baselineskip}
 
 Il seguente esempio mostra come l'uso della lambda eviti la verbosità di dover creare una classe dedicata (come abbiamo fatto con \texttt{LengthComparator} nel paragrafo del callback); dall'esempio è anche chiaro cosa succeda quando si usa una lambda e perché il metodo dell'interfaccia debba essere uno solo:
@@ -459,9 +461,9 @@ Oltre alla compatibilità sintattica (che controlla il compilatore), resta a car
 
  Infine, bisogna essere consapevoli di dove si sta passando la lambda: se la si passa a un metodo che si aspetta un certo tipo di interfaccia funzionale, non se ne potrà usare un'altra. Ad esempio, non si può passare una lambda che implementa \texttt{Runnable} a un metodo che si aspetta un \texttt{Comparator} (come \texttt{Arrays.sort} di cui abbiamo visto la firma qui \ref{firma Array.sort}), anche se la sintassi della lambda è corretta per entrambi i casi.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip: L'annotazione @FunctionalInterface]
+\begin{tip}[L'annotazione @FunctionalInterface]
 Per evitare errori, si usa spesso l'annotazione \texttt{@FunctionalInterface} sopra la definizione dell'interfaccia funzionale. Non è obbligatoria, ma serve a dire al compilatore: "Avvisami se per sbaglio aggiungo un secondo metodo astratto a questa interfaccia, perché romperei tutte le lambda che la usano".
-\end{tcolorbox}
+\end{tip}
 
 \subsection{Interfacce Funzionali Standard}
 
@@ -587,9 +589,9 @@ int[] numeriRef = int[]::new;
 
 Le lambda expression possono accedere alle variabili locali del blocco di codice in cui sono definite. Tuttavia, tali variabili devono essere \textbf{effectively final}.
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Tip:La regola dell'Effectively Final]
+\begin{tip}[La regola dell'Effectively Final]
 Una variabile si dice \textit{effectively final} se non viene mai modificata dopo la sua inizializzazione. Se provi a modificare una variabile locale all'interno di una lambda, o se la modifichi fuori dopo che la lambda l'ha "catturata", il codice non compilera'.
-\end{tcolorbox}
+\end{tip}
 
 \begin{lstlisting}[language=Java]
 int counter = 0;

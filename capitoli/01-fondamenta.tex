@@ -85,9 +85,9 @@ In definitiva, la funzione \texttt{length()} non restituisce il numero di simbol
     \item \textbf{Caso Esotico}: Per i caratteri supplementari (come le emoji o simboli matematici rari), 1 simbolo = 2 \texttt{char} (4 byte). In questo caso, la lunghezza risulta \textbf{doppia} rispetto al numero di simboli reali.
 \end{itemize}
 
-\begin{important}
+\begin{warning}[]
 Nonostante le stringhe siano logicamente sequenze di char a 2 byte (UTF-16), le versioni moderne di Java (a partire da Java 9 in poi) le memorizzano come sequenze di singoli byte se il contenuto lo permette, risparmiando spazio senza cambiare il comportamento del codice.
-\end{important}
+\end{warning}
 
 \subsection{Il tipo boolean}
 
@@ -134,13 +134,13 @@ La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le carat
 \caption{Quadro sinottico dei tipi primitivi in Java.}
 \end{table}
 
-\begin{important}
+\begin{warning}[]
 \textbf{Promemoria:}
 \begin{itemize}
     \item \textbf{Aritmetica Modulare}: L'overflow degli interi è silenzioso e ciclico ($max + 1 = min$).
     \item \textbf{Precisione Binaria}: Non usare mai \texttt{double} o \texttt{float} per calcoli monetari o di precisione assoluta (usare \texttt{BigDecimal}).
 \end{itemize}
-\end{important}
+\end{warning}
 
 \section{Stringhe}
 
@@ -257,9 +257,9 @@ A differenza di \texttt{String}, questa classe offre metodi per la modifica \tex
     \item \texttt{reverse()}: Inverte l'ordine dei caratteri (operazione estremamente efficiente).
 \end{itemize}
 
-\begin{important}
+\begin{warning}[]
     \textbf{Ottimizzazione del Compilatore:} Nelle versioni moderne di Java, il compilatore trasforma automaticamente le concatenazioni semplici (es. \texttt{s = a + b}) in istruzioni \texttt{StringBuilder}. Tuttavia, all'interno dei \textbf{cicli}, il compilatore non è in grado di applicare questa ottimizzazione in modo efficiente, rendendo l'uso manuale di \texttt{StringBuilder} un requisito fondamentale per scrivere codice professionale. Non conviene invece usarlo se devono solo unire due o tre stringhe una sola volta: l'overhead per istanziare l'oggetto StringBuilder renderebbe il codice inutilmente complesso e leggermente più lento rispetto ad una semplice concatenazione con l'operatore \texttt{+}.
-\end{important}
+\end{warning}
 % --- Fine Sezione StringBuilder ---
 
 \section{Input e output su console}
@@ -322,9 +322,9 @@ System.out.printf("%8.2f", quota);
 Mentre in C potevi accidentalmente passare un argomento del tipo sbagliato a \texttt{printf} causando crash o comportamenti indefiniti, in Java il compilatore e la JVM effettuano controlli più rigorosi, lanciando un'eccezione (\texttt{IllegalFormatException}) se il tipo dell'argomento non corrisponde allo specificatore.
 \end{observation}
 
-\begin{important}
-    \textbf{Curiosità:} Se hai bisogno di formattare una stringa senza stamparla immediatamente, puoi usare \texttt{String.format("...", args)}, che restituisce una nuova stringa formattata seguendo le stesse regole di \texttt{printf}.
-\end{important}
+\begin{tip}[]
+    Se hai bisogno di formattare una stringa senza stamparla immediatamente, puoi usare \texttt{String.format("...", args)}, che restituisce una nuova stringa formattata seguendo le stesse regole di \texttt{printf}.
+\end{tip}
 
 \section{Lettura e Scrittura su File}
 
@@ -343,7 +343,7 @@ import java.nio.charset.StandardCharsets;
 Scanner in = new Scanner(Path.of("miofile.txt"), StandardCharsets.UTF_8);
 \end{lstlisting}
 
-\begin{warning}
+\begin{warning}[]
 Se scrivi \texttt{Scanner in = new Scanner("miofile.txt")}, lo \texttt{Scanner} non aprirà il file, ma leggerà la stringa stessa come se fosse il contenuto dei dati. L'uso di \texttt{Path.of} è obbligatorio per puntare al file fisico.
 \end{warning}
 
@@ -370,9 +370,9 @@ Quando si lavora con i file, bisogna considerare due aspetti critici:
 
 
 
-\begin{important}
+\begin{warning}[]
     \textbf{Evoluzione del Charset (JEP 400):} Sebbene a partire da Java 18 l'encoding predefinito sia diventato ufficialmente \texttt{UTF\_8}, è comunque consigliabile specificare \texttt{StandardCharsets.UTF\_8} (spesso considerato ridondante) in modo esplicito. Questo garantisce la portabilità del codice su versioni precedenti di Java e rende l'intento del programmatore inequivocabile, evitando che il comportamento del software dipenda implicitamente dalle impostazioni della JVM.
-\end{important}
+\end{warning}
 
 \section{Il Costrutto Switch}
 
@@ -452,9 +452,9 @@ switch (obj) {
 }
 \end{lstlisting}
 
-\begin{observation}
+\begin{tip}[]
     Sebbene esistano diverse combinazioni sintattiche per lo \texttt{switch} (incrociando l'uso di \texttt{:} o \texttt{->} con la natura di \textit{statement} o \textit{expression}), la buona pratica in Java moderno è orientata verso la massima sicurezza. Si tende a utilizzare quasi esclusivamente la \textbf{sintassi a freccia} (\texttt{->}) per eliminare alla radice il rischio di \textit{fall-through} e a preferire, laddove possibile, le \textbf{switch expressions} per rendere il codice più dichiarativo e meno incline a errori di stato.
-\end{observation}
+\end{tip}
 
 % --- Inizio sezione Clausola WHEN negli Switch ---
 \subsection{L'Utilizzo della Clausola \texttt{when} negli \texttt{switch}}
@@ -500,9 +500,9 @@ BigInteger reallyBig = new BigInteger("22223224462942044552973989346190996720666
     \item \textbf{Costanti predefinite}: \texttt{BigInteger.ZERO}, \texttt{ONE}, \texttt{TWO} e \texttt{TEN}.
 \end{itemize}
 
-\begin{important}
+\begin{warning}[]
     Per \texttt{BigDecimal}, si deve \textbf{sempre} usare il costruttore che accetta una \texttt{String}. Il costruttore \texttt{BigDecimal(double)} è intrinsecamente prono a errori di arrotondamento dovuti alla rappresentazione binaria dei floating-point.
-\end{important}
+\end{warning}
 
 Ad esempio, \texttt{new BigDecimal(0.1)} non produce esattamente $0.1$, ma una sequenza imprecisa (com'è noto da nozioni di architettura dei calcolatori, 0.1 in binario è un numero periodico infinito, quindi viene approssimato):
 $$0.1000000000000000055511151231257827021181583404541015625$$

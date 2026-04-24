@@ -59,18 +59,18 @@ Nonostante il prefisso "super", una superclasse non è "superiore" in termini di
     \item La \textbf{Sottoclasse} eredita tutto ciò che c'è nella superclasse e aggiunge campi o metodi specializzati (\textit{campi e metodi propri}).
 \end{itemize}
 
-\begin{caution}[Precisazione sull'esempio del libro]
+\begin{warning}[Precisazione sull'esempio del libro]
     Nel libro di testo, l'esempio viene proposto nell'ipotesi (puramente esemplificativa) che un Employee non possa mai diventare Manager. In una situazione reale questo non è in genere realistico e la modellazione delle classi dovrebbe tenere conto di questa possibilità.
-\end{caution}
+\end{warning}
 
-\begin{observation}[Accesso di classe vs Accesso di istanza]
+\begin{tip}[Accesso di classe vs Accesso di istanza]
     In Java, il modificatore \texttt{private} garantisce la visibilità a livello di \textbf{classe} e non di singola istanza:
     \begin{itemize}
         \item Un'istanza di \texttt{Employee} può accedere ai membri privati di un'altra istanza della stessa classe.
         \item Una sottoclasse \texttt{Manager}, pur ereditando lo stato, è considerata \textbf{codice esterno} rispetto alla definizione della superclasse.
     \end{itemize}
     \textbf{Conseguenza}: La sottoclasse possiede i dati della superclasse (memoria), ma deve interagire con essi tramite l'interfaccia pubblica (metodi), preservando l'integrità dell'incapsulamento.
-\end{observation}
+\end{tip}
 
 \section{Sovrascrivere i Metodi (Overriding)}
 
@@ -100,14 +100,14 @@ public double getSalary() {
 }
 \end{lstlisting}
 
-\begin{important}[\texttt{super} non è un riferimento]
+\begin{warning}[\texttt{super} non è un riferimento]
 A differenza di \texttt{this}, che è un riferimento all'oggetto corrente (e può essere assegnato a una variabile), \textbf{\texttt{super}} è solo una \textbf{parola chiave speciale} che dirige il compilatore verso la superclasse. Non puoi, ad esempio, scrivere \texttt{Object x = super;}.
-\end{important}
+\end{warning}
 
-\begin{observation}[La Regola della Visibilità nell'Overriding]
+\begin{warning}[La Regola della Visibilità nell'Overriding]
 Questa è una regola ferrea: \textbf{una sottoclasse non può rendere "meno visibile" un metodo ereditato.}:
 Se un metodo nella superclasse è \texttt{public}, nella sottoclasse \textbf{deve} rimanere \texttt{public}. Non puoi trasformare un metodo pubblico del padre in un metodo privato o protetto nel figlio.
-\end{observation}
+\end{warning}
 
 \subsection{L'importanza di \texttt{@Override}}
 Le annotazioni in Java sono metadati che forniscono informazioni aggiuntive al compilatore; saranno trattate più approfonditamente più avanti, ma è importante introdurre subito l'annotazione \texttt{@Override} in questo contesto.
@@ -147,18 +147,18 @@ A differenza dei metodi, i costruttori non vengono "ereditati" nel senso stretto
     bisogna dichiarare esplicitamente un costruttore nella sottoclasse e la prima istruzione di tale costruttore deve essere una chiamata esplicita a uno dei costruttori della superclasse tramite la sintassi \texttt{super(...parametri...)}.
 \end{enumerate}
 
-\begin{caution}[Errore di compilazione comune]
+\begin{warning}[Errore di compilazione comune]
     Se la superclasse richiede parametri e la sottoclasse non li fornisce esplicitamente (o tenta di farlo dopo la prima riga), il compilatore segnalerà l'errore: \textit{"Implicit super constructor is undefined. Must explicitly invoke another constructor"}.
-\end{caution}
+\end{warning}
 
-\begin{observation}[Invocazione Implicita e Campi Propri]
+\begin{warning}[Invocazione Implicita e Campi Propri]
     Se nella superclasse non è definito alcun costruttore esplicito (ovvero è presente il costruttore \textit{no-args} di default), la sottoclasse gode di maggiore flessibilità: è possibile definire un costruttore che inizializza esclusivamente i \textbf{campi propri} della sottoclasse. In questo scenario, la chiamata a \texttt{super()} può essere omessa (e di solito è considerata una buona pratica, per ridurre la verbosità), poiché il compilatore la inserirà automaticamente come prima riga invisibile.
-\end{observation}
+\end{warning}
 
 
-\begin{observation}[La regola della prima posizione]
+\begin{warning}[La regola della prima posizione]
     Entrambe le istruzioni, \texttt{this()} e \texttt{super()}, hanno il vincolo categorico di dover essere la \textbf{prima istruzione} del costruttore. Di conseguenza, \textbf{non possono mai comparire nello stesso costruttore}.
-\end{observation}
+\end{warning}
 
 
 \begin{observation}
@@ -193,13 +193,13 @@ Nella riga di codice polimorfica di sopra, dobbiamo distinguere due aspetti:
 
 
 
-\begin{important}[L'unidirezionalità della sostituzione]
+\begin{warning}[L'unidirezionalità della sostituzione]
     La sostituzione funziona solo verso l'alto nella gerarchia:
     \begin{itemize}
         \item \textbf{OK}: Assegnare un \texttt{Manager} a una variabile \texttt{Employee}.
         \item \textbf{ERRORE}: Assegnare un \texttt{Employee} a una variabile \texttt{Manager}.
     \end{itemize}
-\end{important}
+\end{warning}
 
 \begin{observation}[Array Polimorfici]
     Il principio di sostituzione si applica anche agli array. È possibile creare un array di una superclasse e riempirlo con oggetti di sottoclassi diverse:
@@ -268,7 +268,10 @@ Quando il programma arriva alla riga \texttt{e.getSalary()}, avviene la magia de
     e.staticMethod();   // Hiding: esegue il metodo di Employee (Compile-time)
     \end{lstlisting}
 
-    \textbf{Best Practice}: Proprio perché il comportamento dei metodi statici può trarre in inganno quando usati con variabili polimorfiche, in Java è considerata cattiva pratica invocare metodi statici tramite un'istanza (es. \texttt{e.staticMethod()}). Si dovrebbe sempre usare il nome della classe (es. \texttt{Employee.staticMethod()}).
+    \begin{bestpractice}
+        Proprio perché il comportamento dei metodi statici può trarre in inganno quando usati con variabili polimorfiche, in Java è considerata cattiva pratica invocare metodi statici tramite un'istanza (es. \texttt{e.staticMethod()}). Si dovrebbe sempre usare il nome della classe (es. \texttt{Employee.staticMethod()}).
+    \end{bestpractice}
+
 \end{observation}
 
 \subsection{Sintesi Mnemonica: Il Senso di Marcia}
@@ -313,12 +316,12 @@ Questo codice è perfettamente legale perché \texttt{Manager} è un sottotipo d
 
 
 
-\begin{important}[Vincolo di direzione]
+\begin{warning}[Vincolo di direzione]
     La covarianza funziona solo in una direzione: si può restituire qualcosa di \textbf{più specifico}, mai qualcosa di più generico. 
     \begin{itemize}
         \item Se il padre restituisce \texttt{Manager}, il figlio non può restituire \texttt{Employee}.
     \end{itemize}
-\end{important}
+\end{warning}
 
 
 \section{Prevenire l'Ereditarietà: Il modificatore \texttt{final}}
@@ -333,9 +336,9 @@ public class Employee {
 }
 \end{lstlisting}
 
-\begin{important}[Distinzione tra Campi e Classi]
+\begin{warning}[Distinzione tra Campi e Classi]
     Se una classe è \texttt{final}, i suoi \textbf{metodi} sono automaticamente \texttt{final}, ma i suoi \textbf{campi} NO. La mutabilità dei dati rimane regolata dai singoli modificatori sui campi.
-\end{important}
+\end{warning}
 
 Dunque l'effetto di dichiarare \texttt{final} classi o metodi è piuttosto semplice da capire; meno ovvio è capire quando e perché farlo. Esistono due motivazioni principali, una di \textbf{design} e una di \textbf{sicurezza}.
 
@@ -400,9 +403,9 @@ public class Executive extends Employee {
     Questo accade per effetto del \textbf{\textit{hiding}} descritto nell'osservazione \ref{hiding_metodi_statici}: il metodo da eseguire viene determinato dal compilatore in base al tipo della classe e non dall'oggetto reale a runtime. Di conseguenza, non vi è il rischio di invocare accidentalmente logica della sottoclasse prima che questa sia stata inizializzata.
 \end{observation}
 
-\begin{tip}[Non abusare dei final!]
+\begin{bestpractice}[Non abusare dei final!]
     In passato molti programmatori tendevano ad usare spesso \texttt{final} anche in contesti in cui non era necessario, per ragioni di ottimizzazione (che qui omettiamo). Oggi non è più necessario, perché la JVM moderna è già abbastanza intelligente da gestire l'ottimizzazione da sola. Dovresti usare \texttt{final} solo per ragioni di \textbf{chiarezza di design} e \textbf{sicurezza}.
-\end{tip}
+\end{bestpractice}
 
 
 \section{Il Casting degli Oggetti}
@@ -469,7 +472,7 @@ La variabile introdotta dal pattern (es. \texttt{boss}) ha uno \textbf{scope lim
 if (e instanceof Executive exec && exec.getTitle().length() > 10) { ... } // OK
 \end{lstlisting}
 
-\begin{important}[Attenzione: Shadowing dei Campi]
+\begin{warning}[Attenzione: Shadowing dei Campi]
     La variabile introdotta da un pattern (es. \texttt{exec}, \texttt{boss}) è una variabile locale. Come tale, può \textbf{oscurare} (shadow) un campo della classe che ha lo stesso nome. Questo può portare a errori logici difficili da individuare.
 
     \begin{lstlisting}[language=Java, caption={Esempio di Shadowing con instanceof}]
@@ -487,7 +490,7 @@ if (e instanceof Executive exec && exec.getTitle().length() > 10) { ... } // OK
     }
     \end{lstlisting}
     \textbf{Best Practice}: Per evitare confusione, è sempre consigliabile dare alla variabile del pattern un nome univoco o diverso dai campi della classe (es. \texttt{otherValue} invece di \texttt{v}).
-\end{important}
+\end{warning}
 
 \subsection{Il Record Pattern e la Decostruzione (Java 21+)}
 
@@ -777,9 +780,9 @@ return field1 == other.field1
     \end{lstlisting}
 \end{enumerate}
 
-\begin{important}[Sottoclassi]
+\begin{warning}[Sottoclassi]
     Se stai ridefinendo \texttt{equals()} in una sottoclasse, la prima operazione dopo i controlli di base deve essere l'invocazione di del metodo della superclasse \textbf{\texttt{super.equals(otherObject)}}. Va anche ricordato che il parametro del metodo \texttt{equals()} è sempre di tipo \texttt{Object} (ma ci si protegge da questo tipo di errore usando l'annotazione \texttt{@Override}).
-\end{important}
+\end{warning}
 
 \subsection{Il Metodo \texttt{hashCode()}}
 
@@ -792,9 +795,9 @@ In Java, l'utilizzo principale di questo metodo avviene all'interno delle \textb
 
 Esiste una regola fondamentale che ogni sviluppatore Java deve rispettare: \textbf{se due oggetti sono uguali secondo il metodo \texttt{equals()}, devono necessariamente avere lo stesso \texttt{hashCode()}.}
 
-\begin{important}
+\begin{warning}
     Se si sovrascrive \texttt{equals()}, si deve sovrascrivere anche \texttt{hashCode()}. Se non lo si fa, gli oggetti della classe non funzioneranno correttamente nelle strutture dati basate su hash, poiché oggetti logicamente identici verrebbero cercati in posizioni diverse della memoria.
-\end{important}
+\end{warning}
 
 Dalla versione 7 di Java, il modo più semplice e sicuro per implementare questo metodo è l'utilizzo della funzione statica \texttt{Objects.hash()}. Questa funzione accetta un numero variabile di argomenti e gestisce automaticamente i valori \texttt{null}.
 
@@ -817,9 +820,9 @@ public class Employee {
 }
 \end{lstlisting}
 
-\begin{important}
+\begin{warning}
     Se la classe contiene dei campi che sono \textbf{array}, \texttt{Objects.hash()} non ne verificherà il contenuto (userebbe l'hash dell'indirizzo di memoria dell'array). In questo caso specifico, è necessario utilizzare il metodo \texttt{Arrays.hashCode()} per calcolare un hash basato sui singoli elementi dell'array. Per lo stesso motivo, usare \texttt{Arrays.deepHashCode} per array multidimensionali.
-\end{important}
+\end{warning}
 
 \subsubsection*{Approfondimento: Calcolo manuale e Performance}
 
@@ -842,9 +845,9 @@ Ad esempio, per una data composta da giorno, mese e anno, una formula come:
 \end{center}
 garantisce che ogni data possibile produca un numero univoco (entro un range ragionevole di anni), poiché i "pesi" assegnati ai campi impediscono sovrapposizioni.
 
-\begin{caution}
+\begin{warning}
     Nel calcolo manuale, per i tipi primitivi (\texttt{double}, \texttt{long}), è fondamentale usare i metodi statici delle classi wrapper (es. \texttt{Double.hashCode(salary)}) invece di castare a \texttt{int}, per non perdere precisione e mantenere una buona distribuzione.
-\end{caution}
+\end{warning}
 
 \subsection{Il Metodo \texttt{toString()}}
 

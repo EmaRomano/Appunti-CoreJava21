@@ -114,9 +114,9 @@ public class Employee {
     Si parla dunque di overloading di un metodo se ci sono due metodi con lo stesso nome ma con firma diversa. Anche se il numero di parametri è lo stesso ma cambia l'ordine, sempre di overloading si tratta, perché cambia la firma. Di fatto, anche se l'identificatore del metodo è lo stesso, si tratta di metodi diversi. Quindi l'overloading non è altro che un modo per evitare il proliferare di identificatori di metodi ed è comodo anche per continuare a descrivere (tramite un nome appropriato) cosa fa un metodo anche se cambiano i parametri.
 \end{observation}
 
-\begin{important}
+\begin{warning}[]
     Ricorda che la chiamata \texttt{this(...)} deve essere tassativamente la \textbf{prima riga} del costruttore. Non puoi eseguire alcun calcolo o istruzione prima di delegare la costruzione all'altro costruttore.
-\end{important}
+\end{warning}
 
 \section{Costruzione degli Oggetti}
 
@@ -131,10 +131,10 @@ A differenza delle variabili locali (che devono essere inizializzate esplicitame
     \item Riferimenti a oggetti: \texttt{null}.
 \end{itemize}
 
-\begin{caution}
+\begin{warning}[]
     \textbf{Il costruttore predefinito "gratis".}
     Java fornisce implicitamente un costruttore senza argomenti (\textit{no-arg constructor}) solo se nella classe non è stato definito \textbf{nessun} costruttore. Se ne definisci anche solo uno con parametri, quello predefinito scompare; se ti serve ancora, devi scriverlo esplicitamente. In ogni caso è importante ricordare che un costruttore \textbf{esiste sempre}, anche se non lo si dichiara.
-\end{caution}
+\end{warning}
 
 \subsection{Blocchi di Inizializzazione}
 
@@ -180,15 +180,14 @@ Esistono tuttavia dei limiti tecnici e stilistici precisi per l'utilizzo di ques
     \item \textbf{Leggibilità:} Horstmann suggerisce di usare \texttt{var} solo quando il tipo è ovvio dalla lettura del lato destro. Ad esempio, \texttt{var in = new Scanner(System.in)} è chiaro, mentre \texttt{var x = calcola()} potrebbe rendere il codice criptico se non si conosce il valore di ritorno del metodo.
 \end{itemize}
 
-\begin{important}
+\begin{warning}[]
     È fondamentale ricordare che il tipo viene fissato a tempo di compilazione. Una volta che \texttt{var staff} è stato interpretato come \texttt{Employee}, non potrà mai contenere un tipo diverso (come una stringa o un intero) durante l'esecuzione del programma.
-\end{important}
+\end{warning}
 
-\section{I vantaggi dell'incapsulamento}
+\section{Ulteriori note sull'incapsulamento}
 
-L'incapsulamento non consiste solo nel nascondere i dati, ma nel fornire un'interfaccia controllata per interagire con essi. Horstmann identifica tre benefici fondamentali nell'uso di metodi accessori (getter) e mutatori (setter) rispetto ai campi pubblici.
+L'incapsulamento non consiste solo nel nascondere i dati, ma nel fornire un'interfaccia controllata per interagire con essi. I principali vantaggi sono:
 
-\subsection{Controllo, Flessibilità e Validazione}
 \begin{enumerate}
     \item \textbf{Debugging semplificato:} Se un campo viene modificato solo tramite un mutatore, la ricerca di eventuali bug legati a valori errati è circoscritta a quel metodo specifico.
     \item \textbf{Trasparenza dell'implementazione:} La struttura interna dei dati può evolvere (es. dividere un campo \texttt{name} in \texttt{firstName} e \texttt{lastName}) senza che il codice esterno debba essere modificato, poiché l'interfaccia dei metodi rimane costante.
@@ -199,10 +198,9 @@ L'incapsulamento non consiste solo nel nascondere i dati, ma nel fornire un'inte
 
 Un errore di progettazione sottile ma grave consiste nello scrivere metodi accessori che restituiscono riferimenti a oggetti \textbf{mutabili}. 
 
-\begin{caution}
-    \textbf{Riferimenti mutabili e rottura dell'incapsulamento.} \\
+\begin{warning}[Riferimenti mutabili e rottura dell'incapsulamento]
     Se un campo privato è un oggetto mutabile (come la vecchia classe \texttt{Date}), restituire quel riferimento tramite un getter permette a codice esterno di modificare lo stato interno dell'oggetto all'insaputa della classe stessa. 
-\end{caution}
+\end{warning}
 
 Si consideri il seguente esempio di ``codice canaglia'':
 \begin{lstlisting}[caption={Violazione dell'incapsulamento}]
@@ -213,22 +211,22 @@ d.setTime(d.getTime() - (long) tenYearsInMilliseconds);
 // Lo stato di harry e cambiato senza usare i metodi di Employee!
 \end{lstlisting}
 
-\begin{important}
+\begin{warning}
     Per prevenire questa vulnerabilità, esistono due strategie principali:
     \begin{itemize}
         \item \textbf{Utilizzare oggetti immutabili:} Classi come \texttt{LocalDate} o \texttt{String} non possiedono metodi mutatori. Una volta creati, il loro stato non può cambiare, rendendo sicuro il ritorno del loro riferimento.
         \item \textbf{Clonazione:} Se si deve assolutamente usare un oggetto mutabile, il getter dovrebbe restituire una copia (\textit{clone}) dell'oggetto, non l'originale.Vedremo più avanti in dettaglio questo tipo di soluzione. 
     \end{itemize}
-\end{important}
+\end{warning}
 
 \section{I Metodi Privati}
 
 Nella grande maggioranza dei casi, i metodi di una classe vengono dichiarati con il modificatore \texttt{public}, poiché costituiscono l'interfaccia attraverso cui il mondo esterno interagisce con l'oggetto. Tuttavia, esistono circostanze in cui è preferibile o necessario rendere un metodo \texttt{private}.
 
-\subsection{Helper Methods e Pulizia del Codice}
+\subsection*{Helper Methods e Pulizia del Codice}
 Spesso, l'implementazione di un compito complesso richiede di spezzare il codice in diverse sotto-operazioni. Questi "metodi di supporto" (\textit{helper methods}) non dovrebbero far parte dell'interfaccia pubblica: potrebbero essere troppo legati all'attuale implementazione interna o richiedere un protocollo di chiamata specifico che non deve essere esposto all'utente della classe. Dichiarandoli privati, ci si assicura che vengano utilizzati solo internamente.
 
-\subsection{Libertà di Evoluzione del Software}
+\subsection*{Libertà di Evoluzione del Software}
 Il vantaggio principale della riservatezza dei metodi risiede nella libertà di manutenzione. 
 \begin{itemize}
     \item \textbf{Metodi Pubblici:} Rappresentano un impegno verso chi utilizza la classe. Se un metodo è pubblico, non può essere rimosso o modificato drasticamente senza rischiare di "rompere" il codice esterno che vi fa affidamento.
@@ -245,15 +243,15 @@ Il vantaggio principale della riservatezza dei metodi risiede nella libertà di 
 
 In Java, è possibile dichiarare un campo di istanza come \texttt{final}. Tale modificatore impone che la variabile venga inizializzata tassativamente entro la fine di ogni costruttore della classe. Una volta assegnato, il valore del campo non può più essere modificato.
 
-\subsection{Tipi primitivi e Classi Immutabili}
+\subsection*{Tipi primitivi e Classi Immutabili}
 L'uso di \texttt{final} è particolarmente efficace con i tipi primitivi o con classi immutabili (ovvero classi i cui metodi non modificano mai lo stato dell'oggetto, come \texttt{String} o \texttt{LocalDate}). In questi casi, il campo diventa a tutti gli effetti una costante dopo la costruzione dell'oggetto.
 
-\subsection{La trappola delle Classi Mutabili}
+\subsection*{La trappola delle Classi Mutabili}
 È necessario prestare attenzione quando si usa \texttt{final} con oggetti mutabili. 
 
-\begin{caution}
+\begin{warning}[]
     Il modificatore \texttt{final} garantisce solo che il \textbf{riferimento} memorizzato nella variabile non punti mai a un oggetto diverso. Tuttavia, non impedisce la mutazione dell'oggetto stesso: per i mutabili final è solo il riferimento all'oggetto ad essere costante, ma tutto ciò a cui punta quel riferimento può essere cambiato.
-\end{caution}
+\end{warning}
 
 Ad esempio, un campo \texttt{private final StringBuilder evaluations} impedisce di assegnare un nuovo \texttt{StringBuilder} alla variabile, ma permette comunque di invocare metodi come \texttt{evaluations.append()}, modificando di fatto lo stato interno dell'oggetto.
 
@@ -335,9 +333,9 @@ Il comportamento osservato differisce in base a ciò che la variabile contiene:
     \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto. In questo caso si parlas di \textit{passaggio per copia del valore del riferimento}.
 \end{itemize}
 
-\begin{important}
-    \textbf{Il fallimento dello swap:} La dimostrazione definitiva che Java non usa il passaggio per riferimento è l'impossibilità di scrivere un metodo \texttt{swap(x, y)} che scambi i riferimenti di due oggetti esterni. Il metodo scambierà solo le sue copie locali, lasciando invariate le variabili originali.
-\end{important}
+\begin{tip}[Il fallimento dello swap]
+    La dimostrazione definitiva che Java non usa il passaggio per riferimento è l'impossibilità di scrivere un metodo \texttt{swap(x, y)} che scambi i riferimenti di due oggetti esterni. Il metodo scambierà solo le sue copie locali, lasciando invariate le variabili originali.
+\end{tip}
 
 \begin{observation}
     \textbf{Il caso degli oggetti immutabili.}
@@ -366,9 +364,9 @@ public static double max(double... values) {
 }
 \end{lstlisting}
 
-\begin{important}
+\begin{warning}[]
     Il parametro varargs deve essere necessariamente l'\textbf{ultimo} nella firma del metodo. È possibile avere un solo parametro varargs per metodo.
-\end{important}
+\end{warning}
 
 \begin{observation}[Efficienza e Varargs]
     È fondamentale distinguere tra l'utilizzo di \textit{varargs} con tipi primitivi e con tipi oggetto (o classi wrapper):
@@ -386,14 +384,14 @@ double[] prezzi = {10.5, 20.0, 5.75};
 double massimo = max(prezzi); // Legale: passa l'array direttamente
 \end{lstlisting}
 
-\begin{caution}[La trappola degli array di primitivi]
+\begin{warning}[La trappola degli array di primitivi]
     Bisogna prestare estrema attenzione quando si passa un array a un metodo con \textit{varargs} di tipo \texttt{Object...}:
     \begin{itemize}
         \item Se si passa un \textbf{array di oggetti} (es. \texttt{String[]}), Java lo "spacchetta" e tratta ogni elemento come un argomento distinto.
         \item Se si passa un \textbf{array di primitivi} (es. \texttt{int[]}), Java \textbf{non} può trattarlo come un \texttt{Object[]}. Di conseguenza, considera l'intero array come un \textbf{singolo oggetto} e lo inserisce come unico elemento della lista parametri.
     \end{itemize}
     Per ottenere lo spacchettamento di un array di primitivi, è necessario convertirlo preventivamente in un array della relativa classe wrapper (\texttt{Integer[]}).
-\end{caution}
+\end{warning}
 
 \begin{tip}
     Anche il metodo \texttt{main} può essere dichiarato usando i varargs: 
@@ -521,14 +519,13 @@ Le caratteristiche principali dei record sono:
     \item \textbf{Personalizzazione:} È possibile sovrascrivere i metodi generati automaticamente, ad esempio per aggiungere una logica di validazione nel costruttore.
 \end{itemize}
 
-\begin{caution}
-    \textbf{Attenzione alla mutabilità dei componenti.}
+\begin{warning}[Attenzione alla mutabilità dei componenti]
     I componenti di un record sono implicitamente \textit{final}, quindi va ricordato ciò che abbiamo detto a proposito di tali campi: se un record ha come componente un oggetto mutabile (es. un array), l'immutabilità del record è solo superficiale; il riferimento all'array non può cambiare, ma gli elementi interni all'array sì. Per garantire la sicurezza, è preferibile usare solo tipi primitivi o immutabili come componenti.
-\end{caution}
+\end{warning}
 
-\begin{observation}
-    \textbf{Analogia con il C:} Per un programmatore C, il record è l'equivalente funzionale di una \texttt{struct} costante, ma con il vantaggio di avere già pronti tutti i metodi per il confronto e la visualizzazione testuale.
-\end{observation}
+
+\textbf{Analogia con il C:} Per un programmatore C, il record è l'equivalente funzionale di una \texttt{struct} costante, ma con il vantaggio di avere già pronti tutti i metodi per il confronto e la visualizzazione testuale.
+
 \vspace{\baselineskip}
 
 
@@ -636,7 +633,7 @@ Comprendere questa distinzione chiarisce il comportamento dei parametri nei meto
 \caption{Differenze chiave tra Stack e Heap in Java.}
 \end{table}
 
-\begin{important}
-    \textbf{Connessione con la Concorrenza:} In sistemi complessi o distribuiti, ogni thread possiede il proprio Stack privato, mentre lo Heap è condiviso tra tutti. Questa condivisione è la causa principale dei problemi di visibilità e sincronizzazione che richiedono l'uso di blocchi (\texttt{synchronized}) o variabili atomiche.
-\end{important}
+\begin{warning}[Connessione con la Concorrenza]
+    In sistemi complessi o distribuiti, ogni thread possiede il proprio Stack privato, mentre lo Heap è condiviso tra tutti. Questa condivisione è la causa principale dei problemi di visibilità e sincronizzazione che richiedono l'uso di blocchi (\texttt{synchronized}) o variabili atomiche.
+\end{warning}
 % --- Fine Sezione Stack vs Heap ---
