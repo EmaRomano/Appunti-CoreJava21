@@ -307,7 +307,7 @@ Questo tipo di delega segue le seguenti regole:
 \begin{itemize}
     \item \textbf{Per le Checked Exceptions}: La delega tramite \texttt{throws} è \textbf{obbligatoria} se non si usa un \texttt{try-catch}. Se dimentichi di dichiararla, il codice non compila.
     \item \textbf{Per le Unchecked Exceptions}: La delega è \textbf{facoltativa}.
-    \item \textbf{Passaggio di consegne}: Se il metodo A chiama il metodo B (che lancia un'eccezione), il metodo A ha di nuovo le stesse due opzioni: catturarla con un \texttt{try-catch} o dichiararla a sua volta con \texttt{throws}, passandola al metodo superiore.
+    \item \textbf{Passaggio di consegne}: Se il metodo A chiama il metodo B (che lancia un'eccezione), il metodo A ha di nuovo le stesse due opzioni: catturarla con un \texttt{try-catch} o dichiararla a sua volta con \texttt{throws} (di nuovo: obbligatorio in caso di eccezione \textit{checked}, opzionale altrimenti), passandola al metodo superiore.
 \end{itemize}
 
 \begin{bestpractice}[Best Practice]
@@ -335,7 +335,7 @@ Se un metodo della sottoclasse sovrascrive un metodo della superclasse, valgono 
     \item \textbf{Può} decidere di non dichiarare alcuna eccezione.
 \end{itemize}
 
-In particolare, se il metodo della superclasse non dichiara alcuna eccezione checked, allora il metodo sovrascritto nella sottoclasse \textbf{non può propagarne nessuna}. Può comunque usare codice che genera checked exceptions, ma in tal caso deve gestirle localmente mediante \texttt{try-catch}.
+In particolare, se il metodo della superclasse non dichiara alcuna eccezione checked, allora il metodo sovrascritto nella sottoclasse \textbf{non può propagarne alcuna che sia checked}. Può comunque usare codice che genera checked exceptions, ma in tal caso deve gestirle localmente mediante \texttt{try-catch}.
 
 Queste restrizioni riguardano solo le \textit{checked exceptions}. Le \textit{unchecked exceptions} possono invece essere lanciate liberamente anche se non vengono lanciate nel metodo della superclasse.
 
@@ -374,7 +374,7 @@ Una volta definita, la tua eccezione è pronta per essere lanciata all'interno d
 public String leggiDati(Scanner in) throws FileFormatException {
    // ... logica di lettura ...
    while (...) {
-      if (ch == -1) { // Fine del file inattesa
+      if (ch == -1) { // Fine del file in attesa
          if (n < len)
             throw new FileFormatException("Il file termina inaspettatamente");
       }
@@ -443,7 +443,7 @@ try {
 }
 \end{lstlisting}
 
-Tuttavia, per una gestione perfetta, è preferibile separare le responsabilità usando blocchi \texttt{try} annidati: uno interno per garantire la chiusura e uno esterno per gestire/segnalare gli errori.
+Per una gestione perfetta, è preferibile separare le responsabilità usando blocchi \texttt{try} annidati: uno interno per garantire la chiusura e uno esterno per gestire/segnalare gli errori.
 \begin{lstlisting}[caption={un tipico pattern di \texttt{try} annidati}]
 InputStream in = . . .;
 try
