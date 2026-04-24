@@ -347,27 +347,6 @@ Quando progetti una gerarchia di classi, valuta con attenzione quali eccezioni i
 
 Sebbene Java offra una vasta gamma di classi di eccezione, potresti imbatterti in problemi che non sono descritti adeguatamente da quelle standard. In questi casi, basta creare un'eccezione personalizzata: è sufficiente estendere la classe \texttt{Exception} (per creare una \textit{checked exception}) o una sua sottoclasse (come \texttt{IOException}). Se invece si desidera una \textit{unchecked exception}, si deve estendere \texttt{RuntimeException}.
 
-È consuetudine fornire almeno due costruttori:
-\begin{enumerate}
-    \item Un costruttore predefinito senza argomenti.
-    \item Un costruttore che accetta una stringa descrittiva del problema.
-\end{enumerate}
-
-\begin{lstlisting}[caption={Definizione di una classe di eccezione personalizzata}]
-class FileFormatException extends IOException {
-   public FileFormatException() {}
-   
-   public FileFormatException(String messaggio) {
-      // Passiamo il messaggio al costruttore della superclasse
-      super(messaggio);
-   }
-}
-\end{lstlisting}
-
-\begin{bestpractice}
-Fornire sempre entrambi i costruttori standard. Quello che accetta una stringa è fondamentale perché il metodo \texttt{toString} di \texttt{Throwable} (la superclasse di tutte le eccezioni) restituirà proprio quel messaggio, facilitando enormemente il debugging.
-\end{bestpractice}
-
 Una volta definita, la tua eccezione è pronta per essere lanciata all'interno dei tuoi metodi esattamente come un'eccezione di sistema.
 
 \begin{lstlisting}[caption={Lancio di un'eccezione personalizzata}]
@@ -520,6 +499,43 @@ try (var out = new PrintWriter("file.txt")) {
 
 \begin{tip}
 Non devi preoccuparti di gestire manualmente le eccezioni soppresse nel 99\% dei casi. La cosa fondamentale è che, guardando lo \textit{stack trace} nella console, Java te le mostrerà automaticamente sotto la dicitura \texttt{Suppressed: ...}, permettendoti di vedere l'intera catena del disastro.
+\end{tip}
+
+\subsection{Costruttori e Metodi di Eccezioni}
+
+Ogni volta che scrivi \texttt{catch (Exception e)}, la variabile \texttt{e} è un riferimento a un oggetto. Poiché le eccezioni ereditano da \texttt{java.lang.Throwable}, ereditano un set di metodi preziosi per la diagnostica.
+
+\begin{itemize}
+    \item \textbf{\texttt{String getMessage()}}: Restituisce la stringa descrittiva passata al costruttore. È il "cosa è successo" in formato leggibile.
+    \item \textbf{\texttt{Throwable getCause()}}: Restituisce l'eccezione interna che ha scatenato quella attuale (fondamentale per l'\textit{incatenamento} visto nei paragrafi precedenti).
+    \item \textbf{\texttt{StackTraceElement[] getStackTrace()}}: Permette di accedere programmaticamente alla "pila" delle chiamate. Ogni elemento contiene il nome del file, la classe, il metodo e la riga di codice.
+    \item \textbf{\texttt{void printStackTrace()}}: Stampa l'intera traccia dell'errore sullo standard error.
+    \item \textbf{\texttt{void addSuppressed(Throwable t)}}: Aggiunge un'eccezione alla lista delle soppresse (usato automaticamente dal try-with-resources).
+\end{itemize}
+\vspace{\baselineskip}
+
+Per quanto riguarda i costruttori, creando una tua eccezione, dovresti quasi sempre implementare questi quattro per garantire massima flessibilità:
+
+\begin{lstlisting}[caption={I 4 costruttori "canonici" di un'eccezione}]
+public class MiaException extends Exception {
+    // 1. Vuoto: per errori generici senza dettagli
+    public MiaException() { super(); }
+
+    // 2. Con messaggio: per spiegare cosa e' andato storto
+    public MiaException(String message) { super(message); }
+
+    // 3. Con causa: per "impacchettare" un altro errore
+    public MiaException(Throwable cause) { super(cause); }
+
+    // 4. Con messaggio e causa:
+    public MiaException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+\end{lstlisting}
+
+\begin{tip}
+Evita di usare \texttt{e.printStackTrace()} nel codice di produzione backend. Questo metodo scrive direttamente sulla console del server, che spesso viene ignorata o sovrascritta. Usa sempre un logger (\texttt{logger.log(Level.SEVERE, "msg", e)}) che invece salva lo stack trace in modo ordinato su file.
 \end{tip}
 
 
