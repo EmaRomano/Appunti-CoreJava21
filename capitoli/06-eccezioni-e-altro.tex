@@ -692,6 +692,54 @@ Se invece la documentazione pone una \textbf{precondizione} (es. "il parametro $
 In sintesi: se il controllo deve sopravvivere nel prodotto finale perché l'errore può capitare anche se il codice è perfetto (es. input utente), usa le \textbf{Eccezioni}. Se il controllo serve a beccare il programmatore mentre scrive codice sbagliato, usa le \textbf{Asserzioni}.
 \end{tip}
 
+\section{Logging}
+
+Tutti i programmatori Java conoscono il rito del "debugging tramite stampa": inserire chiamate a \texttt{System.out.println} nei punti critici del codice per capire cosa stia succedendo. Una volta risolto il problema, queste istruzioni vengono rimosse, per poi essere reinserite al bug successivo.
+
+I framework di \textbf{logging} sono progettati per superare questo ciclo inefficiente, offrendo una soluzione permanente, professionale e configurabile.
+
+Il logging non è una semplice "stampa a video evoluta", ma un sistema di tracciamento che offre:
+\begin{itemize}
+    \item \textbf{Persistenza}: Registrare i messaggi su file o database, non solo sulla console.
+    \item \textbf{Granularità}: Classificare i messaggi per importanza (es. INFO, WARNING, SEVERE).
+    \item \textbf{Configurabilità}: Attivare o disattivare i messaggi senza modificare o ricompilare il codice.
+\end{itemize}
+
+\medskip
+
+In un'applicazione professionale, l'uso di \texttt{System.out.println} è considerato una cattiva pratica. Considera questo scenario: un server subisce un guasto alle 3 di notte mentre processa dei pagamenti. L' "utente" in questo caso non è un essere umano che interagisce in tempo reale, ma un processo automatico che gira in background. Senza un log persistente su file, l'errore svanirebbe nel nulla e sarebbe impossibile ricostruire l'accaduto il mattino seguente. Il logging è la "scatola nera" per quando non si è presenti a guardare la console.
+
+\subsection{Architettura del Logging: Facciate e Implementazioni}
+
+Nel mondo Java, il logging non è un blocco monolitico. Per garantire flessibilità, si utilizza un'architettura divisa in due parti:
+
+\begin{itemize}
+    \item \textbf{Frontend (façade/API)}: È il codice (es. \texttt{logger.log(...)}) che il programmatore scrive. Definisce \textit{come} si inviano i messaggi. Esempi: \textbf{SLF4J}, \textbf{Platform Logging API (JEP 264)}.
+    \item \textbf{Backend (Implementation)}: È il motore che decide \textit{dove} vanno i messaggi (file, console, rete) e come formattarli. Esempi: \textbf{java.util.logging (JUL)}, \textbf{Log4j}, \textbf{Logback}.
+\end{itemize}
+
+\medskip
+
+Utilizzare una "facciata" (come SLF4J o la Platform API) permette di cambiare il motore di logging in futuro senza dover modificare una singola riga di codice nel resto dell'applicazione. Basta cambiare una configurazione esterna.
+
+Anche se nel mondo enterprise si usano spesso Log4j o Logback, studiare il backend standard del JDK (JUL) è importante per tre motivi:
+\begin{enumerate}
+    \item \textbf{Fondamenta}: Offre una base solida per capire come funzionano tutti gli altri framework.
+    \item \textbf{Semplicità e Sicurezza}: Essendo parte del JDK, è più "snello" e meno soggetto ad attacchi informatici. 
+    \item \textbf{Zero Dipendenze}: Non richiede librerie esterne, rendendolo perfetto per piccoli progetti o moduli di sistema.
+\end{enumerate}
+
+\begin{warning}[Sicurezza e Log4j]
+La complessità eccessiva può essere un pericolo. Il famoso attacco hacker a \textbf{Log4j} (Log4Shell) è stato possibile proprio a causa di funzionalità oscure e troppo potenti che permettevano l'esecuzione di codice malevolo tramite un semplice messaggio di log.
+\end{warning}
+
+Oltre al logging dell'applicazione, esiste il logging della Java Virtual Machine stessa (ad esempio per monitorare il \textit{Garbage Collector}). Questo si attiva all'avvio con l'opzione \texttt{-Xlog}:
+
+\begin{lstlisting}[language=bash, caption={Abilitare il logging del GC}]
+java -Xlog:gc=trace:file=gc.log:uptime,tid MyApp
+\end{lstlisting}
+
+
 
 
 
