@@ -620,6 +620,10 @@ java -da -ea:com.mio.AlgoritmoCritico MyApp
 Le classi di sistema (come quelle in \texttt{java.util.*}) sono caricate dal \textit{Bootstrap Class Loader} e ignorano i flag \texttt{-ea} e \texttt{-da}. Se sospetti un bug interno al JDK e vuoi attivare le sue asserzioni, devi usare obbligatoriamente \texttt{-esa}.
 \end{warning}
 
+\begin{observation}
+Sebbene sia possibile attivare le asserzioni da riga di comando, nella pratica quotidiana si utilizzano le impostazioni dell'IDE. E' fondamentale inserire il flag \texttt{-ea} nel campo delle \textbf{VM Options} (parametri per la Virtual Machine) e non tra i \textit{Program Arguments}, altrimenti il comando verrebbe ignorato.
+\end{observation}
+
 Le asserzioni non richiedono la ricompilazione del codice per essere attivate o disattivate; questa decisione viene presa dal \textbf{Class Loader} (il sottosistema della JVM che cerca i file \texttt{.class} sul disco, ne verifica l'integrità e li carica nella memoria della JVM.) al momento dell'esecuzione. Quando sono disattivate, il Class Loader ignora tutte le asserzioni, che quindi non pesano sulle prestazioni. 
 
 \begin{warning}[Effetti Collaterali]
