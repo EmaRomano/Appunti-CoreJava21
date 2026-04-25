@@ -538,6 +538,161 @@ public class MiaException extends Exception {
 Evita di usare \texttt{e.printStackTrace()} nel codice di produzione backend. Questo metodo scrive direttamente sulla console del server, che spesso viene ignorata o sovrascritta. Usa sempre un logger (\texttt{logger.log(Level.SEVERE, "msg", e)}) che invece salva lo stack trace in modo ordinato su file.
 \end{tip}
 
+\section{Le Asserzioni (Assertions)}
+
+Le asserzioni servono a verificare presupposti che il programmatore ritiene debbano essere sempre veri (\textit{invarianti}) in un determinato punto del codice. 
+
+Java mette a disposizione la parola chiave \texttt{assert} con due forme:
+
+\begin{enumerate}
+    \item \texttt{assert condizione;}
+    \item \texttt{assert condizione : espressione;}
+\end{enumerate}
+
+Se la \texttt{condizione} è \texttt{false}, viene lanciato un \texttt{AssertionError}. Nella seconda forma, l'\texttt{espressione} viene convertita in stringa e usata come messaggio di errore.
+
+\begin{lstlisting}[caption={Esempio di utilizzo delle asserzioni}]
+double y = Math.sqrt(x);
+// Sono certo che x non sia negativo per logica del programma
+assert x >= 0 : "x era negativo: " + x;
+\end{lstlisting}
+
+\begin{tip}[]
+L'unico scopo dell'espressione dopo i due punti è fornire dettagli per il debugging. Non cercare di usarla per "recuperare" l'errore: le asserzioni servono a far fallire il programma subito se qualcosa di "impossibile" accade. È un'applicazione del principio di \textit{Fail Fast}: è molto meglio che un programma vada in crash subito durante i test, piuttosto che continui a girare con dati corrotti, rischiando di salvare informazioni sbagliate nel database o generare bug "silenziosi" difficilissimi da scovare mesi dopo.
+\end{tip}
+
+Perché usare \texttt{assert} invece di \texttt{if-throw}? A differenza delle normali istruzioni di controllo, le asserzioni hanno un vantaggio prestazionale unico:
+
+\begin{itemize}
+    \item \textbf{In Sviluppo}: Vengono abilitate per trovare bug logici.
+    \item \textbf{In Produzione}: Vengono disabilitate di default. Il bytecode relativo alle asserzioni non viene nemmeno eseguito, garantendo che il programma sia il più veloce possibile.
+\end{itemize}
+\medskip
+
+\subsection{Attivare/Disattivare Asserzioni}
+Le asserzioni sono dunque disabilitate di deafult; per abilitarle, bisogna inserire i parametri \texttt{-enableassertions} (oppure la forma abbreviata \texttt{-ea}) :
+
+\begin{lstlisting}[language=bash, caption={}]
+java -enableassertions MyApp
+\end{lstlisting}
+
+Java permette di filtrare l'attivazione delle asserzioni per singola classe o per pacchetto:
+
+\begin{itemize}
+    \item \textbf{Singola Classe:} \texttt{-ea:NomeClasse} attiva le asserzioni solo per quella classe.
+    \item \textbf{Pacchetto e Sottopacchetti:} \texttt{-ea:com.azienda.libreria...} attiva le asserzioni per tutte le classi del pacchetto specificato e di tutti i suoi sottopacchetti.
+    \item \textbf{Unnamed Package:} L'opzione \texttt{-ea:...} attiva le asserzioni per tutte le classi che non appartengono a un pacchetto dichiarato (il cosiddetto \textit{unnamed package}).
+\end{itemize}
+\medskip
+Allo stesso modo, è possibile disabilitare le asserzioni in punti specifici del codice utilizzando il flag \texttt{-disableassertions} (o \texttt{-da}). Questo è particolarmente utile quando si vuole monitorare tutto il progetto tranne una classe o un modulo specifico che sappiamo essere già stabile o che genera troppi errori di asserzione irrilevanti.
+
+\begin{lstlisting}[language=bash, caption={Esempio di abilitazione specifica}]
+# 1. Abilitare le asserzioni per una SINGOLA CLASSE
+java -ea:com.azienda.progetto.ValidatoreDati MyApp
+
+# 2. Abilitare le asserzioni per un SINGOLO PACKAGE (e i suoi sottopacchetti)
+# Nota: i tre punti (...) sono fondamentali
+java -ea:com.azienda.progetto.servizi... MyApp
+
+# 3. Abilitare in un PACKAGE, ma disabilitarle in una CLASSE specifica
+# Utile se quella classe e' vecchia (legacy) e lancia errori che vuoi ignorare
+java -ea:com.azienda.progetto.logica... -da:com.azienda.progetto.logica.VecchioAlgoritmo MyApp
+
+# 4. Abilitare in un PACKAGE, ma disabilitarle in un suo SOTTOPACKAGE
+# Utile per testare la parte stabile e ignorare quella sperimentale/instabile
+java -ea:com.azienda.core... -da:com.azienda.core.sperimentale... MyApp
+
+# Attiva le asserzioni nell'unnamed package, ma disabilitale in MyClass
+java -ea:... -da:MyClass MyApp
+\end{lstlisting}
+
+È possibile combinare più flag. In caso di conflitto, la regola è: \textbf{il filtro più specifico vince}.
+
+\begin{lstlisting}[caption={Esempio di configurazione mista}]
+# Abilita tutto il progetto, ma tieni spente le asserzioni nel pacchetto "legacy"
+java -ea -da:com.vecchio.codice... MyApp
+
+# Abilita solo una classe specifica mentre tutto il resto e' spento
+java -da -ea:com.mio.AlgoritmoCritico MyApp
+\end{lstlisting}
+
+\begin{warning}
+Le classi di sistema (come quelle in \texttt{java.util.*}) sono caricate dal \textit{Bootstrap Class Loader} e ignorano i flag \texttt{-ea} e \texttt{-da}. Se sospetti un bug interno al JDK e vuoi attivare le sue asserzioni, devi usare obbligatoriamente \texttt{-esa}.
+\end{warning}
+
+Le asserzioni non richiedono la ricompilazione del codice per essere attivate o disattivate; questa decisione viene presa dal \textbf{Class Loader} (il sottosistema della JVM che cerca i file \texttt{.class} sul disco, ne verifica l'integrità e li carica nella memoria della JVM.) al momento dell'esecuzione. Quando sono disattivate, il Class Loader ignora tutte le asserzioni, che quindi non pesano sulle prestazioni. 
+
+\begin{warning}[Effetti Collaterali]
+La condizione di un'asserzione non deve \textbf{mai} alterare lo stato del programma. Poiché il codice dentro l'\texttt{assert} potrebbe non essere eseguito in produzione, inserire operazioni logiche (come eliminare un file o incrementare un contatore) porterebbe a bug diversi tra l'ambiente di test e quello di produzione.
+\end{warning}
+
+\begin{lstlisting}[caption={Esempio di Side-Effect da evitare}]
+// SBAGLIATO: l'elemento viene rimosso solo se le asserzioni sono attive
+assert lista.remove(oggetto); 
+
+// CORRETTO:
+boolean rimosso = lista.remove(oggetto);
+assert rimosso : "L'oggetto doveva essere presente nella lista!";
+\end{lstlisting}
+
+Se si lavora su sistemi estremamente critici dove anche lo spazio occupato dai file \texttt{.class} e' un problema, si puo' usare una costante \texttt{static final}:
+
+\begin{lstlisting}
+public static final boolean DEBUG = true;
+// ...
+if (DEBUG) assert x >= 0;
+\end{lstlisting}
+
+\begin{tip}
+Il compilatore Java è intelligente: se \texttt{DEBUG} è \texttt{false}, l'intero blocco \texttt{if} viene rimosso dal bytecode finale perche' considerato "unreachable code".
+\end{tip}
+
+\subsection{Quando scegliere le Asserzioni}
+
+Java offre tre strumenti per gestire i fallimenti del sistema: le \textbf{Eccezioni}, il \textbf{Logging} (che vedremo nella prossima sezione) e le \textbf{Asserzioni}. Scegliere quella corretta dipende dalla natura dell'errore.
+
+\begin{itemize}
+    \item \textbf{Eccezioni}: Per condizioni recuperabili o errori comunicati all'utente/chiamante.
+    \item \textbf{Logging}: Per tenere traccia di eventi e diagnosticare problemi nel tempo.
+    \item \textbf{Asserzioni}: Per individuare errori logici interni durante lo sviluppo.
+\end{itemize} 
+
+\medskip
+
+Le asserzioni hanno due caratteristiche fondamentali:
+\begin{enumerate}
+    \item Sono destinate a errori \textbf{fatali e non recuperabili}.
+    \item Sono attive \textbf{solo durante lo sviluppo}. C'è una battuta famosa nel settore: "Usare le asserzioni è come indossare un giubbotto di salvataggio finché sei vicino a riva, per poi buttarlo via quando sei in mezzo all'oceano".
+\end{enumerate}
+
+\medskip
+
+Il dubbio più comune è: "Devo controllare i parametri di un metodo con un \texttt{if-throw} o con un \texttt{assert}?". La risposta dipende dal \textbf{contratto} del metodo.
+
+Se la documentazione del metodo dichiara esplicitamente che verrà lanciata un'eccezione in caso di parametri errati (usando i tag Javadoc \texttt{@throws}), quel comportamento fa parte del \textbf{contratto}. In questo caso \textbf{non} si devono usare le asserzioni.
+
+\begin{lstlisting}[caption={Esempio di contratto con eccezioni}]
+/**
+ * @throws IllegalArgumentException se fromIndex > toIndex
+ */
+static void sort(int[] a, int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) 
+        throw new IllegalArgumentException("fromIndex > toIndex");
+    // ...
+}
+\end{lstlisting}
+
+Se invece la documentazione pone una \textbf{precondizione} (es. "il parametro $a$ non deve essere \texttt{null"}) senza promettere un'eccezione specifica, il chiamante è avvisato: se viola la precondizione, il comportamento è indefinito. Qui l'asserzione è lo strumento perfetto per il programmatore.
+
+\begin{tip}
+In sintesi: se il controllo deve sopravvivere nel prodotto finale perché l'errore può capitare anche se il codice è perfetto (es. input utente), usa le \textbf{Eccezioni}. Se il controllo serve a beccare il programmatore mentre scrive codice sbagliato, usa le \textbf{Asserzioni}.
+\end{tip}
+
+
+
+
+
+
 
 
 
