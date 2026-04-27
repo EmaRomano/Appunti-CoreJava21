@@ -89,49 +89,78 @@ java -cp "/home/user/libs/*:." MiaClasse
 \end{lstlisting}
 \textbf{Nota}: L'asterisco include tutti i file \texttt{.jar}, ma non i singoli file \texttt{.class} sparsi nella cartella.
 
-\section{bozze eccezioni}
+\section{La Classe \texttt{java.lang.System}}
 
-\subsection{Rilanciare ed Incapsulare Eccezioni (Chaining)}
+La classe \texttt{java.lang.System} rappresenta uno dei pilastri fondamentali del Java Development Kit (JDK). Situata nel pacchetto \texttt{java.lang}, essa funge da interfaccia primaria tra l'applicazione Java e l'ambiente in cui viene eseguita (Java Virtual Machine e Sistema Operativo).
 
-A volte non vogliamo gestire un'eccezione direttamente, ma vogliamo "impacchettarla" in un'eccezione più significativa per chi usa il nostro codice. Questo processo si chiama \textit{Exception Chaining}.
+\subsection{Caratteristiche Strutturali}
 
-\begin{important}
-Il compilatore controlla la coerenza tra ciò che lanci con \texttt{throw} e ciò che dichiari con \texttt{throws}. Se nel \texttt{catch} lanci una \textbf{nuova checked exception}, devi dichiararla nella firma del metodo, anche se l'eccezione originale era diversa.
-\end{important}
+Dal punto di vista dell'architettura software, la classe \texttt{System} presenta caratteristiche peculiari:
+\begin{itemize}
+    \item \textbf{Finalità}: È dichiarata come \texttt{public final}, il che impedisce qualsiasi tentativo di ereditarietà.
+    \item \textbf{Istanziabilità}: Il costruttore è privato, rendendo impossibile creare istanze della classe. Tutte le sue funzionalità sono accessibili esclusivamente tramite metodi e campi \texttt{static}.
+    \item \textbf{Accessibilità}: Essendo parte di \texttt{java.lang}, viene importata automaticamente in ogni file sorgente Java.
+\end{itemize}
 
-\subsubsection{Esempio 1: Conversione in Checked Exception}
-In questo caso, catturiamo una \texttt{SQLException} (molto tecnica) e la trasformiamo in una \texttt{DataAccessException} (più generica). Poiché la nuova eccezione è \textit{checked}, dobbiamo aggiornare il \texttt{throws}.
+\subsection{I Flussi di I/O Standard}
 
-\begin{lstlisting}[caption={Cambio della firma per nuova Checked Exception}]
-// Il metodo dichiara la NUOVA eccezione, non quella originale
-public void salvaDati() throws DataAccessException { 
-    try {
-        // ... codice che lancia SQLException ...
-    } catch (SQLException e) {
-        // Lanciamo una nuova eccezione 'impacchettando' l'originale
-        throw new DataAccessException("Errore salvataggio", e);
-    }
-}
+La classe gestisce i tre canali di comunicazione standard definiti a livello di sistema operativo. Questi campi sono istanze di \texttt{PrintStream} (per l'output) e \texttt{InputStream} (per l'input).
+
+\begin{enumerate}
+    \item \texttt{System.out}: Rappresenta lo \textit{standard output}. Viene utilizzato per l'invio di dati alla console o al terminale.
+    \item \texttt{System.err}: Rappresenta lo \textit{standard error}. Sebbene tecnicamente simile a \texttt{out}, è destinato specificamente alla diagnostica. Molti IDE e sistemi di logging separano questi due flussi, evidenziando spesso l'errore in rosso.
+    \item \texttt{System.in}: Rappresenta lo \textit{standard input}. Viene solitamente utilizzato in combinazione con la classe \texttt{Scanner} per leggere l'input dell'utente dalla tastiera.
+\end{enumerate}
+
+\begin{lstlisting}[language=Java, caption={Esempio di utilizzo dei flussi standard}]
+System.out.println("Messaggio informativo");
+System.err.println("Messaggio di errore critico");
 \end{lstlisting}
 
+\subsection{Gestione del Tempo e Misurazioni}
 
+Per il monitoraggio delle prestazioni e la gestione temporale, la classe offre due metodi fondamentali con risoluzioni differenti:
 
-\subsubsection{Esempio 2: Conversione in Unchecked Exception}
-Molti programmatori preferiscono trasformare le \textit{checked} in \textit{unchecked} per non appesantire la firma del metodo. In questo caso, il \texttt{throws} sparisce del tutto.
+\begin{itemize}
+    \item \texttt{currentTimeMillis()}: Restituisce il tempo corrente in millisecondi dall'epoca Unix (1 gennaio 1970). È ideale per calcolare date o timestamp da salvare nel database.
+    \item \texttt{nanoTime()}: Restituisce il valore di un timer ad alta risoluzione in nanosecondi. Non è legato all'ora solare, ma è lo strumento standard per misurare quanto tempo impiega un blocco di codice ad essere eseguito (benchmarking).
+\end{itemize}
 
-\begin{lstlisting}[caption={Conversione a Unchecked (firma pulita)}]
-// Non serve piu il 'throws' perche' lanciamo una RuntimeException
-public void leggiConfigurazione() {
-    try {
-        // ... codice che lancia IOException ...
-    } catch (IOException e) {
-        // Trasformiamo in RuntimeException (Unchecked)
-        throw new RuntimeException("Configurazione mancante!", e);
-    }
-}
+\subsection{Interazione con l'Ambiente Operativo}
+
+La classe permette di interrogare il sistema operativo e la configurazione della JVM tramite le \textit{System Properties} e le \textit{Environment Variables}.
+
+\subsubsection{Proprietà di Sistema}
+Le proprietà di sistema sono coppie chiave-valore che definiscono il runtime Java.
+\begin{itemize}
+    \item \texttt{System.getProperty("user.home")}: Restituisce il percorso della cartella utente.
+    \item \texttt{System.getProperty("java.version")}: Restituisce la versione di Java in uso.
+    \item \texttt{System.lineSeparator()}: Restituisce il separatore di riga specifico dell'OS (\texttt{\textbackslash n} su Unix, \texttt{\textbackslash r\textbackslash n} su Windows).
+\end{itemize}
+
+\subsubsection{Variabili d'Ambiente}
+Le variabili d'ambiente sono impostate a livello di OS e sono fondamentali nel backend moderno (specialmente con Docker e Kubernetes) per gestire configurazioni sensibili come password o indirizzi di database.
+\begin{lstlisting}[language=Java]
+String dbUrl = System.getenv("DATABASE_URL");
 \end{lstlisting}
 
-\begin{observation}
-Passare l'eccezione originale \texttt{e} come secondo parametro nel costruttore della nuova eccezione (\texttt{new NuovaExc("msg", e)}) è fondamentale: permette di non perdere lo \textit{stack trace} originale, facilitando il debugging.
-\end{observation}
+\subsection{Utility di Sistema e Memoria}
+
+\begin{itemize}
+    \item \textbf{\texttt{arraycopy()}}: Un metodo nativo estremamente performante per copiare dati tra array. A differenza di un ciclo \texttt{for}, questo metodo sposta i blocchi di memoria direttamente tramite chiamate a basso livello.
+    \item \textbf{\texttt{gc()}}: Suggerisce alla JVM di eseguire il Garbage Collector. È importante notare che è solo un suggerimento e non garantisce l'immediata liberazione della memoria.
+    \item \textbf{\texttt{exit(int status)}}: Termina la JVM corrente. Un codice di stato \texttt{0} indica una chiusura corretta, mentre un valore diverso da zero indica un fallimento.
+\end{itemize}
+
+\subsection{Integrazione con il Logging Moderno}
+
+Dalla versione 9 di Java, la classe \texttt{System} ha assunto un ruolo centrale nella \textit{Platform Logging API} tramite il metodo:
+\begin{lstlisting}[language=Java]
+System.Logger logger = System.getLogger("NomeLogger");
+\end{lstlisting}
+Questo permette di astrarre il sistema di logging, delegando a \texttt{System} il compito di trovare e utilizzare il miglior backend disponibile (come JUL o Log4j).
+
+\begin{warning}
+Nel contesto dei server e delle applicazioni web, l'uso di \texttt{System.exit()} e la manipolazione diretta di \texttt{System.out} sono sconsigliati. Si preferisce delegare la chiusura al contenitore dell'applicazione e utilizzare i framework di logging per l'output, garantendo così la stabilità e la tracciabilità del sistema.
+\end{warning}
 

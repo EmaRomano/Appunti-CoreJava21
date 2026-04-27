@@ -727,17 +727,13 @@ Anche se nel mondo enterprise si usano spesso Log4j o Logback, studiare il backe
     \item \textbf{Fondamenta}: Offre una base solida per capire come funzionano tutti gli altri framework.
     \item \textbf{Semplicità e Sicurezza}: Essendo parte del JDK, è più "snello" e meno soggetto ad attacchi informatici. 
     \item \textbf{Zero Dipendenze}: Non richiede librerie esterne, rendendolo perfetto per piccoli progetti o moduli di sistema.
-\end{enumerate}
+\end{enumerate} 
 
 \begin{warning}[Sicurezza e Log4j]
 La complessità eccessiva può essere un pericolo. Il famoso attacco hacker a \textbf{Log4j} (Log4Shell) è stato possibile proprio a causa di funzionalità oscure e troppo potenti che permettevano l'esecuzione di codice malevolo tramite un semplice messaggio di log.
 \end{warning}
 
-Oltre al logging dell'applicazione, esiste il logging della Java Virtual Machine stessa (ad esempio per monitorare il \textit{Garbage Collector}). Questo si attiva all'avvio con l'opzione \texttt{-Xlog}:
-
-\begin{lstlisting}[language=bash, caption={Abilitare il logging del GC}]
-java -Xlog:gc=trace:file=gc.log:uptime,tid MyApp
-\end{lstlisting}
+Di seguito, faremo dunque riferimento a JEP 264 per il frontend e a JUL per il backend.
 
 
 
