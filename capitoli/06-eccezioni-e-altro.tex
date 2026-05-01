@@ -733,7 +733,7 @@ Anche se nel mondo enterprise si usano spesso Log4j o Logback, studiare il backe
 La complessità eccessiva può essere un pericolo. Il famoso attacco hacker a \textbf{Log4j} (Log4Shell) è stato possibile proprio a causa di funzionalità oscure e troppo potenti che permettevano l'esecuzione di codice malevolo tramite un semplice messaggio di log.
 \end{warning}
 
-Di seguito, faremo dunque riferimento a JEP 264 per il frontend e a JUL per il backend.
+Di seguito, salvo avviso contrario, faremo dunque riferimento a JEP 264 per il frontend e a JUL per il backend.
 
 \subsection{L'interfaccia \texttt{System.Logger}}
 Come abbiamo accennato alla fine di \ref{sec: classi statiche}, oltre alle classi, si possono annidare anche le interfacce. \texttt{System.Logger} è proprio un esempio di \textbf{Nested Interface}: la classe \textbf{System} funge da \textit{namespace} per l'interfaccia \texttt{Logger} quindi, quando scriviamo \texttt{System.Logger}, il punto (\texttt{.}) non indica l'accesso a un metodo o a una variabile di istanza, ma l'accesso a un \textbf{tipo} definito all'interno dell'ambito (scope) della classe \texttt{System}.
@@ -780,6 +780,87 @@ Ricordiamo che per utilizzare un tipo annidato, la sintassi segue la gerarchia d
 \begin{tip}
 Ricorda: un'interfaccia annidata è sempre \texttt{static}, anche se non lo scrivi esplicitamente. Questo significa che può essere utilizzata senza dover creare un'istanza della classe esterna (cosa che nel caso di \texttt{System} sarebbe comunque impossibile, avendo il costruttore privato).
 \end{tip}
+
+\subsection{Ottenimento e Utilizzo del Logger}
+
+L'ottenimento di un logger non avviene tramite l'operatore \texttt{new}, ma attraverso il metodo statico \texttt{System.getLogger()}. L'argomento del metodo è una stringa che rappresenta il nome del logger; questo nome può essere arbitrario, ma è considerata una \textit{best practice} utilizzare il nome del package (o della classe) in cui si generano i messaggi. 
+
+Questo approccio permette di sfruttare la \textbf{gerarchia dei nomi} per una configurazione granulare. Di fatto, il sistema utilizza un meccanismo di \textbf{caching} concettualmente analogo a quello della \textit{String Pool}: la prima chiamata al metodo con un determinato nome crea il logger, mentre tutte le chiamate successive con lo stesso nome restituiscono il medesimo oggetto già esistente.
+
+\begin{lstlisting}[language=Java, caption={Recupero di un Logger}]
+System.Logger logger = System.getLogger("com.myapp");
+\end{lstlisting}
+
+\begin{tip}
+Poiché i logger con lo stesso nome sono condivisi, è prassi comune dichiararli come \texttt{private static final}. Questo garantisce che la variabile non venga riassegnata e che sia disponibile a livello di classe.
+\end{tip}
+
+Una volta ottenuto il logger, è possibile registrare messaggi specificando il \textbf{livello di importanza}. La sintassi base della \textit{Platform Logging API} è la seguente:
+
+\begin{lstlisting}[language=Java, caption={Esempio di registrazione di un messaggio}]
+logger.log(System.Logger.Level.INFO, "Apertura del file " + filename);
+\end{lstlisting}
+
+A differenza di una stampa manuale, il sistema di logging produce un record strutturato. Ecco un esempio di come appare il messaggio precedente in console (usando il backend JUL):
+
+\begin{lstlisting}[language=bash]
+Apr 28, 2026 10:20:00 AM com.myapp.Main read
+INFO: Apertura del file dati.txt
+\end{lstlisting}
+
+Il logger si comporta come un segretario scrupoloso. Oltre al messaggio fornito dal programmatore, esso cattura e stampa automaticamente i seguenti \textbf{metadati}:
+\begin{itemize}
+    \item \textbf{Timestamp}: Data e ora precisa dell'evento.
+    \item \textbf{Nome della Classe}: Il nome completo (\textit{Fully Qualified Name}) della classe chiamante, nel nostro caso \texttt{com.myapp.Main}.
+    \item \textbf{Nome del Metodo}: Il nome del metodo all'interno del quale è stata invocata la scrittura del log, nel nostro caso \texttt{read}.
+    \item \textbf{Livello}: L'etichetta di severità (\texttt{INFO}, \texttt{WARNING}, ecc.).
+\end{itemize}
+
+\medskip
+
+Il fatto che il nome della classe e del metodo siano inclusi \textbf{automaticamente} è un vantaggio enorme in fase di debug. Non è più necessario scrivere manualmente \texttt{"Errore nel metodo read(): ..."}, poiché il logger "sa" già dove si trova grazie all'analisi dello stack trace.
+
+
+
+% \section{Configurazione del Backend (JUL)}
+
+% La forza del logging risiede nella separazione tra il \textbf{Frontend} (l'API che usiamo per scrivere) e il \textbf{Backend} (il motore che decide cosa mostrare). 
+
+% \subsection{Il file logging.properties}
+% Il backend \texttt{java.util.logging} (JUL) si configura tramite un file di proprieta'. Questo file permette di definire:
+% \begin{itemize}
+%     \item \textbf{Handlers}: Chi scrive fisicamente il log (es. \texttt{ConsoleHandler} per il terminale, \texttt{FileHandler} per i file).
+%     \item \textbf{Filtering}: Il livello minimo di severita' per ogni pacchetto.
+% \end{itemize}
+
+% \begin{lstlisting}[language=bash, caption={logging.properties}]
+% # Filtra i messaggi: mostra solo WARNING e SEVERE
+% com.mycompany.myapp.level=WARNING
+% \end{lstlisting}
+
+% \subsection{Attivazione della Configurazione}
+% Per istruire la JVM a caricare queste impostazioni, si utilizza il flag \texttt{-D} al lancio dell'applicazione:
+
+% \begin{lstlisting}[language=bash]
+% java -Djava.util.logging.config.file=logging.properties NomeClasse
+% \end{lstlisting}
+
+% \begin{observation}
+% Poiche' \texttt{INFO} e' gerarchicamente inferiore a \texttt{WARNING}, tutti i messaggi di tipo \texttt{INFO} verranno scartati dal backend senza che sia necessario modificare il codice sorgente.
+% \end{observation}
+
+
+
+% \begin{important}
+% \textbf{Ricorda}: 
+% \begin{itemize}
+%     \item L'\textbf{API} (ottenere il logger, scrivere il messaggio) e' parte del \textbf{Frontend}.
+%     \item La \textbf{Destinazione}, la \textbf{Formattazione} e il \textbf{Filtraggio} sono compiti del \textbf{Backend}.
+% \end{itemize}
+% \end{important}
+
+
+
 
 
 
