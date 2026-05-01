@@ -692,7 +692,7 @@ Se invece la documentazione pone una \textbf{precondizione} (es. "il parametro $
 In sintesi: se il controllo deve sopravvivere nel prodotto finale perché l'errore può capitare anche se il codice è perfetto (es. input utente), usa le \textbf{Eccezioni}. Se il controllo serve a beccare il programmatore mentre scrive codice sbagliato, usa le \textbf{Asserzioni}.
 \end{tip}
 
-\section{Logging}
+\section{Logging [BOZZE DA RIPRENDERE]}
 
 Tutti i programmatori Java conoscono il rito del "debugging tramite stampa": inserire chiamate a \texttt{System.out.println} nei punti critici del codice per capire cosa stia succedendo. Una volta risolto il problema, queste istruzioni vengono rimosse, per poi essere reinserite al bug successivo.
 
@@ -822,42 +822,8 @@ Il fatto che il nome della classe e del metodo siano inclusi \textbf{automaticam
 
 
 
-% \section{Configurazione del Backend (JUL)}
-
-% La forza del logging risiede nella separazione tra il \textbf{Frontend} (l'API che usiamo per scrivere) e il \textbf{Backend} (il motore che decide cosa mostrare). 
-
-% \subsection{Il file logging.properties}
-% Il backend \texttt{java.util.logging} (JUL) si configura tramite un file di proprieta'. Questo file permette di definire:
-% \begin{itemize}
-%     \item \textbf{Handlers}: Chi scrive fisicamente il log (es. \texttt{ConsoleHandler} per il terminale, \texttt{FileHandler} per i file).
-%     \item \textbf{Filtering}: Il livello minimo di severita' per ogni pacchetto.
-% \end{itemize}
-
-% \begin{lstlisting}[language=bash, caption={logging.properties}]
-% # Filtra i messaggi: mostra solo WARNING e SEVERE
-% com.mycompany.myapp.level=WARNING
-% \end{lstlisting}
-
-% \subsection{Attivazione della Configurazione}
-% Per istruire la JVM a caricare queste impostazioni, si utilizza il flag \texttt{-D} al lancio dell'applicazione:
-
-% \begin{lstlisting}[language=bash]
-% java -Djava.util.logging.config.file=logging.properties NomeClasse
-% \end{lstlisting}
-
-% \begin{observation}
-% Poiche' \texttt{INFO} e' gerarchicamente inferiore a \texttt{WARNING}, tutti i messaggi di tipo \texttt{INFO} verranno scartati dal backend senza che sia necessario modificare il codice sorgente.
-% \end{observation}
 
 
-
-% \begin{important}
-% \textbf{Ricorda}: 
-% \begin{itemize}
-%     \item L'\textbf{API} (ottenere il logger, scrivere il messaggio) e' parte del \textbf{Frontend}.
-%     \item La \textbf{Destinazione}, la \textbf{Formattazione} e il \textbf{Filtraggio} sono compiti del \textbf{Backend}.
-% \end{itemize}
-% \end{important}
 
 
 
