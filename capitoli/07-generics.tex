@@ -1,1 +1,110 @@
 \chapter{Generics}
+
+\section{Introduzione}
+Prima dell'introduzione dei \textit{Generics}, la programmazione generica in Java veniva realizzata esclusivamente tramite l'ereditarietà. La classe \texttt{ArrayList}, ad esempio, gestiva semplicemente un array di riferimenti di tipo \texttt{Object}. Questo approccio presentava due problematiche critiche:
+
+\begin{itemize}
+    \item \textbf{Casting Obbligatorio}: Ogni volta che si recuperava un valore dalla lista, era necessario un cast esplicito al tipo desiderato.
+    \begin{lstlisting}[language=Java]
+ArrayList files = new ArrayList();
+String filename = (String) files.get(0); // Cast necessario
+    \end{lstlisting}
+    \item \textbf{Assenza di Controllo sui Tipi}: Era possibile inserire oggetti di qualsiasi classe nella stessa collezione senza che il compilatore segnalasse errori.
+    \begin{lstlisting}[language=Java]
+files.add(new File("...")); // Compila correttamente, ma causera' un errore al runtime
+    \end{lstlisting}
+\end{itemize}
+\medskip
+I \textit{Generics} offrono una soluzione basata sui parametri di tipo. La sintassi permette di indicare esplicitamente il tipo di elementi che la collezione deve gestire.
+
+\begin{itemize}
+    \item \textbf{Sintassi Diamond}: Se il tipo e' dichiarato esplicitamente a sinistra, si può omettere nel costruttore usando l'operatore diamante \texttt{<>}.
+    \begin{lstlisting}[language=Java]
+ArrayList<String> files = new ArrayList<>();
+    \end{lstlisting}
+    \item \textbf{Inferenza con \texttt{var}}: Introdotta nelle versioni recenti, permette di dedurre il tipo dalla parte destra dell'assegnazione.
+    \begin{lstlisting}[language=Java]
+var files = new ArrayList<String>();
+    \end{lstlisting}
+\end{itemize}
+\medskip
+L'appello dei parametri di tipo risiede in due pilastri fondamentali:
+
+\begin{enumerate}
+    \item \textbf{Leggibilità}: È immediatamente chiaro quali oggetti siano contenuti nella lista (es. solo \texttt{String}).
+    \item \textbf{Sicurezza (Type Safety)}: Il compilatore impedisce l'inserimento di oggetti di tipo errato.
+\end{enumerate}
+
+\begin{tip}[]
+Un errore segnalato dal compilatore (\textit{compile-time error}) e' di gran lunga preferibile a un'eccezione durante l'esecuzione (\textit{runtime ClassCastException}). I Generics spostano il controllo della correttezza del codice dalla fase di esecuzione alla fase di scrittura.
+\end{tip}
+
+La padronanza dei \textit{Generics} si sviluppa su tre livelli distinti, spostando l'attenzione dall'utilizzo alla progettazione.
+\begin{enumerate}
+    \item \textbf{Utilizzo (Livello Base)}: Uso delle classi fornite dal JDK (es. \texttt{ArrayList<String>}) come se fossero tipi nativi del linguaggio.
+    \item \textbf{Risoluzione Problemi (Livello Intermedio)}: Comprensione dei meccanismi interni per gestire messaggi di errore complessi o interoperabilità con codice legacy.
+    \item \textbf{Implementazione (Livello Avanzato)}: Creazione di proprie classi e metodi generici, anticipando i potenziali utilizzi futuri degli utenti.
+\end{enumerate}
+\medskip
+Un compito cruciale del progettista è bilanciare sicurezza e usabilità. Consideriamo, ad esempio, il metodo \texttt{addAll}:
+\begin{itemize}
+    \item Deve essere possibile aggiungere \texttt{ArrayList<Manager>} a \texttt{ArrayList<Employee>} perche' un Manager \textit{è} un Employee.
+    \item Non deve essere possibile il contrario.
+\end{itemize}
+\medskip
+Vedremo presto che per risolvere queste asimmetrie, Java introduce i \textbf{wildcard types} (tipi jolly), che permettono di definire relazioni di sottotipo tra tipi parametrizzati.
+
+\begin{tip}
+La programmazione generica e' particolarmente utile quando si scrive codice che altrimenti richiederebbe numerosi cast da tipi generali come \texttt{Object}. Per la maggior parte delle applicazioni comuni, le classi fornite dal JDK sono sufficienti.
+\end{tip}
+
+\section{Struttura di una Classe Generica}
+
+Una classe generica è definita dall'introduzione di una o più \textbf{variabili di tipo} posizionate dopo il nome della classe. Queste fungono da segnaposto che verranno sostituiti dai tipi reali al momento dell'istanziazione.
+
+\begin{lstlisting}[language=Java, caption={Esempio: la classe \texttt{Pair}}]
+    public class Pair<T>{
+        private T first;
+        private T second;
+
+        public Pair() { first = null; second = null; }
+        public Pair(T first, T second) { this.first = first; 
+                                         this.second = second; }
+
+        public T getFirst() { return first; }
+        public T getSecond() { return second; }
+
+        public void setFirst(T newValue) { first = newValue; }
+        public void setSecond(T newValue) { second = newValue; }
+        }
+\end{lstlisting}
+
+La classe \texttt{Pair} dimostra come la variabile \texttt{T} sia utilizzata coerentemente in tutta la definizione:
+
+\begin{itemize}
+    \item \textbf{Campi}: \texttt{private T first;} --- Il tipo è determinato dall'utente.
+    \item \textbf{Costruttore}: \texttt{public Pair(T first, T second)} --- Accetta parametri del tipo specificato.
+    \item \textbf{Metodi}: \texttt{public T getFirst()} --- Restituisce un oggetto del tipo corretto senza necessità di cast.
+\end{itemize}
+\medskip
+Per mantenere il codice leggibile e coerente con le API di Java, si utilizzano lettere singole maiuscole:
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\hline
+\textbf{Lettera} & \textbf{Significato} \\ \hline
+\texttt{E} & Elemento (usato nelle collezioni) \\
+\texttt{K} & Chiave (Key) \\
+\texttt{V} & Valore (Value) \\
+\texttt{T, U, S} & Tipi generici qualsiasi \\ \hline
+\end{tabular}
+\end{table}
+
+E' possibile definire classi con più variabili di tipo, ad esempio \texttt{public class Pair<T, U>}, permettendo alla classe di gestire coppie di oggetti di natura differente in modo \textit{type-safe}.
+
+\begin{tip}[\textbf{Type Erasure (Cancellazione del Tipo)}]
+    La JVM non conosce i Generics. Durante la compilazione, il compilatore sostituisce tutte le variabili di tipo con il loro \textit{bound} (solitamente \texttt{Object}) e inserisce i cast necessari. Questo garantisce la compatibilità con il vecchio codice.
+\end{tip}
+
+
+
