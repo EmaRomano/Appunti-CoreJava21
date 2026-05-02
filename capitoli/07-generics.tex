@@ -209,5 +209,38 @@ Se un tipo ha piu' vincoli, l'ordine non è indifferente. Il compilatore sostitu
 Più in generale, per ridurre il \textit{runtime overhead}, conviene posizionare come primo vincolo l'interfaccia i cui metodi vengono invocati più frequentemente all'interno del codice generico.
 \end{warning}
 
+\subsection{Traduzione delle Espressioni Generiche}
+
+Dopo che il compilatore ha eseguito la \textit{Type Erasure}, le chiamate ai metodi e l'accesso ai campi devono essere adattati per mantenere la coerenza dei tipi.
+Poiché il tipo di ritorno di un metodo cancellato è solitamente \texttt{Object}, il compilatore inserisce automaticamente un \textbf{cast} nel codice chiamante. 
+Data la chiamata \texttt{Employee buddy = buddies.getFirst();}, la traduzione nel bytecode avviene in due passaggi:
+
+\begin{enumerate}
+    \item Chiamata al metodo \textit{raw} \texttt{Pair.getFirst()} (ritorna \texttt{Object}).
+    \item Conversione (\textit{cast}) del valore ritornato da \texttt{Object} a \texttt{Employee}.
+\end{enumerate}
+
+\medskip
+
+Il medesimo principio si applica all'accesso diretto ai campi, qualora siano visibili. Anche se sintatticamente non appare alcun cast nel codice sorgente \texttt{.java}, il bytecode risultante conterrà un'istruzione di cast per garantire che il riferimento sia del tipo corretto.
+
+Il vantaggio dei Generics non è quindi l'eliminazione dei cast a livello di esecuzione (che continuano a esistere nel bytecode), ma il fatto che il compilatore li gestisca \textbf{automaticamente} e in modo \textbf{sicuro}, sollevando il programmatore dal rischio di errori manuali. Praticamente, i Generics non sono altro che un modo di gestire in modo automatico ciò che prima della loro introduzione si faceva a mano.
+
+\subsection{I Metodi Ponte (Bridge Methods)}
+
+I \textit{bridge methods} sono sintetizzati dal compilatore per gestire le discrepanze causate dalla \textit{type erasure}.
+
+Data una gerarchia \texttt{Sub extends Super<T>}, il processo segue questi passi:
+\begin{enumerate}
+    \item La \textit{type erasure} trasforma i metodi della superclasse in metodi \textit{raw} (usando \texttt{Object} o i \textit{bounds}).
+    \item Il compilatore crea un metodo nella sottoclasse con la firma \textit{raw} (il "ponte").
+    \item Il ponte effettua il cast del parametro al tipo specifico e invoca il metodo originale della sottoclasse.
+\end{enumerate}
+
+Sebbene il linguaggio Java proibisca metodi con firme identiche ma diversi tipi di ritorno, la JVM permette questa distinzione nel \textit{bytecode}. I Generics sfruttano questa caratteristica per mantenere il polimorfismo anche quando i tipi vengono cancellati.
+
+
+
+
 
 
