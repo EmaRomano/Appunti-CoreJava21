@@ -103,24 +103,6 @@ Per mantenere il codice leggibile e coerente con le API di Java, si utilizzano l
 
 E' possibile definire classi con più variabili di tipo, ad esempio \texttt{public class Pair<T, U>}, permettendo alla classe di gestire coppie di oggetti di natura differente in modo \textit{type-safe}.
 
-%nota spostare
-% \begin{tip}[\textbf{Type Erasure (Cancellazione del Tipo)}]
-%     La JVM non conosce i Generics. Durante la compilazione, il compilatore sostituisce tutte le variabili di tipo con il loro \textit{bound} (solitamente \texttt{Object}) e inserisce i cast necessari. Questo garantisce la compatibilità con il vecchio codice.
-
-%     % Esempio da aggiungere alla nota quando la inserirai
-%     \begin{example}
-%     Il codice sorgente:
-%     \begin{lstlisting}[language=Java]
-%     public T getFirst() { return first; }
-%     \end{lstlisting}
-%     Dopo la \textit{Type Erasure}, diventa:
-%     \begin{lstlisting}[language=Java]
-%     public Object getFirst() { return first; }
-%     \end{lstlisting}
-%     Il compilatore aggiunge poi il cast invisibile nel punto in cui il metodo viene chiamato.
-%     \end{example}
-% \end{tip}
-
 \section{Metodi Generici}
 
 Un metodo generico può essere definito sia all'interno di classi ordinarie che di classi generiche. La sua caratteristica principale è la presenza di parametri di tipo indipendenti dalla classe.
@@ -169,17 +151,63 @@ La clausola \texttt{<T extends BoundingType>} indica che \texttt{T} deve essere 
 \end{enumerate}
 \end{warning}
 
+Ecco come appare il codice di un metodo \texttt{min} che calcola il minimo di un array di oggetti generici, purché siano comparabili:
+
+\begin{lstlisting}[language=Java]
+public static <T extends Comparable> T min(T[] a) {
+    if (a == null || a.length == 0) return null;
+    T smallest = a[0];
+    for (int i = 1; i < a.length; i++) {
+        if (smallest.compareTo(a[i]) > 0) {
+            smallest = a[i];
+        }
+    }
+    return smallest;
+}
+\end{lstlisting}
+
 \begin{observation}
     L'interfaccia \texttt{Comparable} che abbiamo usato per l'esempio è essa stessa di tipo generico; ciò comporta che la sintassi che abbiamo usato genera dei warnings. Chiariremo questo dettaglio più avanti. 
 \end{observation}
 
-\begin{example}
-Il metodo \texttt{min}:
-\begin{lstlisting}[language=Java]
-public static <T extends Comparable> T min(T[] a) {
-    // Ora il compilatore sa che T ha il metodo compareTo()
-    if (smallest.compareTo(a[i]) > 0) ...
-}
+\section{Funzionamento interno dei Generics}
+Vediamo ora come la JVM gestisce internamente i Generics. 
+
+\subsection{Type Erasure (Cancellazione del Tipo)}
+
+La \textit{Type Erasure} è il processo mediante il quale il compilatore Java traduce il codice generico in codice compatibile con le versioni precedenti della JVM (pre-Java 5).
+
+Per ogni tipo generico, il compilatore genera un \textbf{Raw Type} (tipo grezzo) seguendo queste regole:
+\begin{itemize}
+    \item Le variabili di tipo senza vincoli (\texttt{<T>}) vengono sostituite da \texttt{Object}.
+    \item Le variabili con vincoli (\texttt{<T extends B1 \& B2>}) vengono sostituite dal \textbf{primo vincolo} (\texttt{B1}).
+\end{itemize}
+
+\medskip
+
+\begin{lstlisting}[language=Java, caption={Esempio: la classe \texttt{Interval}}]
+    public class Interval<T extends Comparable & Serializable> implements Serializable{
+        private T lower;
+        private T upper;
+        . . .
+        public Interval(T first, T second)
+        {
+            if (first.compareTo(second) <= 0) { lower = first; upper = second; }
+            else { lower = second; upper = first; }
+        }
+        }
 \end{lstlisting}
-\end{example}
+
+Ad esempio, per la classe \texttt{Interval<T extends Comparable \& Serializable>}:
+\begin{itemize}
+    \item Il campo \texttt{private T lower} diventa \texttt{private Comparable lower}.
+    \item Il metodo \texttt{compareTo} può essere chiamato direttamente senza cast.
+\end{itemize}
+
+\begin{warning}[\textbf{Efficienza e Ordine dei Vincoli}]
+Se un tipo ha piu' vincoli, l'ordine non è indifferente. Il compilatore sostituisce \texttt{T} con il primo vincolo della lista. Se il primo vincolo è un'interfaccia "tag" (senza metodi come \texttt{Serializable}), il compilatore dovrà inserire dei cast extra per invocare i metodi degli altri vincoli. 
+Più in generale, per ridurre il \textit{runtime overhead}, conviene posizionare come primo vincolo l'interfaccia i cui metodi vengono invocati più frequentemente all'interno del codice generico.
+\end{warning}
+
+
 

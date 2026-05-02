@@ -622,6 +622,7 @@ button.addActionListener(e -> counter[0]++);
 \textbf{Nota di cautela}: L'uso di array di un solo elemento o di "wrapper" per aggirare l'impossibilità di modificare variabili locali è un \textit{workaround} che va usato con \textbf{estrema cautela}. In ambienti multi-thread, questa pratica espone il codice a \textit{race conditions} se non opportunamente sincronizzata.
 \end{warning}
 
+
 \section{Inner Classes}
 
 Una \textbf{Inner Class} è una classe definita all'interno di un'altra. La sua caratteristica distintiva è il legame con l'istanza della classe esterna (\textit{Outer Class}).
@@ -877,6 +878,57 @@ Se l'istanza interna viene passata a un contesto a lungo termine (es. Thread, St
 \begin{warning}
 Le \textbf{classi anonime} sono le piu' pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.
 \end{warning}
+
+\section{Approfondimento: le Chiusure (Closures)}
+
+Sebbene il termine non compaia spesso nella documentazione ufficiale Java (che preferisce \textit{Variable Capture}), in informatica si definisce \textbf{Closure} (o chiusura) un blocco di codice (come una Lambda o una Inner Class) insieme al \textbf{contesto} (lo scope) in cui è stato creato.
+
+\begin{tip}[Definizione Formale]
+Una \textbf{closure} è una funzione che "racchiude" (da cui il nome) le variabili libere del suo ambiente circostante, permettendo loro di sopravvivere anche dopo che il blocco di codice originale ha terminato l'esecuzione.
+\end{tip}
+
+In Java, ogni volta che una Lambda Expression o una Local Inner Class accede a una variabile definita all'esterno del suo corpo, stiamo creando una chiusura.
+
+Le chiusure sono fondamentali nel backend moderno perché permettono di "personalizzare" un comportamento con dei dati specifici al momento della creazione, per poi eseguirlo in un secondo momento.
+
+\begin{lstlisting}[language=Java, caption={Esempio pratico di Closure}]
+public class ChiusuraEsempio {
+    public static void main(String[] args) {
+        // Creiamo un'azione "personalizzata" con un dato locale
+        Runnable azione = creaSaluto("Studente Java");
+        
+        // Eseguiamo l'azione: il metodo creaSaluto e' gia' terminato,
+        // ma la Lambda "ricorda" ancora il valore di 'nome'.
+        azione.run(); 
+    }
+
+    public static Runnable creaSaluto(String nome) {
+        String prefisso = "Benvenuto, "; // Variabile locale
+        
+        // Questa e' una CLOSURE:
+        // Il codice della lambda + le variabili 'prefisso' e 'nome'
+        return () -> System.out.println(prefisso + nome);
+    }
+}
+\end{lstlisting}
+
+È importante notare una distinzione fondamentale che spesso emerge nei colloqui tecnici:
+\begin{itemize}
+    \item \textbf{In linguaggi come JavaScript o Python}: Le chiusure catturano il \textit{riferimento} alla variabile. Se la variabile cambia fuori, cambia anche dentro la chiusura.
+    \item \textbf{In Java}: Le chiusure catturano il \textbf{valore} (una copia). Per evitare l'incoerenza tra l'originale e la copia (come spiegato nel paragrafo \ref{sec:variable-capture}), Java impone che la variabile sia \textbf{effectively final}.
+\end{itemize}
+
+\begin{warning}[]
+Se qualcuno ti chiede: "Java supporta le chiusure?", la risposta corretta è: \textit{"Sì, Java supporta le chiusure tramite le Lambda e le Inner Classes, ma con il vincolo che le variabili catturate devono essere immutabili (effectively final) per garantire la thread-safety e la coerenza dello stack."}
+\end{warning}
+
+
+Riepilogando:
+\begin{enumerate}
+    \item \textbf{Lambda/Inner Class}: È il contenitore fisico del codice.
+    \item \textbf{Variable Capture}: È il processo tecnico (fatto dal compilatore) di copiare le variabili.
+    \item \textbf{Closure}: È il concetto teorico che descrive l'unione tra il codice e le variabili catturate.
+\end{enumerate}
 
 
 
