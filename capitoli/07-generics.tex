@@ -143,3 +143,42 @@ Quando vengono passati tipi eterogenei (es. \texttt{Double} e \texttt{Integer}),
 Per scoprire quale tipo il compilatore sta inferendo "sotto il cofano", prova ad assegnare il risultato del metodo a un tipo palesemente errato (es. \texttt{JButton}). L'errore del compilatore rivelerà l'esatta gerarchia di tipi (intersezione di tipi) che ha trovato, come \texttt{Object \& Serializable \& Comparable}.
 \end{tip}
 
+\section{Variabili di Tipo Vincolate (Bounded Type Variables)}
+
+Talvolta è necessario limitare i tipi che possono essere sostituiti a una variabile di tipo \texttt{T}. Questo permette di invocare metodi specifici (come \texttt{compareTo}) sull'oggetto generico.
+
+La clausola \texttt{<T extends BoundingType>} indica che \texttt{T} deve essere un \textbf{sottotipo} del tipo vincolante.
+\begin{itemize}
+    \item \textbf{Esempio}: \texttt{<T extends Comparable>} garantisce che \texttt{T} implementi l'interfaccia \texttt{Comparable}.
+    \item \textbf{Nota Linguistica}: Si usa sempre \texttt{extends}, anche se il vincolo è un'interfaccia, per denotare il concetto generale di "sottotipo" senza aggiungere nuove keyword: in tale contesto, la parola chiave \texttt{implements} \textbf{non esiste}. 
+\end{itemize}
+
+\medskip
+
+È possibile specificare più vincoli separandoli con l'operatore \texttt{\&} (la virgola è già usata per separare le variabili di tipo).
+\begin{center}
+\texttt{T extends Class1 \& Interface1 \& Interface2}
+\end{center}
+
+\begin{warning}[\textbf{Regole di Precedenza}]
+\begin{enumerate}
+    \item Si può specificare al massimo una classe come vincolo.
+    \item Se presente, la classe deve essere indicata per \textbf{prima} nella lista dei vincoli.
+    \item Le interfacce seguono la classe, separate da \texttt{\&}.
+\end{enumerate}
+\end{warning}
+
+\begin{observation}
+    L'interfaccia \texttt{Comparable} che abbiamo usato per l'esempio è essa stessa di tipo generico; ciò comporta che la sintassi che abbiamo usato genera dei warnings. Chiariremo questo dettaglio più avanti. 
+\end{observation}
+
+\begin{example}
+Il metodo \texttt{min}:
+\begin{lstlisting}[language=Java]
+public static <T extends Comparable> T min(T[] a) {
+    // Ora il compilatore sa che T ha il metodo compareTo()
+    if (smallest.compareTo(a[i]) > 0) ...
+}
+\end{lstlisting}
+\end{example}
+
