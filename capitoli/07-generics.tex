@@ -102,9 +102,44 @@ Per mantenere il codice leggibile e coerente con le API di Java, si utilizzano l
 
 E' possibile definire classi con più variabili di tipo, ad esempio \texttt{public class Pair<T, U>}, permettendo alla classe di gestire coppie di oggetti di natura differente in modo \textit{type-safe}.
 
-\begin{tip}[\textbf{Type Erasure (Cancellazione del Tipo)}]
-    La JVM non conosce i Generics. Durante la compilazione, il compilatore sostituisce tutte le variabili di tipo con il loro \textit{bound} (solitamente \texttt{Object}) e inserisce i cast necessari. Questo garantisce la compatibilità con il vecchio codice.
+%nota spostare
+% \begin{tip}[\textbf{Type Erasure (Cancellazione del Tipo)}]
+%     La JVM non conosce i Generics. Durante la compilazione, il compilatore sostituisce tutte le variabili di tipo con il loro \textit{bound} (solitamente \texttt{Object}) e inserisce i cast necessari. Questo garantisce la compatibilità con il vecchio codice.
+
+%     % Esempio da aggiungere alla nota quando la inserirai
+%     \begin{example}
+%     Il codice sorgente:
+%     \begin{lstlisting}[language=Java]
+%     public T getFirst() { return first; }
+%     \end{lstlisting}
+%     Dopo la \textit{Type Erasure}, diventa:
+%     \begin{lstlisting}[language=Java]
+%     public Object getFirst() { return first; }
+%     \end{lstlisting}
+%     Il compilatore aggiunge poi il cast invisibile nel punto in cui il metodo viene chiamato.
+%     \end{example}
+% \end{tip}
+
+\section{Metodi Generici}
+
+Un metodo generico può essere definito sia all'interno di classi ordinarie che di classi generiche. La sua caratteristica principale è la presenza di parametri di tipo indipendenti dalla classe.
+
+La variabile di tipo deve essere dichiarata tra parentesi angolate \textit{dopo} i modificatori e \textit{prima} del tipo di ritorno:
+\begin{center}
+\texttt{modificatori <T> tipo\_ritorno nomeMetodo(parametri)}
+\end{center}
+
+Il compilatore Java è solitamente in grado di dedurre il tipo del parametro analizzando gli argomenti passati alla chiamata del metodo.
+\begin{itemize}
+    \item \textbf{Chiamata esplicita}: \texttt{ArrayAlg.<String>getMiddle("A", "B");}
+    \item \textbf{Chiamata con inferenza}: \texttt{ArrayAlg.getMiddle("A", "B");}
+\end{itemize}
+
+\medskip
+
+Quando vengono passati tipi eterogenei (es. \texttt{Double} e \texttt{Integer}), il compilatore cerca il \textit{common supertype}. Se esistono più supertipi validi (come \texttt{Number} e \texttt{Comparable}), l'inferenza fallisce.
+
+\begin{tip}[\textbf{Il trucco dell'errore indotto}]
+Per scoprire quale tipo il compilatore sta inferendo "sotto il cofano", prova ad assegnare il risultato del metodo a un tipo palesemente errato (es. \texttt{JButton}). L'errore del compilatore rivelerà l'esatta gerarchia di tipi (intersezione di tipi) che ha trovato, come \texttt{Object \& Serializable \& Comparable}.
 \end{tip}
-
-
 
