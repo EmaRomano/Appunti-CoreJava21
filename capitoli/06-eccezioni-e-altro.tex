@@ -260,9 +260,9 @@ Il flusso di esecuzione è il seguente:
     \end{itemize}
 \end{enumerate}
 
-\begin{warning}
+\begin{warningbox}
 L'ordine dei blocchi \texttt{catch} e' fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, si devono sempre mettere le eccezioni **più specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **più generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la più specifica non verrà mai raggiunta.
-\end{warning}
+\end{warningbox}
 
 A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identico modo, non è più necessario scrivere blocchi \texttt{catch} duplicati: basta usare la sintassi \textit{multi-catch} separando le classi con l'operatore \textit{pipe} (\texttt{|}). Oltre a rendere il codice più leggibile, questa pratica è più efficiente: il compilatore genera un unico blocco di \textit{bytecode} per le eccezioni condivise, riducendo la dimensione del file compilato.
 \begin{lstlisting}[caption={Esempio di multi-catch}]
@@ -272,21 +272,21 @@ A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identic
 }
 \end{lstlisting}
 
-\begin{warning}
+\begin{warningbox}
     Quando si usa il multi-catch con l'operatore | , la variabile dell'eccezione (\texttt{e}) è implicitamente \textbf{final}: non si può riassegnarla all'interno del blocco.
 
     Un altro dettaglio tecnico importante è che il tipo di \texttt{e} nel multi-catch non è un "tipo unione" (anche quando l'IDE ci dice che è così). Il compilatore assegna a \texttt{e} il tipo della \textbf{superclasse comune più vicina} (\textit{LUD: least upper bound}) tra quelle elencate. In genere questo non è un problema ma, in caso contrario, probabilmente è meglio tornare a usare blocchi \texttt{catch} separati. Il codice risulterà molto più pulito e meno propenso a errori.
-\end{warning}
+\end{warningbox}
 
 Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia delle risorse (chiudere file, connessioni database, socket). La sua caratteristica unica è che viene eseguito \textbf{anche se} nel blocco \texttt{try} o \texttt{catch} era presente un'istruzione \texttt{return}.
 
 L'unica situazione in cui \texttt{finally} potrebbe non essere eseguito è se la JVM si arresta bruscamente (es. \texttt{System.exit(0)}) o se si verifica un \texttt{Error} catastrofico dell'hardware.
 
 
-\begin{warning}
+\begin{warningbox}
 Sebbene il \texttt{finally} sia fondamentale per la chiusura delle risorse, bisogna stare attenti a un errore comune: inserire istruzioni che alterano il flusso di controllo (come \texttt{return} o \texttt{throw}) all'interno del \texttt{finally}.
 Se un blocco \texttt{finally} contiene un \texttt{return}, questo "sovrascriverà" qualsiasi valore di ritorno o eccezione lanciata nei blocchi \texttt{try} o \texttt{catch}. Analogamente per i \texttt{throw}.
-\end{warning}
+\end{warningbox}
 
 \subsection{La clausola \texttt{throws}: gestione delegata}
 
@@ -616,9 +616,9 @@ java -ea -da:com.vecchio.codice... MyApp
 java -da -ea:com.mio.AlgoritmoCritico MyApp
 \end{lstlisting}
 
-\begin{warning}
+\begin{warningbox}
 Le classi di sistema (come quelle in \texttt{java.util.*}) sono caricate dal \textit{Bootstrap Class Loader} e ignorano i flag \texttt{-ea} e \texttt{-da}. Se sospetti un bug interno al JDK e vuoi attivare le sue asserzioni, devi usare obbligatoriamente \texttt{-esa}.
-\end{warning}
+\end{warningbox}
 
 \begin{observation}
 Sebbene sia possibile attivare le asserzioni da riga di comando, nella pratica quotidiana si utilizzano le impostazioni dell'IDE. E' fondamentale inserire il flag \texttt{-ea} nel campo delle \textbf{VM Options} (parametri per la Virtual Machine) e non tra i \textit{Program Arguments}, altrimenti il comando verrebbe ignorato.
@@ -626,9 +626,9 @@ Sebbene sia possibile attivare le asserzioni da riga di comando, nella pratica q
 
 Le asserzioni non richiedono la ricompilazione del codice per essere attivate o disattivate; questa decisione viene presa dal \textbf{Class Loader} (il sottosistema della JVM che cerca i file \texttt{.class} sul disco, ne verifica l'integrità e li carica nella memoria della JVM.) al momento dell'esecuzione. Quando sono disattivate, il Class Loader ignora tutte le asserzioni, che quindi non pesano sulle prestazioni. 
 
-\begin{warning}[Effetti Collaterali]
+\begin{warningbox}[Effetti Collaterali]
 La condizione di un'asserzione non deve \textbf{mai} alterare lo stato del programma. Poiché il codice dentro l'\texttt{assert} potrebbe non essere eseguito in produzione, inserire operazioni logiche (come eliminare un file o incrementare un contatore) porterebbe a bug diversi tra l'ambiente di test e quello di produzione.
-\end{warning}
+\end{warningbox}
 
 \begin{lstlisting}[caption={Esempio di Side-Effect da evitare}]
 // SBAGLIATO: l'elemento viene rimosso solo se le asserzioni sono attive
@@ -729,9 +729,9 @@ Anche se nel mondo enterprise si usano spesso Log4j o Logback, studiare il backe
     \item \textbf{Zero Dipendenze}: Non richiede librerie esterne, rendendolo perfetto per piccoli progetti o moduli di sistema.
 \end{enumerate} 
 
-\begin{warning}[Sicurezza e Log4j]
+\begin{warningbox}[Sicurezza e Log4j]
 La complessità eccessiva può essere un pericolo. Il famoso attacco hacker a \textbf{Log4j} (Log4Shell) è stato possibile proprio a causa di funzionalità oscure e troppo potenti che permettevano l'esecuzione di codice malevolo tramite un semplice messaggio di log.
-\end{warning}
+\end{warningbox}
 
 Di seguito, salvo avviso contrario, faremo dunque riferimento a JEP 264 per il frontend e a JUL per il backend.
 

@@ -127,9 +127,9 @@ class Employee implements Comparable<Employee>
 
 Il vantaggio principale di questa evoluzione è che il compilatore ora può garantire la coerenza dei tipi durante la compilazione, eliminando la possibilità di errori di tipo a runtime e migliorando la leggibilità del codice.
 
-\begin{warning}
+\begin{warningbox}
     L'uso di \texttt{Comparable<T>} è oggi lo standard assoluto. La versione non generica (\texttt{raw type}) viene mantenuta solo per compatibilità con il codice scritto prima del 2004, ma il suo utilizzo è fortemente sconsigliato (\textit{deprecated} nella logica di progettazione).
-\end{warning}
+\end{warningbox}
 
 \subsubsection*{Comparable ed Ereditarietà: Il problema dell'Antisimmetria}
 Il contratto di \texttt{Comparable} impone una regola matematica ferrea definita \textbf{antisimmetria}:
@@ -388,11 +388,11 @@ x -> x * x
     Al contrario dei metodi, nelle Lambda il tipo di ritorno è sempre dedotto dal contesto e non può essere dichiarato esplicitamente.
 \end{observation}
 
-\begin{warning}
+\begin{warningbox}
     Se il corpo della Lambda ha dei rami condizionali (\texttt{if/else}), è \textbf{illegale} che alcuni rami restituiscano un valore e altri no. 
 Esempio errato: \texttt{(int x) -> \{ if (x >= 0) return 1; \}} 
 Il compilatore darà errore perché manca il valore di ritorno per il caso \texttt{x < 0}.
-\end{warning}
+\end{warningbox}
 
 A partire da Java 21, è stata introdotta la possibilità di utilizzare il carattere \textbf{underscore} (\texttt{\_}) per denotare parametri di una Lambda expression che non vengono mai utilizzati nel corpo della funzione (abbiamo già incontrato questo tipo di sintassi nel pattern matching con \texttt{switch} o \texttt{instanceof}).
 
@@ -618,9 +618,9 @@ int[] counter = { 0 };
 button.addActionListener(e -> counter[0]++); 
 \end{lstlisting}
 
-\begin{warning}
+\begin{warningbox}
 \textbf{Nota di cautela}: L'uso di array di un solo elemento o di "wrapper" per aggirare l'impossibilità di modificare variabili locali è un \textit{workaround} che va usato con \textbf{estrema cautela}. In ambienti multi-thread, questa pratica espone il codice a \textit{race conditions} se non opportunamente sincronizzata.
-\end{warning}
+\end{warningbox}
 
 
 \section{Inner Classes}
@@ -875,9 +875,9 @@ Se l'istanza interna viene passata a un contesto a lungo termine (es. Thread, St
     \end{enumerate}
 \end{tip}
 
-\begin{warning}
+\begin{warningbox}
 Le \textbf{classi anonime} sono le piu' pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.
-\end{warning}
+\end{warningbox}
 
 \section{Approfondimento: le Chiusure (Closures)}
 
@@ -918,9 +918,9 @@ public class ChiusuraEsempio {
     \item \textbf{In Java}: Le chiusure catturano il \textbf{valore} (una copia). Per evitare l'incoerenza tra l'originale e la copia (come spiegato nel paragrafo \ref{sec:variable-capture}), Java impone che la variabile sia \textbf{effectively final}.
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
 Se qualcuno ti chiede: "Java supporta le chiusure?", la risposta corretta è: \textit{"Sì, Java supporta le chiusure tramite le Lambda e le Inner Classes, ma con il vincolo che le variabili catturate devono essere immutabili (effectively final) per garantire la thread-safety e la coerenza dello stack."}
-\end{warning}
+\end{warningbox}
 
 
 Riepilogando:

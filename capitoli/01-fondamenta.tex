@@ -85,9 +85,9 @@ In definitiva, la funzione \texttt{length()} non restituisce il numero di simbol
     \item \textbf{Caso Esotico}: Per i caratteri supplementari (come le emoji o simboli matematici rari), 1 simbolo = 2 \texttt{char} (4 byte). In questo caso, la lunghezza risulta \textbf{doppia} rispetto al numero di simboli reali.
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
 Nonostante le stringhe siano logicamente sequenze di char a 2 byte (UTF-16), le versioni moderne di Java (a partire da Java 9 in poi) le memorizzano come sequenze di singoli byte se il contenuto lo permette, risparmiando spazio senza cambiare il comportamento del codice.
-\end{warning}
+\end{warningbox}
 
 \subsection{Il tipo boolean}
 
@@ -134,13 +134,13 @@ La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le carat
 \caption{Quadro sinottico dei tipi primitivi in Java.}
 \end{table}
 
-\begin{warning}[]
+\begin{warningbox}[]
 \textbf{Promemoria:}
 \begin{itemize}
     \item \textbf{Aritmetica Modulare}: L'overflow degli interi è silenzioso e ciclico ($max + 1 = min$).
     \item \textbf{Precisione Binaria}: Non usare mai \texttt{double} o \texttt{float} per calcoli monetari o di precisione assoluta (usare \texttt{BigDecimal}).
 \end{itemize}
-\end{warning}
+\end{warningbox}
 
 \section{Stringhe}
 
@@ -257,9 +257,9 @@ A differenza di \texttt{String}, questa classe offre metodi per la modifica \tex
     \item \texttt{reverse()}: Inverte l'ordine dei caratteri (operazione estremamente efficiente).
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
     \textbf{Ottimizzazione del Compilatore:} Nelle versioni moderne di Java, il compilatore trasforma automaticamente le concatenazioni semplici (es. \texttt{s = a + b}) in istruzioni \texttt{StringBuilder}. Tuttavia, all'interno dei \textbf{cicli}, il compilatore non è in grado di applicare questa ottimizzazione in modo efficiente, rendendo l'uso manuale di \texttt{StringBuilder} un requisito fondamentale per scrivere codice professionale. Non conviene invece usarlo se devono solo unire due o tre stringhe una sola volta: l'overhead per istanziare l'oggetto StringBuilder renderebbe il codice inutilmente complesso e leggermente più lento rispetto ad una semplice concatenazione con l'operatore \texttt{+}.
-\end{warning}
+\end{warningbox}
 % --- Fine Sezione StringBuilder ---
 
 \section{Input e output su console}
@@ -343,9 +343,9 @@ import java.nio.charset.StandardCharsets;
 Scanner in = new Scanner(Path.of("miofile.txt"), StandardCharsets.UTF_8);
 \end{lstlisting}
 
-\begin{warning}[]
+\begin{warningbox}[]
 Se scrivi \texttt{Scanner in = new Scanner("miofile.txt")}, lo \texttt{Scanner} non aprirà il file, ma leggerà la stringa stessa come se fosse il contenuto dei dati. L'uso di \texttt{Path.of} è obbligatorio per puntare al file fisico.
-\end{warning}
+\end{warningbox}
 
 \subsection{Scrittura su File}
 
@@ -370,9 +370,9 @@ Quando si lavora con i file, bisogna considerare due aspetti critici:
 
 
 
-\begin{warning}[]
+\begin{warningbox}[]
     \textbf{Evoluzione del Charset (JEP 400):} Sebbene a partire da Java 18 l'encoding predefinito sia diventato ufficialmente \texttt{UTF\_8}, è comunque consigliabile specificare \texttt{StandardCharsets.UTF\_8} (spesso considerato ridondante) in modo esplicito. Questo garantisce la portabilità del codice su versioni precedenti di Java e rende l'intento del programmatore inequivocabile, evitando che il comportamento del software dipenda implicitamente dalle impostazioni della JVM.
-\end{warning}
+\end{warningbox}
 
 \section{Il Costrutto Switch}
 
@@ -500,9 +500,9 @@ BigInteger reallyBig = new BigInteger("22223224462942044552973989346190996720666
     \item \textbf{Costanti predefinite}: \texttt{BigInteger.ZERO}, \texttt{ONE}, \texttt{TWO} e \texttt{TEN}.
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
     Per \texttt{BigDecimal}, si deve \textbf{sempre} usare il costruttore che accetta una \texttt{String}. Il costruttore \texttt{BigDecimal(double)} è intrinsecamente prono a errori di arrotondamento dovuti alla rappresentazione binaria dei floating-point.
-\end{warning}
+\end{warningbox}
 
 Ad esempio, \texttt{new BigDecimal(0.1)} non produce esattamente $0.1$, ma una sequenza imprecisa (com'è noto da nozioni di architettura dei calcolatori, 0.1 in binario è un numero periodico infinito, quindi viene approssimato):
 $$0.1000000000000000055511151231257827021181583404541015625$$

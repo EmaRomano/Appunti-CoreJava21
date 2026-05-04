@@ -161,9 +161,9 @@ System.Logger logger = System.getLogger("NomeLogger");
 \end{lstlisting}
 Questo permette di astrarre il sistema di logging, delegando a \texttt{System} il compito di trovare e utilizzare il miglior backend disponibile (come JUL o Log4j).
 
-\begin{warning}
+\begin{warningbox}
 Nel contesto dei server e delle applicazioni web, l'uso di \texttt{System.exit()} e la manipolazione diretta di \texttt{System.out} sono sconsigliati. Si preferisce delegare la chiusura al contenitore dell'applicazione e utilizzare i framework di logging per l'output, garantendo così la stabilità e la tracciabilità del sistema.
-\end{warning}
+\end{warningbox}
 
 
 

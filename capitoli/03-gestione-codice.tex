@@ -34,14 +34,14 @@ Poiché i domini sono assegnati in modo univoco dalle autorità internazionali, 
     \end{center}
 \end{example}
 
-\begin{warning}[Package vs Directory: Distinzione Concettuale]
+\begin{warningbox}[Package vs Directory: Distinzione Concettuale]
 Un errore tipico dei principianti è identificare il concetto di \textbf{package} con quello di \textbf{directory} (cartella). Sebbene Java, come vedremo a breve, imponga una corrispondenza biunivoca tra il nome del package e il percorso fisico sul disco, i due concetti rimangono distinti:
 \begin{itemize}
     \item Il \textbf{Package} è un'entità logica (\textit{Namespace}): serve a raggruppare classi correlate e a prevenire conflitti di nomi.
     \item La \textbf{Directory} è un'entità fisica: è una struttura del \textit{file system} utilizzata dal sistema operativo.
 \end{itemize}
 In sintesi: un package \textbf{non è} semplicemente una collezione di file contenuti nella stessa cartella. Prova ne è il fatto che file situati nella stessa cartella, ma privi della direttiva \texttt{package}, appartengono, come vedremo, all'``unnamed package'' e non a un package che prende il nome dalla cartella stessa.
-\end{warning}
+\end{warningbox}
 
 Un altro errore comune per chi inizia è pensare che i package siano "annidati" come le cartelle di un sistema operativo e che quindi condividano permessi o caratteristiche. In Java, questa gerarchia è puramente visiva per l'essere umano, ma non esiste per il compilatore: per quest'ultimo, i package sono tutti "allo stesso livello". 
 
@@ -133,7 +133,7 @@ Per lanciare il programma da terminale, la JVM deve essere posizionata sulla \te
 In ogni caso, \textbf{non} devi mai entrare dentro le sottocartelle del package (come \texttt{math/}) per lanciare il comando, altrimenti la JVM "perderebbe il filo" della struttura logica: la JVM cercherebbe una classe che dichiara di non avere package (unnamed package); trovando invece scritto \texttt{package eu.dedalo.math;}, la JVM rifiuterebbe di caricarla per incoerenza tra posizione e dichiarazione.
 
 
-\begin{warning}[Compilazione ed Esecuzione: File vs Classi]
+\begin{warningbox}[Compilazione ed Esecuzione: File vs Classi]
 È fondamentale distinguere come il sistema si interfaccia con il codice a seconda della fase in cui ci troviamo. Assumendo di trovarsi nella \textbf{Project Root}:
 
 \begin{itemize}
@@ -152,7 +152,7 @@ In ogni caso, \textbf{non} devi mai entrare dentro le sottocartelle del package 
         \item \textit{Best Practice}: \texttt{java -cp bin eu.dedalo.math.Calcolatrice}
     \end{itemize}
 \end{itemize}
-\end{warning}
+\end{warningbox}
 
 \begin{tip}[Regola Mnemonica]
     Usa lo \textbf{slash} (\texttt{/}) quando stai parlando con il Sistema Operativo (file sul disco). \\
@@ -167,9 +167,9 @@ Una classe, un metodo o una variabile definiti senza modificatori di accesso son
 
 Sebbene l'accesso di package sia accettabile per le classi di utilità interna, Horstmann sottolinea come sia una scelta pericolosa per i campi di istanza (variabili).
 
-\begin{warning}[Regola d'oro dell'Incapsulamento]
+\begin{warningbox}[Regola d'oro dell'Incapsulamento]
     Le variabili di istanza dovrebbero essere \textbf{sempre} dichiarate come \texttt{private}. Dimenticare il modificatore non le rende private, ma le espone a tutte le classi del package, violando il principio di protezione dei dati.
-\end{warning}
+\end{warningbox}
 
 \subsection{Sicurezza e Moduli}
 In passato, era possibile "intrufolarsi" in un package altrui semplicemente dichiarando lo stesso nome di pacchetto nel proprio file sorgente. 
@@ -197,9 +197,9 @@ Esistono due modi per importare:
 \textbf{Nota bene:} L'uso del carattere \texttt{*} non ha alcun impatto negativo sulla dimensione del file compilato (\textit{bytecode}), ma rende meno esplicito quali classi siano effettivamente utilizzate nel file.
 \end{observation}
 
-\begin{warning}[La regola del pacchetto singolo]
+\begin{warningbox}[La regola del pacchetto singolo]
     La wildcard \texttt{*} può "aprire" solo un singolo package. Non è possibile usare \texttt{import java.*} per importare tutti i sotto-pacchetti che iniziano con \texttt{java}. Ogni livello va importato singolarmente.
-\end{warning}
+\end{warningbox}
 
 \begin{tip}[L'eccezione java.lang]
     Il package \texttt{java.lang} (che contiene classi base come \texttt{System}, \texttt{String} o \texttt{Math}) è \textbf{sempre} importato automaticamente in ogni file Java. Non c'è mai bisogno di scriverlo esplicitamente.

@@ -114,9 +114,9 @@ public class Employee {
     Si parla dunque di overloading di un metodo se ci sono due metodi con lo stesso nome ma con firma diversa. Anche se il numero di parametri è lo stesso ma cambia l'ordine, sempre di overloading si tratta, perché cambia la firma. Di fatto, anche se l'identificatore del metodo è lo stesso, si tratta di metodi diversi. Quindi l'overloading non è altro che un modo per evitare il proliferare di identificatori di metodi ed è comodo anche per continuare a descrivere (tramite un nome appropriato) cosa fa un metodo anche se cambiano i parametri.
 \end{observation}
 
-\begin{warning}[]
+\begin{warningbox}[]
     Ricorda che la chiamata \texttt{this(...)} deve essere tassativamente la \textbf{prima riga} del costruttore. Non puoi eseguire alcun calcolo o istruzione prima di delegare la costruzione all'altro costruttore.
-\end{warning}
+\end{warningbox}
 
 \section{Costruzione degli Oggetti}
 
@@ -131,10 +131,10 @@ A differenza delle variabili locali (che devono essere inizializzate esplicitame
     \item Riferimenti a oggetti: \texttt{null}.
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
     \textbf{Il costruttore predefinito "gratis".}
     Java fornisce implicitamente un costruttore senza argomenti (\textit{no-arg constructor}) solo se nella classe non è stato definito \textbf{nessun} costruttore. Se ne definisci anche solo uno con parametri, quello predefinito scompare; se ti serve ancora, devi scriverlo esplicitamente. In ogni caso è importante ricordare che un costruttore \textbf{esiste sempre}, anche se non lo si dichiara.
-\end{warning}
+\end{warningbox}
 
 \subsection{Blocchi di Inizializzazione}
 
@@ -180,9 +180,9 @@ Esistono tuttavia dei limiti tecnici e stilistici precisi per l'utilizzo di ques
     \item \textbf{Leggibilità:} Horstmann suggerisce di usare \texttt{var} solo quando il tipo è ovvio dalla lettura del lato destro. Ad esempio, \texttt{var in = new Scanner(System.in)} è chiaro, mentre \texttt{var x = calcola()} potrebbe rendere il codice criptico se non si conosce il valore di ritorno del metodo.
 \end{itemize}
 
-\begin{warning}[]
+\begin{warningbox}[]
     È fondamentale ricordare che il tipo viene fissato a tempo di compilazione. Una volta che \texttt{var staff} è stato interpretato come \texttt{Employee}, non potrà mai contenere un tipo diverso (come una stringa o un intero) durante l'esecuzione del programma.
-\end{warning}
+\end{warningbox}
 
 \section{Ulteriori note sull'incapsulamento}
 
@@ -198,9 +198,9 @@ L'incapsulamento non consiste solo nel nascondere i dati, ma nel fornire un'inte
 
 Un errore di progettazione sottile ma grave consiste nello scrivere metodi accessori che restituiscono riferimenti a oggetti \textbf{mutabili}. 
 
-\begin{warning}[Riferimenti mutabili e rottura dell'incapsulamento]
+\begin{warningbox}[Riferimenti mutabili e rottura dell'incapsulamento]
     Se un campo privato è un oggetto mutabile (come la vecchia classe \texttt{Date}), restituire quel riferimento tramite un getter permette a codice esterno di modificare lo stato interno dell'oggetto all'insaputa della classe stessa. 
-\end{warning}
+\end{warningbox}
 
 Si consideri il seguente esempio di ``codice canaglia'':
 \begin{lstlisting}[caption={Violazione dell'incapsulamento}]
@@ -211,13 +211,13 @@ d.setTime(d.getTime() - (long) tenYearsInMilliseconds);
 // Lo stato di harry e cambiato senza usare i metodi di Employee!
 \end{lstlisting}
 
-\begin{warning}
+\begin{warningbox}
     Per prevenire questa vulnerabilità, esistono due strategie principali:
     \begin{itemize}
         \item \textbf{Utilizzare oggetti immutabili:} Classi come \texttt{LocalDate} o \texttt{String} non possiedono metodi mutatori. Una volta creati, il loro stato non può cambiare, rendendo sicuro il ritorno del loro riferimento.
         \item \textbf{Clonazione:} Se si deve assolutamente usare un oggetto mutabile, il getter dovrebbe restituire una copia (\textit{clone}) dell'oggetto, non l'originale.Vedremo più avanti in dettaglio questo tipo di soluzione. 
     \end{itemize}
-\end{warning}
+\end{warningbox}
 
 \section{I Metodi Privati}
 
@@ -249,9 +249,9 @@ L'uso di \texttt{final} è particolarmente efficace con i tipi primitivi o con c
 \subsection*{La trappola delle Classi Mutabili}
 È necessario prestare attenzione quando si usa \texttt{final} con oggetti mutabili. 
 
-\begin{warning}[]
+\begin{warningbox}[]
     Il modificatore \texttt{final} garantisce solo che il \textbf{riferimento} memorizzato nella variabile non punti mai a un oggetto diverso. Tuttavia, non impedisce la mutazione dell'oggetto stesso: per i mutabili final è solo il riferimento all'oggetto ad essere costante, ma tutto ciò a cui punta quel riferimento può essere cambiato.
-\end{warning}
+\end{warningbox}
 
 Ad esempio, un campo \texttt{private final StringBuilder evaluations} impedisce di assegnare un nuovo \texttt{StringBuilder} alla variabile, ma permette comunque di invocare metodi come \texttt{evaluations.append()}, modificando di fatto lo stato interno dell'oggetto.
 
@@ -364,9 +364,9 @@ public static double max(double... values) {
 }
 \end{lstlisting}
 
-\begin{warning}[]
+\begin{warningbox}[]
     Il parametro varargs deve essere necessariamente l'\textbf{ultimo} nella firma del metodo. È possibile avere un solo parametro varargs per metodo.
-\end{warning}
+\end{warningbox}
 
 \begin{observation}[Efficienza e Varargs]
     È fondamentale distinguere tra l'utilizzo di \textit{varargs} con tipi primitivi e con tipi oggetto (o classi wrapper):
@@ -384,14 +384,14 @@ double[] prezzi = {10.5, 20.0, 5.75};
 double massimo = max(prezzi); // Legale: passa l'array direttamente
 \end{lstlisting}
 
-\begin{warning}[La trappola degli array di primitivi]
+\begin{warningbox}[La trappola degli array di primitivi]
     Bisogna prestare estrema attenzione quando si passa un array a un metodo con \textit{varargs} di tipo \texttt{Object...}:
     \begin{itemize}
         \item Se si passa un \textbf{array di oggetti} (es. \texttt{String[]}), Java lo "spacchetta" e tratta ogni elemento come un argomento distinto.
         \item Se si passa un \textbf{array di primitivi} (es. \texttt{int[]}), Java \textbf{non} può trattarlo come un \texttt{Object[]}. Di conseguenza, considera l'intero array come un \textbf{singolo oggetto} e lo inserisce come unico elemento della lista parametri.
     \end{itemize}
     Per ottenere lo spacchettamento di un array di primitivi, è necessario convertirlo preventivamente in un array della relativa classe wrapper (\texttt{Integer[]}).
-\end{warning}
+\end{warningbox}
 
 \begin{tip}
     Anche il metodo \texttt{main} può essere dichiarato usando i varargs: 
@@ -519,9 +519,9 @@ Le caratteristiche principali dei record sono:
     \item \textbf{Personalizzazione:} È possibile sovrascrivere i metodi generati automaticamente, ad esempio per aggiungere una logica di validazione nel costruttore.
 \end{itemize}
 
-\begin{warning}[Attenzione alla mutabilità dei componenti]
+\begin{warningbox}[Attenzione alla mutabilità dei componenti]
     I componenti di un record sono implicitamente \textit{final}, quindi va ricordato ciò che abbiamo detto a proposito di tali campi: se un record ha come componente un oggetto mutabile (es. un array), l'immutabilità del record è solo superficiale; il riferimento all'array non può cambiare, ma gli elementi interni all'array sì. Per garantire la sicurezza, è preferibile usare solo tipi primitivi o immutabili come componenti.
-\end{warning}
+\end{warningbox}
 
 
 \textbf{Analogia con il C:} Per un programmatore C, il record è l'equivalente funzionale di una \texttt{struct} costante, ma con il vantaggio di avere già pronti tutti i metodi per il confronto e la visualizzazione testuale.
@@ -633,7 +633,7 @@ Comprendere questa distinzione chiarisce il comportamento dei parametri nei meto
 \caption{Differenze chiave tra Stack e Heap in Java.}
 \end{table}
 
-\begin{warning}[Connessione con la Concorrenza]
+\begin{warningbox}[Connessione con la Concorrenza]
     In sistemi complessi o distribuiti, ogni thread possiede il proprio Stack privato, mentre lo Heap è condiviso tra tutti. Questa condivisione è la causa principale dei problemi di visibilità e sincronizzazione che richiedono l'uso di blocchi (\texttt{synchronized}) o variabili atomiche.
-\end{warning}
+\end{warningbox}
 % --- Fine Sezione Stack vs Heap ---

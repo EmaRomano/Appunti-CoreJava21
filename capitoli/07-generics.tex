@@ -143,13 +143,13 @@ La clausola \texttt{<T extends BoundingType>} indica che \texttt{T} deve essere 
 \texttt{T extends Class1 \& Interface1 \& Interface2}
 \end{center}
 
-\begin{warning}[\textbf{Regole di Precedenza}]
+\begin{warningbox}[\textbf{Regole di Precedenza}]
 \begin{enumerate}
     \item Si può specificare al massimo una classe come vincolo.
     \item Se presente, la classe deve essere indicata per \textbf{prima} nella lista dei vincoli.
     \item Le interfacce seguono la classe, separate da \texttt{\&}.
 \end{enumerate}
-\end{warning}
+\end{warningbox}
 
 Ecco come appare il codice di un metodo \texttt{min} che calcola il minimo di un array di oggetti generici, purché siano comparabili:
 
@@ -204,10 +204,10 @@ Ad esempio, per la classe \texttt{Interval<T extends Comparable \& Serializable>
     \item Il metodo \texttt{compareTo} può essere chiamato direttamente senza cast.
 \end{itemize}
 
-\begin{warning}[\textbf{Efficienza e Ordine dei Vincoli}]
-Se un tipo ha piu' vincoli, l'ordine non è indifferente. Il compilatore sostituisce \texttt{T} con il primo vincolo della lista. Se il primo vincolo è un'interfaccia "tag" (senza metodi come \texttt{Serializable}), il compilatore dovrà inserire dei cast extra per invocare i metodi degli altri vincoli. 
+\begin{warningbox}[\textbf{Efficienza e Ordine dei Vincoli}]
+Se un tipo ha piu' vincoli, l'ordine non è indifferente. Il compilatore sostituisce \texttt{T} con il primo vincolo della lista. Se il primo vincolo è un'interfaccia "tag" (senza metodi, come \texttt{Serializable}), il compilatore dovrà inserire dei cast extra per invocare i metodi degli altri vincoli. 
 Più in generale, per ridurre il \textit{runtime overhead}, conviene posizionare come primo vincolo l'interfaccia i cui metodi vengono invocati più frequentemente all'interno del codice generico.
-\end{warning}
+\end{warningbox}
 
 \subsection{Traduzione delle Espressioni Generiche}
 
@@ -226,18 +226,99 @@ Il medesimo principio si applica all'accesso diretto ai campi, qualora siano vis
 
 Il vantaggio dei Generics non è quindi l'eliminazione dei cast a livello di esecuzione (che continuano a esistere nel bytecode), ma il fatto che il compilatore li gestisca \textbf{automaticamente} e in modo \textbf{sicuro}, sollevando il programmatore dal rischio di errori manuali. Praticamente, i Generics non sono altro che un modo di gestire in modo automatico ciò che prima della loro introduzione si faceva a mano.
 
-\subsection{I Metodi Ponte (Bridge Methods)}
+\subsection{Type Erasure e Polimorfismo: i Metodi Ponte (Bridge Methods)}
 
-I \textit{bridge methods} sono sintetizzati dal compilatore per gestire le discrepanze causate dalla \textit{type erasure}.
+La cancellazione del tipo si applica ovviamente anche ai metodi generici; generalmente, si tende a pensare al metodo:
+\begin{center}
+    \texttt{public static <T extends Comparable> T min(T[] a)}
+\end{center}
 
-Data una gerarchia \texttt{Sub extends Super<T>}, il processo segue questi passi:
-\begin{enumerate}
-    \item La \textit{type erasure} trasforma i metodi della superclasse in metodi \textit{raw} (usando \texttt{Object} o i \textit{bounds}).
-    \item Il compilatore crea un metodo nella sottoclasse con la firma \textit{raw} (il "ponte").
-    \item Il ponte effettua il cast del parametro al tipo specifico e invoca il metodo originale della sottoclasse.
-\end{enumerate}
+come a una famiglia di metodi. In realtà, dopo la cancellazione del tipo, ciò che resta è il singolo metodo:
+\begin{center}
+    \texttt{public static Comparable min(Comparable[] a)}
+\end{center}
 
-Sebbene il linguaggio Java proibisca metodi con firme identiche ma diversi tipi di ritorno, la JVM permette questa distinzione nel \textit{bytecode}. I Generics sfruttano questa caratteristica per mantenere il polimorfismo anche quando i tipi vengono cancellati.
+La cancellazione del tipo sui metodi generici comporta però qualche complicazione quando una sottoclasse prova a fare l'override di un metodo ereditato da una classe generica. Consideriamo ad esempio: 
+
+\begin{lstlisting}[language=Java]
+    class DateInterval extends Pair<LocalDate>{
+        public void setSecond(LocalDate second)
+        {
+            if (second.compareTo(getFirst()) >= 0)
+                super.setSecond(second);
+        }
+        . . .
+        }
+\end{lstlisting}
+
+Qui è stato eseguito l'override di \texttt{setSecond} per essere sicuri che la seconda data non sia mai precedente alla prima. Il problema è che nella classe \texttt{Pair}, dopo la cancellazione del tipo, esiste il metodo \texttt{setSecond(Object second)}, che viene ereditato da \texttt{DateInterval}; questo è un metodo diverso da \texttt{setSecond(LocalDate second)} che abbiamo definito (ha una firma diversa, come se si fosse fatto l'overload al posto di un override). 
+
+Per evitare che il polimorfismo fallisca, il compilatore genera automaticamente un \textit{metodo ponte} nella sottoclasse:
+\begin{lstlisting}[language=Java]
+    public void setSecond(Object second){
+         setSecond((LocalDate) second); 
+         }
+\end{lstlisting}
+
+\begin{dettagli}[Dettagli: Logica di Rilevamento dei Metodi Ponte]
+
+    Il compilatore genera un \textit{bridge method} quando rileva una discrepanza tra l'intento del programmatore e i vincoli della \textit{Type Erasure}.
+
+    Il compilatore esegue i seguenti passaggi logici durante l'analisi della sottoclasse:
+
+    \begin{enumerate}
+        \item \textbf{Analisi delle Firme}: Identifica un metodo nella sottoclasse che corrisponde a un metodo della superclasse generica (es. \texttt{setSecond(LocalDate)} vs \texttt{setSecond(T)}).
+        \item \textbf{Previsione della Cancellazione}: Calcola come appariranno le firme nel bytecode (es. \texttt{LocalDate} rimane tale, ma \texttt{T} diventa \texttt{Object}).
+        \item \textbf{Rilevamento del Conflitto}: Se le firme cancellate non coincidono, il metodo non e' piu' un \textit{override} valido per la JVM.
+        \item \textbf{Sintesi}: Genera automaticamente un metodo con la firma cancellata della superclasse che delega il lavoro al metodo della sottoclasse.
+    \end{enumerate}
+
+    \smallskip
+
+    Il compilatore "capisce" la necessità del ponte perché possiede la tabella dei tipi completi prima che la cancellazione dei dati abbia luogo. Il ponte è il meccanismo che permette di mappare una chiamata generica \textit{raw} (basata su \texttt{Object}) alla specifica implementazione \textit{type-safe} della sottoclasse.
+\end{dettagli}
+
+La situazione diventa ancora più strana con i metodi che restituiscono valori; consideriamo ad esempio: 
+\begin{lstlisting}[language=Java]
+    class DateInterval extends Pair<LocalDate>{
+        public LocalDate getSecond() { return (LocalDate) super.getSecond(); }
+        . . .
+        }
+\end{lstlisting}
+
+Nella classe \texttt{DateInterval} avremmo a questo punto due metodi con lo stesso nome \texttt{getSecond()} e nessun parametro: uno che restituisce un \texttt{Object} e uno che restituisce un \texttt{LocalDate}; come ben sappiamo, in Java questo sarebbe illegale, perché non si possono avere due metodi con la stessa firma che restituiscono tipi diversi. Tuttavia, nella Virtual Machine, un metodo è identificato univocamente dalla combinazione di nome, parametri \textbf{e tipo di ritorno}. Il compilatore può quindi generare bytecode che la JVM gestisce correttamente, anche se noi non potremmo scriverlo a mano. Il compilatore Java si comporta in questi casi quasi come un "hacker" che sfrutta le libertà della Virtual Machine per aggirare i limiti del linguaggio stesso.
+
+\begin{warningbox}[Firma del Metodo: Java vs JVM]
+    Esiste una distinzione fondamentale tra come il linguaggio Java e la JVM identificano i metodi:
+    \begin{itemize}
+        \item \textbf{Java Language}: Un metodo è identificato univocamente dalla sua \textit{signature} (nome e tipi dei parametri). Il tipo di ritorno viene ignorato per evitare ambiguita' durante l'invocazione.
+        \item \textbf{JVM Bytecode}: Un metodo è identificato dal nome, dai parametri e dal \textbf{tipo di ritorno}.
+    \end{itemize}
+    Questa differenza è ciò che permette al compilatore di sintetizzare i \textit{bridge methods}. Il compilatore genera due metodi con la stessa firma Java ma con ritorni diversi, permettendo alla JVM di risolvere correttamente le chiamate polimorfiche dopo la \textit{type erasure}.
+\end{warningbox}
+
+\begin{observation}[Ritorno Covariante e Bridge Methods]
+    I \textit{bridge methods} non sono limitati ai tipi generici; vengono impiegati anche per gestire i \textbf{tipi di ritorno covarianti}. Come abbiamo visto nel capitolo su ereditarietà e polimorfismo, si ha covarianza quando una sottoclasse effettua l'override di un metodo specificando un tipo di ritorno più restrittivo rispetto a quello della superclasse.
+
+    Consideriamo ad esempio:
+    \begin{lstlisting}[language=Java]
+        class Animal {
+            public Animal getIdentity() { return this; }
+        }
+
+        class Cat extends Animal {
+            @Override
+            public Cat getIdentity() { return this; } // Ritorno covariante
+        }
+    \end{lstlisting}
+
+    Nella classe \texttt{Cat}, il compilatore sintetizza effettivamente due metodi nel bytecode per garantire la compatibilità:
+    \begin{itemize}
+        \item \texttt{Cat getIdentity()}: Il metodo definito dal programmatore.
+        \item \texttt{Animal getIdentity()}: Il \textit{bridge method} che sovrascrive il metodo di \texttt{Animal} e chiama internamente la versione specifica.
+    \end{itemize}
+\end{observation}
+
 
 
 
