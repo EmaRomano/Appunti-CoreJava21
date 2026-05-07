@@ -37,7 +37,7 @@ L'appello dei parametri di tipo risiede in due pilastri fondamentali:
 \end{enumerate}
 
 \begin{tip}[]
-Un errore segnalato dal compilatore (\textit{compile-time error}) e' di gran lunga preferibile a un'eccezione durante l'esecuzione (\textit{runtime ClassCastException}). I Generics spostano il controllo della correttezza del codice dalla fase di esecuzione alla fase di scrittura.
+Un errore segnalato dal compilatore (\textit{compile-time error}) è di gran lunga preferibile a un'eccezione durante l'esecuzione (\textit{runtime ClassCastException}). I Generics spostano il controllo della correttezza del codice dalla fase di esecuzione alla fase di scrittura.
 \end{tip}
 
 La padronanza dei \textit{Generics} si sviluppa su tre livelli distinti, spostando l'attenzione dall'utilizzo alla progettazione.
@@ -56,7 +56,7 @@ Un compito cruciale del progettista è bilanciare sicurezza e usabilità. Consid
 Vedremo presto che per risolvere queste asimmetrie, Java introduce i \textbf{wildcard types} (tipi jolly), che permettono di definire relazioni di sottotipo tra tipi parametrizzati.
 
 \begin{tip}
-La programmazione generica e' particolarmente utile quando si scrive codice che altrimenti richiederebbe numerosi cast da tipi generali come \texttt{Object}. Per la maggior parte delle applicazioni comuni, le classi fornite dal JDK sono sufficienti.
+La programmazione generica è particolarmente utile quando si scrive codice che altrimenti richiederebbe numerosi cast da tipi generali come \texttt{Object}. Per la maggior parte delle applicazioni comuni, le classi fornite dal JDK sono sufficienti.
 \end{tip}
 
 \section{Struttura di una Classe Generica}
@@ -101,7 +101,7 @@ Per mantenere il codice leggibile e coerente con le API di Java, si utilizzano l
 \end{tabular}
 \end{table}
 
-E' possibile definire classi con più variabili di tipo, ad esempio \texttt{public class Pair<T, U>}, permettendo alla classe di gestire coppie di oggetti di natura differente in modo \textit{type-safe}.
+È possibile definire classi con più variabili di tipo, ad esempio \texttt{public class Pair<T, U>}, permettendo alla classe di gestire coppie di oggetti di natura differente in modo \textit{type-safe}.
 
 \section{Metodi Generici}
 
@@ -205,7 +205,7 @@ Ad esempio, per la classe \texttt{Interval<T extends Comparable \& Serializable>
 \end{itemize}
 
 \begin{warningbox}[\textbf{Efficienza e Ordine dei Vincoli}]
-Se un tipo ha piu' vincoli, l'ordine non è indifferente. Il compilatore sostituisce \texttt{T} con il primo vincolo della lista. Se il primo vincolo è un'interfaccia "tag" (senza metodi, come \texttt{Serializable}), il compilatore dovrà inserire dei cast extra per invocare i metodi degli altri vincoli. 
+Se un tipo ha più vincoli, l'ordine non è indifferente. Il compilatore sostituisce \texttt{T} con il primo vincolo della lista. Se il primo vincolo è un'interfaccia "tag" (senza metodi, come \texttt{Serializable}), il compilatore dovrà inserire dei cast extra per invocare i metodi degli altri vincoli. 
 Più in generale, per ridurre il \textit{runtime overhead}, conviene posizionare come primo vincolo l'interfaccia i cui metodi vengono invocati più frequentemente all'interno del codice generico.
 \end{warningbox}
 
@@ -291,7 +291,7 @@ Nella classe \texttt{DateInterval} avremmo a questo punto due metodi con lo stes
 \begin{warningbox}[Firma del Metodo: Java vs JVM]
     Esiste una distinzione fondamentale tra come il linguaggio Java e la JVM identificano i metodi:
     \begin{itemize}
-        \item \textbf{Java Language}: Un metodo è identificato univocamente dalla sua \textit{signature} (nome e tipi dei parametri). Il tipo di ritorno viene ignorato per evitare ambiguita' durante l'invocazione.
+        \item \textbf{Java Language}: Un metodo è identificato univocamente dalla sua \textit{signature} (nome e tipi dei parametri). Il tipo di ritorno viene ignorato per evitare ambiguità durante l'invocazione.
         \item \textbf{JVM Bytecode}: Un metodo è identificato dal nome, dai parametri e dal \textbf{tipo di ritorno}.
     \end{itemize}
     Questa differenza è ciò che permette al compilatore di sintetizzare i \textit{bridge methods}. Il compilatore genera due metodi con la stessa firma Java ma con ritorni diversi, permettendo alla JVM di risolvere correttamente le chiamate polimorfiche dopo la \textit{type erasure}.
