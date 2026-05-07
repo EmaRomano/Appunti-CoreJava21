@@ -319,6 +319,88 @@ Nella classe \texttt{DateInterval} avremmo a questo punto due metodi con lo stes
     \end{itemize}
 \end{observation}
 
+\subsection{Interoperabilità con Codice Legacy}
+
+Uno degli obiettivi primari dei \textit{Generics} era la compatibilità con il codice scritto prima di Java 5. Questo avviene attraverso l'uso dei \textbf{Raw Types} (tipi grezzi). Un \textit{Raw Type} è il nome di una classe generica utilizzata senza parametri di tipo (es. \texttt{ArrayList} invece di \texttt{ArrayList<T>}).
+
+\begin{itemize}
+    \item \textbf{da codice moderno a legacy}: Passando una collezione generica a un metodo che accetta un \textit{Raw Type}, il compilatore emette un \textit{warning}. Il rischio è che il vecchio metodo inserisca oggetti di tipo errato, rompendo l'integrità della collezione.
+    \begin{lstlisting}[language=Java]
+        // CODICE LEGACY (Pre-2004)
+        public class VecchioSistema {
+            public static void stampaLibri(ArrayList lista) { // Nota: non c'e' <String>
+                // Fa qualcosa con la lista...
+            }
+        }
+        //CODICE MODERNO
+        ArrayList<String> iMieiLibri = new ArrayList<>();
+        iMieiLibri.add("Il Signore degli Anelli");
+
+        // Quando passi la tua lista "sicura" al vecchio metodo:
+        VecchioSistema.stampaLibri(iMieiLibri); // <-- QUI SCATTA IL WARNING
+    \end{lstlisting}
+    \item \textbf{da legacy a codice moderno}: Assegnando un \textit{Raw Type} a una variabile generica, si ottiene un \textit{warning} di "unchecked assignment", poiché il compilatore non può garantire il contenuto della collezione.
+    \begin{lstlisting}[language=Java]
+        // Ricevi una lista "misteriosa" (Raw Type)
+        ArrayList listaDalPassato = VecchioSistema.getTuttiILibri(); 
+
+        // Provi a metterla in una variabile moderna
+        ArrayList<String> libriModerni = listaDalPassato; // <-- ALTRO WARNING        
+    \end{lstlisting}
+\end{itemize}
+
+\begin{tip}[Gestione dei Warning]
+    Quando si è certi che l'operazione sia sicura (es. sappiamo che la vecchia libreria legge solo i dati senza modificarli), si può utilizzare l'annotazione \texttt{@SuppressWarnings("unchecked")} per istruire il compilatore a ignorare l'avviso su una variabile o su un intero metodo.
+    \begin{lstlisting}[language=Java]
+        @SuppressWarnings("unchecked")
+        ArrayList<String> libriModerni = VecchioSistema.getTuttiILibri();
+    \end{lstlisting}
+\end{tip}
+
+\section{Record Patterns e Generics}
+
+Nelle versioni più recenti di Java (Java 21+), i record possono essere definiti in modo generico e utilizzati con il \textbf{pattern matching} per semplificare l'estrazione dei dati. Un record generico condensa la definizione di una classe \textit{data-carrier} in un'unica riga:
+\begin{lstlisting}[language=Java]
+record Pair<T>(T first, T second) {}
+\end{lstlisting}
+
+L'operatore \texttt{instanceof} può ora "de-costruire" un record generico, estraendo i suoi componenti in variabili locali in un unico passaggio:
+\begin{lstlisting}[language=Java]
+if (p instanceof Pair(var a, var b)) {
+    // a e b vengono estratti e tipizzati automaticamente
+}
+\end{lstlisting}
+
+Il compilatore utilizza le informazioni dei Generics per inferire il tipo delle variabili estratte. Se \texttt{p} è dichiarato come \texttt{Pair<String>}, le variabili \texttt{a} e \texttt{b} nel pattern verranno trattate come \texttt{String}. È possibile anche specificare i tipi esplicitamente: \texttt{p instanceof Pair<String>(String a, String b)}.
+
+I record patterns funzionano non solo con \texttt{instanceof}, ma anche all'interno delle espressioni \texttt{switch}, rendendo la gestione di diverse combinazioni di dati estremamente pulita e sicura.
+
+\section{Ereditarietà nei Tipi Generici}
+
+Una delle regole più importanti (e spesso meno intuitive) dei Generics è che la gerarchia dei tipi delle classi \textbf{non si riflette} sui tipi generici corrispondenti (\textbf{Principio di Invarianza nei Generics}): nonostante \texttt{Manager} sia una sottoclasse di \texttt{Employee}, \texttt{Pair<Manager>} \textbf{non è} una sottoclasse di \texttt{Pair<Employee>}. 
+
+\begin{warningbox}[Contaminazione del Tipo]
+    Se fosse permessa la conversione:
+    \begin{lstlisting}[language=Java]
+Pair<Manager> managers = new Pair<>();
+Pair<Employee> employees = managers; // Errore di compilazione
+employees.setFirst(new Employee()); // Questo corromperebbe la lista di Manager
+    \end{lstlisting}
+    L'invarianza garantisce che una collezione non possa essere "contaminata" con oggetti di un supertipo non compatibile con l'originale.
+\end{warningbox}
+
+\begin{dettagli}[Confronto con gli Array]
+    A differenza dei Generics, gli array in Java sono \textit{covarianti}: \texttt{Employee[] staff = new Manager[10]} è legale. Tuttavia, questa scelta è considerata un difetto di progettazione del Java originale, poiché sposta gli errori dal tempo di compilazione al tempo di esecuzione (\texttt{ArrayStoreException}).
+    \begin{lstlisting}[language=Java]
+        String[] s = new String[10];
+        Object[] o = s;   // consentito: covarianza
+
+        o[0] = 42;        // compila, ma a runtime 
+                          // lancia ArrayStoreException
+    \end{lstlisting}
+\end{dettagli}
+
+
 
 
 
