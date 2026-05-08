@@ -319,7 +319,7 @@ Nella classe \texttt{DateInterval} avremmo a questo punto due metodi con lo stes
     \end{itemize}
 \end{observation}
 
-\subsection{Interoperabilità con Codice Legacy}
+\section{Interoperabilità con Codice Legacy}
 
 Uno degli obiettivi primari dei \textit{Generics} era la compatibilità con il codice scritto prima di Java 5. Questo avviene attraverso l'uso dei \textbf{Raw Types} (tipi grezzi). Un \textit{Raw Type} è il nome di una classe generica utilizzata senza parametri di tipo (es. \texttt{ArrayList} invece di \texttt{ArrayList<T>}).
 
@@ -400,8 +400,52 @@ employees.setFirst(new Employee()); // Questo corromperebbe la lista di Manager
     \end{lstlisting}
 \end{dettagli}
 
+Abbiamo dunque stabilito che \texttt{Pair<Manager>} non è imparentato con \texttt{Pair<Employee>}. Tuttavia, entrambi sono figli del \textit{Raw Type} \texttt{Pair}. Questa conversione è permessa per un motivo pragmatico: se non si potesse passare un \texttt{Pair<String>} a un vecchio metodo che accetta solo \texttt{Pair}, non si potrebbe usare quasi nessuna libreria scritta prima del 2004. Il problema è che, una volta che si "declassa" l'oggetto a Raw Type, si perde la "protezione" del compilatore: l'errore di tipo viene ignorato in fase di compilazione, portando alla "contaminazione" della struttura dati originale.
 
+\begin{lstlisting}[language=Java]
+    Pair<Manager> managers = new Pair<>(ceo, cfo);
+    Pair raw = managers; // Legale (con warning)
+    raw.setFirst(new File("...")); // Compila!
+\end{lstlisting}  
 
+La sicurezza della JVM non è tuttavia compromessa. La cancellazione dei tipi (\textit{Type Erasure}) non impedisce alla JVM di sollevare una \texttt{ClassCastException} al momento del recupero del dato incoerente. Si perde solo il vantaggio del controllo preventivo offerto dai Generics.
+
+\section{Wildcard Types (Tipi Jolly)}
+
+Le \textit{wildcards} permettono di rendere flessibili i parametri di tipo, introducendo una forma di \textbf{covarianza} controllata. Supponiamo, ad esempio, di voler scrivere un metodo che stampa una coppia di \texttt{Employee}:
+\begin{lstlisting}[language=Java]
+    public static void printBuddies(Pair<Employee> p){
+        Employee first = p.getFirst();
+        Employee second = p.getSecond();
+        System.out.println(first.getName() + " and " + second.getName() + " are buddies.");
+        }       
+\end{lstlisting}
+
+Come abbiamo visto nel paragrafo precedente, non possiamo passare una coppia di \texttt{Manager} al metodo; per aggirare questa limitazione, possiamo usare una wildcard:
+
+\begin{center}
+    \texttt{public static void printBuddies(Pair<? extends Employee> p)}
+\end{center}
+
+Il tipo \texttt{Pair<? extends Employee>} indica una coppia il cui tipo parametrizzato è \texttt{Employee} o una sua qualsiasi sottoclasse (es. \texttt{Manager}, \texttt{Executive}). A differenza dei tipi generici standard, le wildcard stabiliscono una relazione di ereditarietà:
+\begin{center}
+\texttt{Pair<Manager>} $\subset$ \texttt{Pair<? extends Employee>}
+\end{center}
+Questo permette di scrivere metodi polimorfici che accettano collezioni di sottotipi diversi.
+
+\medskip
+
+Nel paragrafo precedente abbiamo esaminato i limiti dell'ereditarietà sui Generics, imposti per evitare contaminazioni di tipo. Le wildcards permettono questo tipo di contaminazione? La risposta è NO: l'utilizzo della wildcard \texttt{? extends T} crea una struttura dati in \textbf{sola lettura} (o quasi). Questo garantisce che la struttura originale non venga "corrotta" con tipi incompatibili.
+
+Infatti, dato un riferimento \texttt{Pair<? extends Employee>}, il compilatore interpreta i metodi così:
+\begin{itemize}
+    \item \texttt{? extends Employee getFirst()}: \textbf{FUNZIONA}. Qualunque sia il tipo reale, è un sottotipo di \texttt{Employee}. L'assegnazione a una variabile \texttt{Employee} è sicura.
+    \item \texttt{void setFirst(? extends Employee)}: \textbf{ERRORE}. Il compilatore non può verificare se l'oggetto che stiamo passando sia compatibile con il tipo \textit{specifico} (ma ignoto) della coppia reale, quindi vieta la modifica.  
+\end{itemize}
+
+\begin{warningbox}[]
+Con \texttt{? extends T} puoi \textbf{leggere} oggetti e trattarli come \texttt{T}, ma non puoi \textbf{scrivere} nulla (tranne \texttt{null}). 
+\end{warningbox}
 
 
 
