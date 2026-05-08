@@ -433,6 +433,33 @@ Il tipo \texttt{Pair<? extends Employee>} indica una coppia il cui tipo parametr
 \end{center}
 Questo permette di scrivere metodi polimorfici che accettano collezioni di sottotipi diversi.
 
+\subsection{Usi consentiti}
+
+Le wildcard sono ammesse ovunque si stia dichiarando il tipo di una variabile. In particolare, si possono usare nei seguenti contesti:
+\begin{itemize}
+    \item parametri di un metodo (l'uso più comune):
+    \begin{center}
+        \texttt{public void stampa(List<? extends Persona> lista) { ... }}
+    \end{center}
+    \item campi di una classe o variabili locali:
+    \begin{center}
+        \texttt{List<? extends Persona> lista = iMieiManager;}
+    \end{center}
+    \item tipi di ritorno (lecito, ma sconsigliato):
+    \begin{center}
+        \texttt{public List<? extends Persona> getTeam() { ... }}
+    \end{center}
+    Questo uso non è considerato una buona pratica, perché costringi chi usa il metodo a gestire la wildcard, rendendogli la vita difficile
+\end{itemize}
+
+\medskip
+
+È abbastanza intuitivo che l'uso di questa sintassi non è invece consentito laddove provochi ambiguità non risolvibile dal compilatore: 
+\begin{itemize}
+    \item definizione di classi/metodi: E' necessario utilizzare un identificatore (es. \texttt{T}, \texttt{E}, \texttt{K}).
+    \item Operatore \texttt{new}: L'allocazione di memoria richiede un tipo concreto.
+\end{itemize}
+
 \medskip
 
 Nel paragrafo precedente abbiamo esaminato i limiti dell'ereditarietà sui Generics, imposti per evitare contaminazioni di tipo. Le wildcards permettono questo tipo di contaminazione? La risposta è NO: l'utilizzo della wildcard \texttt{? extends T} crea una struttura dati in \textbf{sola lettura} (o quasi). Questo garantisce che la struttura originale non venga "corrotta" con tipi incompatibili.
@@ -446,6 +473,70 @@ Infatti, dato un riferimento \texttt{Pair<? extends Employee>}, il compilatore i
 \begin{warningbox}[]
 Con \texttt{? extends T} puoi \textbf{leggere} oggetti e trattarli come \texttt{T}, ma non puoi \textbf{scrivere} nulla (tranne \texttt{null}). 
 \end{warningbox}
+
+
+\subsubsection*{Esempio}
+Consideriamo la seguente gerarchia: \texttt{Manager} $\subset$ \texttt{Dipendente} $\subset$ \texttt{Persona}.
+
+\begin{lstlisting}[language=Java]
+// Definizione delle classi e del contesto
+class Persona { ... }
+class Dipendente extends Persona { ... }
+class Manager extends Dipendente { ... }
+
+Pair<Manager> iMieiManager = new Pair<>(new Manager("Alice"), new Manager("Bob"));
+Pair<? extends Dipendente> jolly = iMieiManager; // Riferimento con wildcard
+
+Dipendente unDipendente = new Dipendente("Carlo");
+Manager unManager = new Manager("Diana");
+\end{lstlisting}
+
+Di seguito l'esito della compilazione per diverse operazioni di lettura e scrittura:
+
+\begin{itemize}
+    \item \textbf{\texttt{Dipendente d = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Il "tetto massimo" garantito dalla wildcard e' \texttt{Dipendente}.
+    \item \textbf{\texttt{Persona p = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Poiche' ogni \texttt{Dipendente} è una \texttt{Persona}.
+    \item \textbf{\texttt{Manager m = jolly.getFirst();}} $\rightarrow$ \textbf{NO}. \textbf{Errore di compilazione}: il compilatore sa che l'oggetto e' un \texttt{Dipendente}, ma non ha la certezza che sia un \texttt{Manager}.
+    \item \textbf{\texttt{jolly.setFirst(unDipendente);}} $\rightarrow$ \textbf{NO}. Il compilatore blocca la scrittura perché non conosce il tipo specifico sottostante (che potrebbe essere \texttt{Pair<Manager>}).
+    \item \textbf{\texttt{jolly.setFirst(unManager);}} $\rightarrow$ \textbf{NO}. Anche se in questo caso l'oggetto reale è proprio un \texttt{Pair<Manager>}, il compilatore non può saperlo e nega l'accesso per sicurezza.
+    \item \textbf{\texttt{jolly.setFirst(null);}} $\rightarrow$ \textbf{SI}. \texttt{null} è l'unico valore accettato in scrittura con \texttt{? extends}.
+    \item \textbf{\texttt{Object o = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Qualsiasi oggetto è un'istanza di \texttt{Object}.
+\end{itemize}
+
+\subsection{Wildcard con vincolo inferiore: \texttt{? super T}}
+
+La wildcard \texttt{? super T} (Lower Bound) è lo strumento speculare a \texttt{extends}, ottimizzato per le operazioni di \textbf{scrittura}. Ad esempio, dato un riferimento \texttt{Pair<? super Manager>}, il compilatore ragiona così:
+\begin{itemize}
+    \item \textbf{In Scrittura}: Accetta \texttt{Manager} (o sottotipi come \texttt{Executive}). E' sicuro che il contenitore reale sia in grado di ospitarli, poiché è almeno un \texttt{Pair<Manager>} o un suo supertipo.
+    \item \textbf{In Lettura}: Non garantisce nulla sul tipo estratto. L'oggetto restituito deve essere trattato come un \texttt{Object}, poiché il contenitore potrebbe essere un \texttt{Pair<Object>}.
+\end{itemize}
+
+\subsection*{Esempio}
+
+Consideriamo la gerarchia: \texttt{Manager} $\subset$ \texttt{Dipendente} $\subset$ \texttt{Persona}.
+
+\begin{lstlisting}[language=Java]
+Pair<? super Dipendente> jolly = new Pair<Persona>(...); 
+
+Dipendente unDipendente = new Dipendente("Carlo");
+Manager unManager = new Manager("Diana");
+Persona unaPersona = new Persona("Zoe");
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{\texttt{Dipendente d = jolly.getFirst();}} $\rightarrow$ \textbf{NO}. In lettura, la wildcard \texttt{super} non garantisce nulla se non \texttt{Object}.
+    \item \textbf{\texttt{jolly.setFirst(unDipendente);}} $\rightarrow$ \textbf{SI}. \texttt{Dipendente} è il tipo base accettato.
+    \item \textbf{\texttt{jolly.setFirst(unManager);}} $\rightarrow$ \textbf{SI}. Poiché un \texttt{Manager} \textit{è} un \texttt{Dipendente}, può essere inserito in sicurezza.
+    \item \textbf{\texttt{jolly.setFirst(unaPersona);}} \textbf{$\rightarrow$ NO}. Il compilatore teme che il contenitore reale sia un \texttt{Pair<Dipendente>}, dove una \texttt{Persona} non potrebbe entrare.
+    \item \textbf{\texttt{Object o = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Sempre legale.
+\end{itemize}
+
+\begin{tip}
+    Mentre \texttt{? extends} limita la \textbf{scrittura}, \texttt{? super} limita drasticamente la \textbf{lettura}. Quest'ultima è utile quasi esclusivamente per i metodi che devono "ricevere" dati da elaborare o salvare.
+\end{tip}
+
+
+
 
 
 
