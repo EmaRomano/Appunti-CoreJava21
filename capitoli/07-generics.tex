@@ -154,6 +154,7 @@ La clausola \texttt{<T extends BoundingType>} indica che \texttt{T} deve essere 
 Ecco come appare il codice di un metodo \texttt{min} che calcola il minimo di un array di oggetti generici, purché siano comparabili:
 
 \begin{lstlisting}[language=Java]
+    
 public static <T extends Comparable> T min(T[] a) {
     if (a == null || a.length == 0) return null;
     T smallest = a[0];
@@ -167,7 +168,7 @@ public static <T extends Comparable> T min(T[] a) {
 \end{lstlisting}
 
 \begin{observation}
-    L'interfaccia \texttt{Comparable} che abbiamo usato per l'esempio è essa stessa di tipo generico; ciò comporta che la sintassi che abbiamo usato genera dei warnings. Chiariremo questo dettaglio più avanti. 
+    L'interfaccia \texttt{Comparable} dell'esempio è essa stessa di tipo generico; ciò comporta che la sintassi che abbiamo usato genera dei warnings dovuta all'uso del \textit{raw type}. Chiariremo questo dettaglio in \ref{app super gen}
 \end{observation}
 
 \section{Funzionamento interno dei Generics}
@@ -494,7 +495,7 @@ Manager unManager = new Manager("Diana");
 Di seguito l'esito della compilazione per diverse operazioni di lettura e scrittura:
 
 \begin{itemize}
-    \item \textbf{\texttt{Dipendente d = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Il "tetto massimo" garantito dalla wildcard e' \texttt{Dipendente}.
+    \item \textbf{\texttt{Dipendente d = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Il "tetto massimo" garantito dalla wildcard è \texttt{Dipendente}.
     \item \textbf{\texttt{Persona p = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Poiche' ogni \texttt{Dipendente} è una \texttt{Persona}.
     \item \textbf{\texttt{Manager m = jolly.getFirst();}} $\rightarrow$ \textbf{NO}. \textbf{Errore di compilazione}: il compilatore sa che l'oggetto e' un \texttt{Dipendente}, ma non ha la certezza che sia un \texttt{Manager}.
     \item \textbf{\texttt{jolly.setFirst(unDipendente);}} $\rightarrow$ \textbf{NO}. Il compilatore blocca la scrittura perché non conosce il tipo specifico sottostante (che potrebbe essere \texttt{Pair<Manager>}).
@@ -534,6 +535,69 @@ Persona unaPersona = new Persona("Zoe");
 \begin{tip}
     Mentre \texttt{? extends} limita la \textbf{scrittura}, \texttt{? super} limita drasticamente la \textbf{lettura}. Quest'ultima è utile quasi esclusivamente per i metodi che devono "ricevere" dati da elaborare o salvare.
 \end{tip}
+
+\subsection{Applicazioni in Supertipi Generici}
+\label{app super gen}
+In un paragrafo precedente avevamo usato il seguente esempio, che qui riportiamo per comodità: 
+\begin{lstlisting}[language=Java]
+    
+public static <T extends Comparable> T min(T[] a) {
+    if (a == null || a.length == 0) return null;
+    T smallest = a[0];
+    for (int i = 1; i < a.length; i++) {
+        if (smallest.compareTo(a[i]) > 0) {
+            smallest = a[i];
+        }
+    }
+    return smallest;
+}
+\end{lstlisting}
+Avevamo anticipato che la sintassi usata genera un warning (dovuta all'uso di un raw type); in effetti, essendo \texttt{Comparable} essa stessa un'interfaccia generica avremmo potuto scrivere più precisamente: 
+\begin{lstlisting}
+    public static <T extends Comparable<T>> T min(T[] a)
+\end{lstlisting}
+Questo tipo di sintassi funzionerebbe senza problemi nella maggior parte dei casi, ma non sempre; infatti, la firma \texttt{<T extends Comparable<T>>} è troppo restrittiva: se una classe (es. \texttt{LocalDate}) eredita l'implementazione di \texttt{Comparable} da una superclasse (es. \texttt{ChronoLocalDate}), essa non risulterà compatibile con il vincolo \texttt{Comparable<T>}.
+
+\begin{dettagli}[Dettagli: Analisi di LocalDate]
+    \begin{itemize}
+        \item \texttt{LocalDate} estende \texttt{ChronoLocalDate}.
+        \item \texttt{ChronoLocalDate} implementa \texttt{Comparable<ChronoLocalDate>}.
+        \item Pertanto, \texttt{LocalDate} implementa \texttt{Comparable<ChronoLocalDate>}, ma \textbf{non} \texttt{Comparable<LocalDate>}.
+    \end{itemize}
+\end{dettagli}
+
+In questi casi occorre usare le wildcards e la sintassi corretta da usare è:
+\begin{lstlisting}
+    public static <T extends Comparable<? super T>> T min(T[] a)
+\end{lstlisting}
+
+\begin{bestpractice}
+    Quando si definisce un metodo generico che richiede un vincolo su un'interfaccia a sua volta generica (come \texttt{Comparable} o \texttt{Comparator}), è sempre preferibile utilizzare la wildcard \texttt{? super T} per massimizzare la compatibilita' con le gerarchie di classi esistenti.
+\end{bestpractice}
+
+L'uso di \texttt{? super} è estremamente comune nelle interfacce funzionali di Java (come \texttt{Predicate}, \texttt{Function} o \texttt{Consumer}), poiché permette di riutilizzare logica generica su tipi specifici.
+
+Ad esempio, il metodo \texttt{removeIf} della collezione \texttt{Collection<E>} è dichiarato come:
+\begin{center}
+\texttt{default boolean removeIf(Predicate<? super E> filter)}
+\end{center}
+
+
+Grazie al vincolo \texttt{? super E}, possiamo passare un filtro che lavora su un supertipo di \texttt{E}. Supponiamo allora di voler rimuovere tutti gli elementi con hashcode dispari da una collezione:
+\begin{lstlisting}[language=Java]
+    ArrayList<Employee> staff = ...;
+    // Un predicato che lavora su Object (supertipo di Employee)
+    Predicate<Object> logic = obj -> obj.hashCode() % 2 != 0;
+
+    // Legale grazie a ? super E
+    staff.removeIf(logic); 
+\end{lstlisting}
+Se la firma fosse stata \texttt{Predicate<E>}, il compilatore ci avrebbe costretto a scrivere un nuovo predicato specifico per \texttt{Employee}, anche se la logica era già disponibile per \texttt{Object}.
+
+
+
+
+
 
 
 
