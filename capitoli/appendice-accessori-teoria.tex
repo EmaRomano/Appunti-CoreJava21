@@ -33,3 +33,29 @@ L'hashing risolve problemi critici in diversi settori:
 \subsection*{Il Problema delle Collisioni}
 Poiché l'insieme dei possibili input è infinito, mentre l'insieme dei possibili valori hash (numeri interi o stringhe di lunghezza fissa) è finito, esiste la possibilità teorica che due input diversi producano lo stesso hash. Questo evento è chiamato \textbf{collisione}.
 Un buon algoritmo di hash riduce drasticamente la probabilità di collisioni, e i sistemi informatici (come la JVM di Java) sono progettati per gestire correttamente questi rari casi di "omonimia digitale".
+
+\section{L'Array Circolare (Circular Array)}
+\label{appendix circ array}
+
+Nello studio delle collezioni, in particolare quando si analizzano le implementazioni di code (\textit{Queue}) e code a doppia entrata (\textit{Deque}), ci si imbatte nel concetto di \textbf{array circolare}.
+
+In un normale array lineare, quando implementiamo una coda, aggiungiamo elementi alla fine e li rimuoviamo dall'inizio. 
+\begin{itemize}
+    \item Ogni volta che rimuoviamo il primo elemento, dovremmo teoricamente "shiftare" tutti gli altri elementi a sinistra per coprire il buco.
+    \item Questa operazione ha una complessità temporale di $O(n)$, rendendo la struttura inefficiente per grandi moli di dati.
+\end{itemize}
+
+L'array circolare risolve il problema "collegando" virtualmente l'ultima posizione dell'array alla prima. Invece di spostare i dati, spostiamo i \textbf{puntatori} (indici) che indicano dove inizia e dove finisce la nostra collezione.
+
+L'implementazione si basa su due indici principali:
+\begin{enumerate}
+    \item \texttt{head}: Punta alla posizione del primo elemento disponibile (per la rimozione).
+    \item \texttt{tail}: Punta alla posizione successiva all'ultimo elemento (per l'inserimento).
+\end{enumerate}
+
+Quando un indice raggiunge la fine dell'array fisico, "salta" alla posizione $0$. Matematicamente, questo è gestito tramite l'operatore \textbf{modulo}:
+\[ \text{nuova\_posizione} = (\text{posizione\_attuale} + 1) \pmod{\text{lunghezza\_array}} \]
+
+Questa struttura permette operazioni di inserimento e rimozione in \textbf{tempo costante} $O(1)$.
+
+Sebbene circolare, l'array ha comunque una dimensione fisica limitata. Quando l'array è pieno (ovvero quando \texttt{head == tail}), Java deve allocare un nuovo array più grande e copiare gli elementi. Tuttavia, questa operazione avviene raramente se la capacità iniziale è ben calibrata.

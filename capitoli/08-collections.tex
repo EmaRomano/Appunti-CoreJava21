@@ -1,1 +1,55 @@
 \chapter{Collections}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{JCollFramewk.pdf} 
+    \caption{Gerarchia delle interfacce del Java Collection Framework}
+    \label{fig:collection-hierarchy}
+\end{figure}
+
+\section{Separazione tra Interfaccia e Implementazione}
+
+Il \textit{Java Collections Framework} adotta un approccio fondamentale della programmazione a oggetti: la netta separazione tra le \textbf{interfacce} (che definiscono il comportamento) e le \textbf{implementazioni} concrete (che definiscono le strutture dati e le prestazioni). Per illustrare bene questo concetto e i suoi vantaggi, esaminiamo il seguente esempio. 
+
+Una \texttt{Queue} (coda) specifica un comportamento \textbf{FIFO} (\textit{First In, First Out}): aggiunta in coda, rimozione in testa e monitoraggio della dimensione.
+
+\begin{lstlisting}[caption={Interfaccia minimale di una Queue}]
+public interface Queue<E> {
+    void add(E e);
+    E remove();
+    int size();
+}
+\end{lstlisting}
+
+L'interfaccia non dice nulla su come i dati siano memorizzati. Esistono due implementazioni principali nel JDK:
+\begin{enumerate}
+    \item \textbf{\texttt{ArrayDeque}}: Utilizza un \textit{circular array} (array circolare, vedi in appendice \ref{appendix circ array}).
+    \item \textbf{\texttt{LinkedList}}: Utilizza una lista concatenata di nodi.
+\end{enumerate}
+
+Il vantaggio principale di questa separazione è la flessibilità. Nel codice backend, è considerata una \textit{best practice} utilizzare il tipo interfaccia per dichiarare le variabili, limitando l'uso della classe concreta solo al momento della costruzione.
+
+\begin{lstlisting}[caption={Utilizzo corretto delle interfacce}]
+// Uso l'interfaccia come tipo della variabile
+Queue<Customer> expressLane = new ArrayDeque<>(100);
+expressLane.add(new Customer("Harry"));
+
+// Se cambio idea, devo cambiare solo la riga del costruttore
+Queue<Customer> expressLane = new LinkedList<>();
+\end{lstlisting}
+
+\begin{bestpractice}[Coding to an Interface]
+Usare il tipo dell'interfaccia (es. \texttt{Queue}) invece del tipo concreto (es. \texttt{ArrayDeque}) protegge il codice da dipendenze eccessive. Se accidentalmente si utilizzasse un metodo specifico di \texttt{ArrayDeque} non presente in \texttt{Queue}, il compilatore segnalerebbe l'errore, garantendo che il codice rimanga facilmente intercambiabile.
+
+In Java 6, quando fu introdotta \texttt{ArrayDeque}, i programmatori che avevano "programmato per interfacce" poterono migliorare istantaneamente le prestazioni delle loro applicazioni cambiando una singola riga di codice (il costruttore), lasciando intatto tutto il resto della logica aziendale.
+\end{bestpractice}
+
+Perché scegliere l'una o l'altra? L'interfaccia è agnostica riguardo alle prestazioni, ma le implementazioni no:
+
+\begin{itemize}
+    \item \textbf{\texttt{ArrayDeque}}: È generalmente più performante. Ha un impatto minore sul \textit{Garbage Collector} perché non deve creare un oggetto "Nodo" per ogni elemento inserito. Tuttavia, richiede la riallocazione dell'array quando la capacità finisce.
+    \item \textbf{\texttt{LinkedList}}: Non ha problemi di capacità finita, ma ogni elemento aggiunto comporta la creazione di un nuovo oggetto in memoria, rendendola meno efficiente in scenari ad alto volume di dati.
+\end{itemize}
+
+
+
