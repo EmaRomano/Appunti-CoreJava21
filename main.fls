@@ -1162,6 +1162,9 @@ INPUT capitoli/06-eccezioni-e-altro.aux
 INPUT ./capitoli/07-generics.aux
 INPUT capitoli/07-generics.aux
 INPUT capitoli/07-generics.aux
+INPUT ./capitoli/08-collections.aux
+INPUT capitoli/08-collections.aux
+INPUT capitoli/08-collections.aux
 OUTPUT main.aux
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
@@ -1407,6 +1410,16 @@ INPUT capitoli/07-generics.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbx10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmri10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ts1-lmr10.tfm
+INPUT ./capitoli/08-collections.tex
+INPUT ./capitoli/08-collections.tex
+INPUT ./capitoli/08-collections.tex
+OUTPUT capitoli/08-collections.aux
+INPUT ./capitoli/08-collections.tex
+INPUT ./capitoli/08-collections.tex
+INPUT ./capitoli/08-collections.tex
+INPUT capitoli/08-collections.tex
+INPUT ./capitoli/08-collections.tex
+INPUT capitoli/08-collections.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
@@ -1452,6 +1465,9 @@ INPUT capitoli/06-eccezioni-e-altro.aux
 INPUT ./capitoli/07-generics.aux
 INPUT capitoli/07-generics.aux
 INPUT capitoli/07-generics.aux
+INPUT ./capitoli/08-collections.aux
+INPUT capitoli/08-collections.aux
+INPUT capitoli/08-collections.aux
 INPUT ./main.out
 INPUT ./main.out
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/fontawesome5/FontAwesome5Free-Solid.pfb

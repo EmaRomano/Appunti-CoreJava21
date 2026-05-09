@@ -689,12 +689,12 @@ Se fosse permesso, potremmo:
 \end{bestpractice}
 
 \subsection*{Varargs e l'Annotazione \texttt{@SafeVarargs}}
-Come sappiamo dai primi capitoli, i metodi con un numero variabile di argomenti (\textit{varargs}) utilizzano internamente gli array. Quando si usano tipi generici con i varargs, si crea un conflitto con il divieto di istanziare array generici visto nella sezione precedente. Per non bloccare del tutto l'utilità dei Varargs, Java ha fatto un'eccezione: permette la creazione dell'array in questo caso specifico, ma ti "tempesta" di avvisi sul rischio di \textit{Heap Pollution} (inquinamento dell'heap); quest'ultimo rappresenta il rischio che l'array (la cui componente è cancellata a \texttt{Object} o al \textit{bound}) venga "inquinato" con oggetti di tipo errato.
+Come sappiamo dai primi capitoli, i metodi con un numero variabile di argomenti (\textit{varargs}) utilizzano internamente gli array. Quando si usano tipi generici con i varargs, si crea un conflitto con il divieto di istanziare array generici visto nel paragrafo precedente. Per non bloccare del tutto l'utilità dei Varargs, Java ha fatto un'eccezione: permette la creazione dell'array in questo caso specifico, ma ti "tempesta" di avvisi sul rischio di \textit{Heap Pollution} (inquinamento dell'heap); quest'ultimo rappresenta il rischio che l'array (la cui componente è cancellata a \texttt{Object} o al \textit{bound}) venga "inquinato" con oggetti di tipo errato.
 
 Per silenziare questi warnings (sia nella dichiarazione che nella chiamata) è stata introdotta l'annotazione \textbf{\texttt{@SafeVarargs}}; questa è una sorta di promessa solenne che fai al linguaggio. Quando aggiungi @SafeVarargs, stai dicendo:
 "Giuro che in questo metodo userò l'array solo per leggerne i valori e non farò nulla di strano (come scriverci dentro o passarlo a metodi che potrebbero corromperlo)".
 
-\begin{warningbox}
+\begin{warningbox}[]
     L'annotazione \texttt{@SafeVarargs} può essere applicata solo a metodi \texttt{static}, \texttt{final} o \texttt{private}. Rappresenta una garanzia dello sviluppatore che l'array dei parametri sarà usato solo in modalità "sola lettura" e non verrà mai esposto all'esterno.
 \end{warningbox}
 
