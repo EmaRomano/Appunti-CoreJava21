@@ -594,6 +594,113 @@ Grazie al vincolo \texttt{? super E}, possiamo passare un filtro che lavora su u
 \end{lstlisting}
 Se la firma fosse stata \texttt{Predicate<E>}, il compilatore ci avrebbe costretto a scrivere un nuovo predicato specifico per \texttt{Employee}, anche se la logica era già disponibile per \texttt{Object}.
 
+\subsection{Unbounded Wildcards (bozza)}
+
+La sintassi \texttt{Pair<?>} indica una coppia di un tipo completamente ignoto. Sebbene possa somigliare a un \textit{Raw Type}, la gestione della sicurezza è radicalmente diversa. La differenza fondamentale risiede nella protezione dei dati:
+\begin{itemize}
+    \item \textbf{Raw Type (\texttt{Pair})}: Permette di chiamare \texttt{setFirst(Object)}, esponendo al rischio di \textit{type corruption}.
+    \item \textbf{Unbounded (\texttt{Pair<?>})}: \textbf{Proibisce} qualsiasi chiamata a metodi di scrittura (tranne per il passaggio di \texttt{null}). Non sapendo quale sia il tipo atteso, il compilatore blocca ogni inserimento.
+\end{itemize}
+
+\medskip
+
+Le wildcard senza vincoli sono ideali per metodi "agnostici" rispetto al tipo, che devono solo compiere operazioni strutturali (come il controllo della presenza di valori nulli o il conteggio degli elementi).
+
+\begin{lstlisting}[language=Java]
+public static boolean hasNulls(Pair<?> p) {
+    return p.getFirst() == null || p.getSecond() == null;
+}
+\end{lstlisting}
+
+\begin{observation}
+    Il metodo sopra potrebbe essere scritto come:
+    \begin{center}
+        \texttt{<T> boolean hasNulls(Pair<T> p)}.
+    \end{center}
+    Tuttavia, la versione con \texttt{?} è preferibile perché più concisa e comunica immediatamente che il tipo \texttt{T} non viene mai utilizzato nel corpo del metodo.
+\end{observation}
+
+\subsection{Wildcard Capture (bozza)}
+
+Esistono situazioni in cui l'uso delle wildcard blocca operazioni lecite, come lo scambio di elementi, perché \texttt{?} non è un nome di tipo valido per dichiarare variabili locali.
+
+Per risolvere il problema, si delega l'operazione a un metodo \textit{helper} generico. Il parametro di tipo \texttt{<T>} del metodo helper "cattura" la wildcard, dandole un nome temporaneo utilizzabile nel codice.
+
+\begin{lstlisting}[language=Java]
+public static void swap(Pair<?> p) {
+    swapHelper(p); // T cattura la wildcard ?
+}
+
+private static <T> void swapHelper(Pair<T> p) {
+    T t = p.getFirst();
+    p.setFirst(p.getSecond());
+    p.setSecond(t);
+}
+\end{lstlisting}
+
+La cattura della wildcard è possibile solo se il compilatore può garantire che la wildcard rappresenti un \textbf{singolo tipo definito}. 
+Ad esempio, non è possibile catturare le wildcard in strutture nidificate come \texttt{ArrayList<Pair<?>>}, poiché ogni elemento della lista potrebbe avere un tipo di wildcard differente.
+
+\section{Restrizioni e Limitazioni}
+
+La maggior parte delle limitazioni dei \textit{Generics} in Java deriva direttamente dalla \textbf{Type Erasure} (cancellazione dei tipi).
+
+\subsection*{Tipi Primitivi e Parametri di Tipo}
+Non è possibile utilizzare tipi primitivi come parametri di tipo: \texttt{Pair<double>} è illegale, mentre \texttt{Pair<Double>} è corretto. Dopo la cancellazione dei tipi il compilatore sostituisce \texttt{T} con \texttt{Object}, la struttura risultante può ospitare solo \textbf{riferimenti a oggetti}. 
+
+\subsection*{Verifiche di Tipo a Runtime}
+A causa della \textit{Type Erasure}, tutte le verifiche sui tipi effettuate durante l'esecuzione riguardano esclusivamente i \textbf{Raw Types}.
+
+\begin{itemize}
+    \item \textbf{instanceof}: Non è possibile testare se un oggetto appartiene a un tipo parametrizzato specifico.
+    \begin{lstlisting}[language=Java]
+        if (a instanceof Pair<String>) // ERRORE DI COMPILAZIONE
+        if (a instanceof Pair<?>)     // LEGALE (testa solo se e' un Pair)
+    \end{lstlisting}
+    
+    \item \textbf{Cast}: Il cast verso un tipo generico genera un \textit{warning}. Il compilatore avvisa che non può garantire l'integrità del contenuto a runtime.
+    
+    \item \textbf{getClass()}: Il metodo \texttt{getClass()} restituisce sempre il \textit{raw type}. 
+\end{itemize}
+
+\begin{warningbox}
+    Due istanze di una stessa classe generica con parametri di tipo diversi (es. \texttt{Pair<String>} e \texttt{Pair<Double>}) condividono la stessa identica classe a runtime. Il confronto \texttt{p1.getClass() == p2.getClass()} sara' sempre \texttt{true}.
+\end{warningbox}
+
+\subsection*{Divieto di Creazione di Array Generici}
+In Java, non è possibile istanziare array di tipi parametrizzati (es. \texttt{new Pair<String>[10]}). Questa restrizione protegge l'integrità del sistema dei tipi.
+
+Il divieto esiste perché gli array sono \textbf{covarianti} e \textbf{reificati} (controllano il tipo a runtime), mentre i Generics usano la \textbf{Type Erasure}.
+
+Se fosse permesso, potremmo:
+\begin{enumerate}
+    \item Assegnare un array \texttt{Pair<String>[]} a un riferimento \texttt{Object[]}.
+    \item Inserire un \texttt{Pair<Employee>} nell'array (per la cancellazione del tipo, la JVM vedrebbe solo un \texttt{Pair} generico e lo accetterebbe).
+    \item Causare una \texttt{ClassCastException} al momento della lettura.
+\end{enumerate}
+
+
+\begin{bestpractice}
+    Se hai bisogno di una collezione di oggetti generici, non usare gli array. La soluzione corretta e sicura è utilizzare una \texttt{ArrayList}:
+    \begin{center}
+        \texttt{ArrayList<Pair<String>> lista = new ArrayList<>();}
+    \end{center}
+    Le liste generiche sono invarianti e gestite interamente dal compilatore, evitando ogni rischio a runtime.
+\end{bestpractice}
+
+\subsection*{Varargs e l'Annotazione \texttt{@SafeVarargs}}
+Come sappiamo dai primi capitoli, i metodi con un numero variabile di argomenti (\textit{varargs}) utilizzano internamente gli array. Quando si usano tipi generici con i varargs, si crea un conflitto con il divieto di istanziare array generici visto nella sezione precedente. Per non bloccare del tutto l'utilità dei Varargs, Java ha fatto un'eccezione: permette la creazione dell'array in questo caso specifico, ma ti "tempesta" di avvisi sul rischio di \textit{Heap Pollution} (inquinamento dell'heap); quest'ultimo rappresenta il rischio che l'array (la cui componente è cancellata a \texttt{Object} o al \textit{bound}) venga "inquinato" con oggetti di tipo errato.
+
+Per silenziare questi warnings (sia nella dichiarazione che nella chiamata) è stata introdotta l'annotazione \textbf{\texttt{@SafeVarargs}}; questa è una sorta di promessa solenne che fai al linguaggio. Quando aggiungi @SafeVarargs, stai dicendo:
+"Giuro che in questo metodo userò l'array solo per leggerne i valori e non farò nulla di strano (come scriverci dentro o passarlo a metodi che potrebbero corromperlo)".
+
+\begin{warningbox}
+    L'annotazione \texttt{@SafeVarargs} può essere applicata solo a metodi \texttt{static}, \texttt{final} o \texttt{private}. Rappresenta una garanzia dello sviluppatore che l'array dei parametri sarà usato solo in modalità "sola lettura" e non verrà mai esposto all'esterno.
+\end{warningbox}
+
+\begin{warningbox}[Il pericolo del "Generic Array Creator"]
+    È possibile usare i varargs per creare un metodo che restituisce un array generico (operazione normalmente vietata). Tuttavia, questa pratica è fortemente sconsigliata poiché reintroduce tutti i rischi di \texttt{ClassCastException} a runtime discussi precedentemente.
+\end{warningbox}
 
 
 
