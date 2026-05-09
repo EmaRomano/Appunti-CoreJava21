@@ -51,5 +51,129 @@ Perché scegliere l'una o l'altra? L'interfaccia è agnostica riguardo alle pres
     \item \textbf{\texttt{LinkedList}}: Non ha problemi di capacità finita, ma ogni elemento aggiunto comporta la creazione di un nuovo oggetto in memoria, rendendola meno efficiente in scenari ad alto volume di dati.
 \end{itemize}
 
+\section{L'Interfaccia Collection}
+
+L'interfaccia \texttt{Collection} rappresenta la radice (il "fondamento") della gerarchia delle classi di collezione. Ogni struttura dati che contiene oggetti (ad eccezione delle \textit{Map}) implementa questa interfaccia.
+
+Sebbene l'interfaccia contenga numerosi metodi, ne evidenziamo due come pilastri essenziali:
+
+\begin{lstlisting}[caption={Metodi base dell'interfaccia Collection}]
+public interface Collection<E> {
+   boolean add(E element);
+   Iterator<E> iterator();
+   // ... altri metodi
+}
+\end{lstlisting}
+
+Il metodo \texttt{add} serve a inserire un elemento nella collezione. La sua particolarità risiede nel valore di ritorno:
+\begin{itemize}
+    \item Restituisce \textbf{\texttt{true}} se l'aggiunta ha effettivamente modificato la collezione.
+    \item Restituisce \textbf{\texttt{false}} se la collezione è rimasta invariata.
+\end{itemize}
+
+\medskip
+
+In una \texttt{List}, il metodo \texttt{add} restituirà quasi sempre \texttt{true}. Tuttavia, in un \textbf{\texttt{Set}} (che non ammette duplicati), se provi ad aggiungere un oggetto già presente, il metodo restituirà \texttt{false}, segnalando che l'operazione non ha avuto effetto.
+
+Il metodo \texttt{iterator} restituisce un oggetto che implementa l'interfaccia \texttt{Iterator}. È lo strumento standard fornito dal framework per "visitare" gli elementi uno ad uno, indipendentemente dalla struttura dati sottostante.
+
+\begin{tip}[]
+Nonostante esistano metodi più moderni (come gli \textit{Stream} o il ciclo \textit{for-each}), capire l'interfaccia \texttt{Collection} e il suo \texttt{iterator} è fondamentale per capire come Java astrae il concetto di "gruppo di oggetti".
+\end{tip}
+
+\section{Iteratori}
+Per scorrere gli elementi di una collezione, il Java Collections Framework non si affida agli indici (che sarebbero inefficienti per strutture come le liste concatenate), ma utilizza l'interfaccia \texttt{Iterator<E>}; essa definisce il meccanismo standard per visitare gli elementi di una collezione uno alla volta. 
+
+L'interfaccia \texttt{Iterator} definisce quattro metodi principali:
+\begin{itemize}
+    \item \texttt{E next()}: Restituisce l'elemento successivo e sposta il cursore avanti.
+    \item \texttt{boolean hasNext()}: Restituisce \texttt{true} se ci sono ancora elementi da scorrere.
+    \item \texttt{void remove()}: Rimuove l'ultimo elemento restituito dall'ultimo \texttt{next()}.
+    \item \texttt{void forEachRemaining(Consumer<? super E> action)}: Esegue un'azione su tutti gli elementi rimanenti.
+\end{itemize}
+
+\begin{lstlisting}[language=Java]
+public interface Iterator<E> {
+   boolean hasNext();
+   E next();
+   default void remove();
+   default void forEachRemaining(Consumer<? super E> action);
+}
+\end{lstlisting}
+
+È utile immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura a seguire)
+\begin{itemize}
+    \item Quando chiami \texttt{next()}, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
+    \item Il metodo \texttt{remove()} cancella l'elemento restituito dall'ultima chamata di \texttt{next}; esso è soggetto a vincoli: può essere chiamato solo dopo una chiamata a \texttt{next} (in concetto è: prima lo devo leggere, poi lo posso cancellare) e solo \textbf{una volta} dopo ogni chiamata a \texttt{next()} (non si può chiamare due volte di fila senza un \texttt{next} in mezzo). Se uno di questi vincoli non viene rispettato, si riceve una \texttt{IllegalStateException}.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{iterator.pdf} 
+    \caption{l'iteratore come cursore \textbf{tra} elementi}
+\end{figure}
+
+\begin{dettagli}[]
+    Da notare che nel codice dell'interfaccia i metodi \texttt{remove()} e \texttt{forEachRemaining()} sono segnati come default. Questo significa che chi implementa l'interfaccia non è obbligato a scriverne il corpo se non ne ha bisogno.
+
+    Nello specifico, \texttt{remove()} è un metodo "opzionale": alcune collezioni (come quelle non modificabili) potrebbero lanciare una \texttt{UnsupportedOperationException} se provi a usarlo.
+\end{dettagli}
+
+Per ispezionare tutti gli elementi di una collezione, si richiede un iteratore e si richiama ripetutamente il metodo \texttt{next()}. Se si chiama \texttt{next()} quando si è già raggiunta la fine della collezione, l'iteratore solleva una \texttt{NoSuchElementException}. Per questo motivo, è fondamentale verificare sempre la presenza di un elemento successivo tramite il metodo \texttt{hasNext()}.
+
+\begin{lstlisting}[caption={Utilizzo classico del ciclo while con Iterator}]
+Collection<String> coll = ...;
+Iterator<String> iter = coll.iterator();
+while (iter.hasNext()) {
+   String element = iter.next();
+   // operazione sull'elemento
+}
+\end{lstlisting}
+
+Java permette di scrivere il ciclo precedente in modo molto più conciso grazie al costrutto \textbf{for each}. Il compilatore traduce automaticamente questo costrutto in un ciclo con iteratore.
+
+\begin{lstlisting}[caption={Sintassi for each}]
+for (String element : coll) {
+   // operazione sull'elemento
+}
+\end{lstlisting}
+
+Il ciclo "for each" può essere utilizzato con qualsiasi oggetto che implementi l'interfaccia \textbf{\texttt{Iterable}}, la quale richiede un unico metodo astratto:
+\begin{lstlisting}
+public interface Iterable<E> {
+   Iterator<E> iterator();
+}
+\end{lstlisting}
+
+\begin{bestpractice}[]
+Poiché l'interfaccia \texttt{Collection} estende \texttt{Iterable}, ogni collezione del framework Java può essere scorsa usando la sintassi \textit{for each}. Prediligi sempre questa sintassi per la leggibilità, a meno che tu non abbia bisogno di rimuovere elementi durante l'iterazione.
+\end{bestpractice}
+
+\begin{warningbox}[Effetti Collaterali]
+Tieni presente che durante un \texttt{forEach}, non puoi modificare la struttura della collezione (es. aggiungere o rimuovere elementi), altrimenti Java lancerà una \texttt{ConcurrentModificationException}.
+\end{warningbox}
+
+Oltre ai cicli tradizionali, il \textit{Collections Framework} mette a disposizione metodi che accettano \textbf{lambda expressions} per elaborare gli elementi in modo più conciso e leggibile.
+
+Invece di gestire manualmente l'iteratore, possiamo passare un'azione (sotto forma di lambda) direttamente alla collezione o all'iteratore stesso.
+
+\begin{lstlisting}[caption={Esempi di iterazione funzionale}]
+// Applica l'azione a ogni elemento della collezione
+myCollection.forEach(element -> System.out.println(element));
+
+// Applica l'azione agli elementi rimanenti dell'iteratore
+myIterator.forEachRemaining(element -> System.out.println(element));
+\end{lstlisting}
+
+Entrambi questi metodi utilizzano l'interfaccia funzionale \texttt{Consumer<? super E>}. La lambda viene invocata internamente per ogni elemento della collezione senza che lo sviluppatore debba preoccuparsi di chiamare \texttt{next()} o \texttt{hasNext()}.
+
+Per quanto riguarda l'ordine in cui gli elementi vengono visitati, il comportamento dipende esclusivamente dal tipo di collezione; ad esempio, per un {\texttt{ArrayList}} l'iteratore è \textbf{predicibile}: inizia dall'indice 0 e incrementa di uno a ogni passo; per un \textbf{\texttt{HashSet}}, l'iteratore visita gli elementi in ordine \textbf{essenzialmente casuale} e non si può fare alcuna assunzione sulla sequenza di uscita.
+
+\begin{tip}[Scelta della Collezione]
+Se l'ordine dei dati è irrilevante (es. sommare dei totali o contare occorrenze), l'incertezza sull'ordine di visita non è un problema. Se invece l'ordine è parte della logica di business (es. una lista di transazioni cronologiche), è vitale scegliere una collezione che garantisca l'ordinamento come \texttt{ArrayList} o \texttt{TreeSet}.
+\end{tip}
+
+
+
 
 
