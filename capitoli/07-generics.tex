@@ -694,14 +694,11 @@ private static <T> void swapHelper(Pair<T> p) {
 La cattura della wildcard è possibile solo se il compilatore può garantire che la wildcard rappresenti un \textbf{singolo tipo definito}. 
 Ad esempio, non è possibile catturare le wildcard in strutture nidificate come \texttt{ArrayList<Pair<?>>}, poiché ogni elemento della lista potrebbe avere un tipo di wildcard differente.
 
-\section{Restrizioni e Limitazioni}
+\section{Restrizioni e Limitazioni dei Generics}
 
-La maggior parte delle limitazioni dei \textit{Generics} in Java deriva direttamente dalla \textbf{Type Erasure} (cancellazione dei tipi).
+La maggior parte delle limitazioni dei \textit{Generics} in Java deriva direttamente dalla \textbf{Type Erasure} (cancellazione dei tipi). Ad esempio, la prima (ovvia) limitazione è che non è possibile utilizzare tipi primitivi come parametri di tipo: \texttt{Pair<double>} è illegale, mentre \texttt{Pair<Double>} è corretto. Dopo la cancellazione dei tipi il compilatore sostituisce \texttt{T} con \texttt{Object}, la struttura risultante può ospitare solo \textbf{riferimenti a oggetti}. 
 
-\subsection*{Tipi Primitivi e Parametri di Tipo}
-Non è possibile utilizzare tipi primitivi come parametri di tipo: \texttt{Pair<double>} è illegale, mentre \texttt{Pair<Double>} è corretto. Dopo la cancellazione dei tipi il compilatore sostituisce \texttt{T} con \texttt{Object}, la struttura risultante può ospitare solo \textbf{riferimenti a oggetti}. 
-
-\subsection*{Verifiche di Tipo a Runtime}
+\subsection{Verifiche di Tipo a Runtime}
 A causa della \textit{Type Erasure}, tutte le verifiche sui tipi effettuate durante l'esecuzione riguardano esclusivamente i \textbf{Raw Types}.
 
 \begin{itemize}
@@ -720,7 +717,7 @@ A causa della \textit{Type Erasure}, tutte le verifiche sui tipi effettuate dura
     Due istanze di una stessa classe generica con parametri di tipo diversi (es. \texttt{Pair<String>} e \texttt{Pair<Double>}) condividono la stessa identica classe a runtime. Il confronto \texttt{p1.getClass() == p2.getClass()} sarà sempre \texttt{true}.
 \end{warningbox}
 
-\subsection*{Divieto di Creazione di Array Generici}
+\subsection{Divieto di Creazione di Array Generici}
 In Java, non è possibile istanziare array di tipi parametrizzati (es. \texttt{new Pair<String>[10]}). Questa restrizione protegge l'integrità del sistema dei tipi.
 
 Il divieto esiste perché gli array sono \textbf{covarianti} e \textbf{reificati} (controllano il tipo a runtime), mentre i Generics usano la \textbf{Type Erasure}.
@@ -741,7 +738,7 @@ Se fosse permesso, potremmo:
     Le liste generiche sono invarianti e gestite interamente dal compilatore, evitando ogni rischio a runtime.
 \end{bestpractice}
 
-\subsection*{Varargs e l'Annotazione \texttt{@SafeVarargs}}
+\subsection{Limiti sui Varargs}
 Come sappiamo dai primi capitoli, i metodi con un numero variabile di argomenti (\textit{varargs}) utilizzano internamente gli array. Quando si usano tipi generici con i varargs, si crea un conflitto con il divieto di istanziare array generici visto nel paragrafo precedente. Per non bloccare del tutto l'utilità dei Varargs, Java ha fatto un'eccezione: permette la creazione dell'array in questo caso specifico, ma ti "tempesta" di avvisi sul rischio di \textit{Heap Pollution} (inquinamento dell'heap); quest'ultimo rappresenta il rischio che l'array (la cui componente è cancellata a \texttt{Object} o al \textit{bound}) venga "inquinato" con oggetti di tipo errato.
 
 Per silenziare questi warnings (sia nella dichiarazione che nella chiamata) è stata introdotta l'annotazione \textbf{\texttt{@SafeVarargs}}; questa è una sorta di promessa solenne che fai al linguaggio. Quando aggiungi @SafeVarargs, stai dicendo:
@@ -754,6 +751,59 @@ Per silenziare questi warnings (sia nella dichiarazione che nella chiamata) è s
 \begin{warningbox}[Il pericolo del "Generic Array Creator"]
     È possibile usare i varargs per creare un metodo che restituisce un array generico (operazione normalmente vietata). Tuttavia, questa pratica è fortemente sconsigliata poiché reintroduce tutti i rischi di \texttt{ClassCastException} a runtime discussi precedentemente.
 \end{warningbox}
+
+Esiste un comportamento particolare dei \textit{varargs} generici quando vengono passati degli array. Sebbene un array possa essere passato direttamente a un parametro \textit{varargs}, il meccanismo di "distribuzione" (\textit{spread}) fallisce con i tipi primitivi.
+
+\begin{enumerate}
+    \item \textbf{Meccanismo Standard (Spreading)}: Quando si passa un array a un metodo con \textit{varargs}, Java lo tratta come se gli elementi fossero stati passati singolarmente.
+    \begin{lstlisting}[language=Java]
+        String[] moreStrings = { "A", "B", "C" };
+        List<String> list = List.of(moreStrings); // OK: lista di 3 elementi
+    \end{lstlisting}
+
+    \item \textbf{Il Fallimento con i Primitivi}: Poiché i parametri di tipo (come \texttt{E}) non possono essere tipi primitivi (es. \texttt{int}), un array di tipo \texttt{int[]} non può essere convertito in un array di tipo \texttt{Integer[]} o \texttt{Object[]}.
+    \begin{lstlisting}[language=Java]
+        Collection<Integer> numbers = . . .;
+            int[] moreNumbers = new int[] { 11, 12, 13, 14, 15 };
+            addAll(numbers, moreNumbers); // ERRORE
+    \end{lstlisting}
+\end{enumerate}
+
+Un'altra insidia che riguarda i \textit{varargs} con tipi primitivi è illustrata nel seguente esempio.
+Consideriamo il metodo \texttt{public static <E> List<E> of(E... elements)}.
+Se proviamo a passare un array di primitivi:
+\begin{lstlisting}[language=Java]
+int[] moreNumbers = { 1, 2, 3 };
+var numbers = List.of(moreNumbers);
+\end{lstlisting}
+
+In questo caso, il compilatore non può far corrispondere \texttt{E} a \texttt{int}. Tuttavia, poiché un array è esso stesso un oggetto, il compilatore fa corrispondere \textbf{\texttt{E}} al tipo \textbf{\texttt{int[]}}.
+Il risultato è una \texttt{List<int[]>} che contiene \textbf{un solo elemento}: l'intero array di numeri, invece di una lista di tre numeri interi.
+
+Questo comportamento è, ancora una volta, una diretta conseguenza della \textit{Type Erasure}: dato che \texttt{E} viene cancellato a \texttt{Object}, e un \texttt{int} non è un \texttt{Object}, l'unico modo che la JVM ha per gestire la chiamata è trattare l'intero array \texttt{int[]} come l'unico oggetto che soddisfa il parametro \textit{varargs}.
+
+\subsection{Divieto di Istanziazione di Variabili di Tipo}
+
+Un'altra limitazione significativa è l'impossibilità di utilizzare variabili di tipo in espressioni di creazione di oggetti con \texttt{new T(...)}.
+
+Il compilatore blocca queste operazioni perché, a causa della \textit{Type Erasure}, la variabile \texttt{T} verrebbe sostituita dal suo \textit{bound} (solitamente \texttt{Object}). Di conseguenza, l'istruzione \texttt{new T()} verrebbe compilata come \texttt{new Object()}, il che raramente produce il risultato desiderato dallo sviluppatore.
+
+Per risolvere questo problema, il progettista deve fare in modo che il chiamante fornisca un modo per costruire l'oggetto. L'approccio più moderno e pulito consiste nel passare al metodo una \textit{constructor expression} tramite l'interfaccia funzionale \texttt{Supplier<T>}.
+
+\begin{lstlisting}[language=Java, caption={Istanziazione tramite Supplier}]
+public static <T> Pair<T> makePair(Supplier<T> constr) {
+    // Utilizziamo il metodo get() per ottenere nuove istanze di T
+    return new Pair<>(constr.get(), constr.get());
+}
+
+// Chiamata al metodo tramite Method Reference
+Pair<String> p = Pair.makePair(String::new);
+\end{lstlisting}
+
+\begin{observation}
+    Esiste un altro approccio più tradizionale ma anche più complesso da gestire basato sull'uso della \textit{Reflection}, che qui omettiamo.
+\end{observation}
+
 
 
 
