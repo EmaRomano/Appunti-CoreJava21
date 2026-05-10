@@ -1358,6 +1358,7 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/fontawesome5/ufontawesomefree2.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/fontawesome5/ufontawesomefree2.fd
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/fontawesome5/fa5free2solid.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free2.enc
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbx10.tfm
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
@@ -1386,7 +1387,6 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/lmmi10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/lmsy10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/ec-lmbx10.tfm
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty

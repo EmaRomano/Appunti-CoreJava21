@@ -129,8 +129,6 @@ Per scorrere gli elementi di una collezione, il Java Collections Framework non s
 \end{figure}
 A livello astratto, si può immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura \ref{fig: iteratore}).
 
-
-
 L'interfaccia \texttt{Iterator} definisce quattro metodi principali:
 \begin{lstlisting}[language=Java]
 public interface Iterator<E> {
@@ -154,7 +152,15 @@ public interface Iterator<E> {
     Nello specifico, \texttt{remove()} è un metodo "opzionale": alcune collezioni (come quelle non modificabili) potrebbero lanciare una \texttt{UnsupportedOperationException} se provi a usarlo.
 \end{dettagli}
 
-Per ispezionare tutti gli elementi di una collezione, si richiede un iteratore e si richiama ripetutamente il metodo \texttt{next()}. Se si chiama \texttt{next()} quando si è già raggiunta la fine della collezione, l'iteratore solleva una \texttt{NoSuchElementException}. Per questo motivo, è fondamentale verificare sempre la presenza di un elemento successivo tramite il metodo \texttt{hasNext()}.
+Come si vede dalla figura \ref{fig:collection-hierarchy}, \texttt{Iterable} rappresenta l'interfaccia padre di \texttt{Collection}; ogni classe che la implementa dichiara di poter restituire i propri elementi uno alla volta. Essa contiene un solo metodo astratto e non di default che restituisce un iteratore:
+
+\begin{lstlisting}[language=Java]
+public interface Iterable<E> {
+   Iterator<E> iterator();
+}
+\end{lstlisting}
+
+Questo metodo viene dunque ereditato da \texttt{Collection}; per ispezionare tutti gli elementi di una collezione, si richiede un iteratore e si richiama ripetutamente il metodo \texttt{next()}. Se si chiama \texttt{next()} quando si è già raggiunta la fine della collezione, l'iteratore solleva una \texttt{NoSuchElementException}. Per questo motivo, è fondamentale verificare sempre la presenza di un elemento successivo tramite il metodo \texttt{hasNext()}.
 
 \begin{lstlisting}[caption={Utilizzo classico del ciclo while con Iterator}]
 Collection<String> coll = ...;
@@ -173,12 +179,21 @@ for (String element : coll) {
 }
 \end{lstlisting}
 
-Il ciclo "for each" può essere utilizzato con qualsiasi oggetto che implementi l'interfaccia \textbf{\texttt{Iterable}}, la quale richiede un unico metodo astratto:
-\begin{lstlisting}
-public interface Iterable<E> {
-   Iterator<E> iterator();
-}
-\end{lstlisting}
+\begin{dettagli}
+    \begin{lstlisting}[language=Java]
+        // Scritto dallo sviluppatore:
+        for (String s : coll) { System.out.println(s); }
+
+        // Tradotto dal compilatore:
+            Iterator<String> it = coll.iterator();
+            while (it.hasNext()) {
+                String s = it.next();
+                System.out.println(s);
+        }
+    \end{lstlisting}
+\end{dettagli}
+
+Il ciclo "for each" può essere utilizzato con qualsiasi oggetto che implementi l'interfaccia \textbf{\texttt{Iterable}}. 
 
 \begin{bestpractice}[]
 Poiché l'interfaccia \texttt{Collection} estende \texttt{Iterable}, ogni collezione del framework Java può essere scorsa usando la sintassi \textit{for each}. Prediligi sempre questa sintassi per la leggibilità, a meno che tu non abbia bisogno di rimuovere elementi durante l'iterazione.
@@ -188,9 +203,7 @@ Poiché l'interfaccia \texttt{Collection} estende \texttt{Iterable}, ogni collez
 Tieni presente che durante un \texttt{forEach}, non puoi modificare la struttura della collezione (es. aggiungere o rimuovere elementi), altrimenti Java lancerà una \texttt{ConcurrentModificationException}.
 \end{warningbox}
 
-Oltre ai cicli tradizionali, il \textit{Collections Framework} mette a disposizione metodi che accettano \textbf{lambda expressions} per elaborare gli elementi in modo più conciso e leggibile.
-
-Invece di gestire manualmente l'iteratore, possiamo passare un'azione (sotto forma di lambda) direttamente alla collezione o all'iteratore stesso.
+Oltre ai cicli tradizionali, il \textit{Collections Framework} mette a disposizione metodi che accettano \textbf{lambda expressions} per elaborare gli elementi in modo più conciso e leggibile. Invece di gestire manualmente l'iteratore, possiamo passare un'azione (sotto forma di lambda) direttamente alla collezione o all'iteratore stesso.
 
 \begin{lstlisting}[caption={Esempi di iterazione funzionale}]
 // Applica l'azione a ogni elemento della collezione
