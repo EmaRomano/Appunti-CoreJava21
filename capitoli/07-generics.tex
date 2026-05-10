@@ -594,7 +594,60 @@ Grazie al vincolo \texttt{? super E}, possiamo passare un filtro che lavora su u
 \end{lstlisting}
 Se la firma fosse stata \texttt{Predicate<E>}, il compilatore ci avrebbe costretto a scrivere un nuovo predicato specifico per \texttt{Employee}, anche se la logica era già disponibile per \texttt{Object}.
 
-\subsection{Unbounded Wildcards (bozza)}
+\subsection{Il Principio PECS (Producer Extends, Consumer Super)}
+
+Le \textit{wildcards} con vincoli non sono così banali da capire e usare correttamente; per agevolarne comprensione e uso, esiste una regola mnemonica fondamentale per decidere quale tipo di jolly utilizzare: il principio \textbf{PECS}. 
+
+\begin{tip}[\textbf{Mantra PECS}]
+    \begin{itemize}
+        \item \textbf{P}roducer \textbf{E}xtends: se la struttura dati deve \textit{fornire} elementi (produzione), usa \texttt{? extends T}.
+        \item \textbf{C}onsumer \textbf{S}uper: se la struttura dati deve \textit{ricevere} elementi (consumo), usa \texttt{? super T}.
+    \end{itemize}
+\end{tip}
+
+Il compilatore Java applica queste restrizioni per garantire la \textit{Type Safety} a runtime, evitando che una collezione venga "corrotta" con oggetti di tipo errato.
+
+\begin{enumerate}
+    \item \textbf{Il Producer (extends)}: Quando dichiari \texttt{List<? extends Number>}, stai dicendo: "Questa è una lista di \textit{qualcosa} che estende Number (es. \texttt{Integer}, \texttt{Double}, etc.)". 
+    \begin{itemize}
+        \item Puoi \textbf{leggere} con sicurezza perché qualsiasi cosa esca dalla lista sarà almeno un \texttt{Number}.
+        \item Non puoi \textbf{scrivere} perché il compilatore non sa se la lista reale sia una \texttt{List<Double>} e tu stia cercando di inserire un \texttt{Integer}.
+    \end{itemize}
+
+    \item \textbf{Il Consumer (super)}: Quando dichiari \texttt{List<? super Integer>}, stai dicendo: "Questa lista può ospitare \texttt{Integer} perché è una lista di \texttt{Integer} o di un suo supertipo (es. \texttt{Number}, \texttt{Object})".
+    \begin{itemize}
+        \item Puoi \textbf{scrivere} con sicurezza perché un \texttt{Integer} "entra" correttamente in una lista di \texttt{Object} o \texttt{Number}.
+        \item Non puoi \textbf{leggere} (se non come \texttt{Object}) perché non sai se la lista contiene \texttt{Object}, rendendo rischioso l'assegnamento a variabili più specifiche.
+    \end{itemize}
+\end{enumerate}
+
+\medskip
+
+L'esempio più celebre di PECS nel JDK è il metodo per copiare elementi da una lista all'altra. Analizziamo la sua firma:
+
+\begin{lstlisting}[language=Java, caption={Applicazione di PECS in Collections.copy}]
+public static <T> void copy(List<? super T> dest, List<? extends T> src) {
+    for (int i = 0; i < src.size(); i++) {
+        dest.set(i, src.get(i));
+    }
+}
+\end{lstlisting}
+
+In questo scenario:
+\begin{itemize}
+    \item \texttt{src} è il \textbf{Producer} (\texttt{extends}): fornisce gli elementi da copiare. Vogliamo essere in grado di leggere da una lista di \texttt{Manager} se il tipo \texttt{T} è \texttt{Employee}.
+    \item \texttt{dest} è il \textbf{Consumer} (\texttt{super}): riceve gli elementi. Vogliamo essere in grado di scrivere i nostri oggetti in una lista che potrebbe essere più generica (es. scrivere \texttt{Manager} in una lista di \texttt{Employee} o \texttt{Object}).
+\end{itemize}
+
+\begin{bestpractice}
+    Usa PECS ogni volta che progetti un metodo che accetta collezioni generiche come parametri. Senza questa flessibilità, il tuo codice risulterà inutilmente rigido e costringerà gli utenti a cast manuali o a conversioni costose tra tipi di collezioni.
+\end{bestpractice}
+
+\begin{warningbox}[\textbf{Eccezione alla regola}]
+    Se hai bisogno sia di leggere che di scrivere in una struttura dati all'interno dello stesso metodo, non usare i wildcards. In quel caso, devi utilizzare un tipo generico esatto (es. \texttt{List<T>}).
+\end{warningbox}
+
+\subsection{Unbounded Wildcards}
 
 La sintassi \texttt{Pair<?>} indica una coppia di un tipo completamente ignoto. Sebbene possa somigliare a un \textit{Raw Type}, la gestione della sicurezza è radicalmente diversa. La differenza fondamentale risiede nella protezione dei dati:
 \begin{itemize}
@@ -620,7 +673,7 @@ public static boolean hasNulls(Pair<?> p) {
     Tuttavia, la versione con \texttt{?} è preferibile perché più concisa e comunica immediatamente che il tipo \texttt{T} non viene mai utilizzato nel corpo del metodo.
 \end{observation}
 
-\subsection{Wildcard Capture (bozza)}
+\subsection{Wildcard Capture}
 
 Esistono situazioni in cui l'uso delle wildcard blocca operazioni lecite, come lo scambio di elementi, perché \texttt{?} non è un nome di tipo valido per dichiarare variabili locali.
 
@@ -664,7 +717,7 @@ A causa della \textit{Type Erasure}, tutte le verifiche sui tipi effettuate dura
 \end{itemize}
 
 \begin{warningbox}
-    Due istanze di una stessa classe generica con parametri di tipo diversi (es. \texttt{Pair<String>} e \texttt{Pair<Double>}) condividono la stessa identica classe a runtime. Il confronto \texttt{p1.getClass() == p2.getClass()} sara' sempre \texttt{true}.
+    Due istanze di una stessa classe generica con parametri di tipo diversi (es. \texttt{Pair<String>} e \texttt{Pair<Double>}) condividono la stessa identica classe a runtime. Il confronto \texttt{p1.getClass() == p2.getClass()} sarà sempre \texttt{true}.
 \end{warningbox}
 
 \subsection*{Divieto di Creazione di Array Generici}
@@ -701,6 +754,8 @@ Per silenziare questi warnings (sia nella dichiarazione che nella chiamata) è s
 \begin{warningbox}[Il pericolo del "Generic Array Creator"]
     È possibile usare i varargs per creare un metodo che restituisce un array generico (operazione normalmente vietata). Tuttavia, questa pratica è fortemente sconsigliata poiché reintroduce tutti i rischi di \texttt{ClassCastException} a runtime discussi precedentemente.
 \end{warningbox}
+
+
 
 
 

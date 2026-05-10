@@ -101,7 +101,7 @@ public interface Iterator<E> {
 }
 \end{lstlisting}
 
-È utile immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura a seguire)
+È utile immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura a seguire).
 \begin{itemize}
     \item Quando chiami \texttt{next()}, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
     \item Il metodo \texttt{remove()} cancella l'elemento restituito dall'ultima chamata di \texttt{next}; esso è soggetto a vincoli: può essere chiamato solo dopo una chiamata a \texttt{next} (in concetto è: prima lo devo leggere, poi lo posso cancellare) e solo \textbf{una volta} dopo ogni chiamata a \texttt{next()} (non si può chiamare due volte di fila senza un \texttt{next} in mezzo). Se uno di questi vincoli non viene rispettato, si riceve una \texttt{IllegalStateException}.
