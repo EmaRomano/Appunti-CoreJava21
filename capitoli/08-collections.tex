@@ -47,51 +47,91 @@ In Java 6, quando fu introdotta \texttt{ArrayDeque}, i programmatori che avevano
 Perché scegliere l'una o l'altra? L'interfaccia è agnostica riguardo alle prestazioni, ma le implementazioni no:
 
 \begin{itemize}
-    \item \textbf{\texttt{ArrayDeque}}: È generalmente più performante. Ha un impatto minore sul \textit{Garbage Collector} perché non deve creare un oggetto "Nodo" per ogni elemento inserito. Tuttavia, richiede la riallocazione dell'array quando la capacità finisce.
+    \item \textbf{\texttt{ArrayDeque}}: È generalmente più performante. Ha un impatto minore sul \textit{Garbage Collector} perché non deve creare un oggetto "Nodo" per ogni elemento inserito. Richiede la riallocazione dell'array quando la capacità finisce (operazione computazionalmente costosa), ma se la capacità iniziale è ben calibrata, queste riallocazioni sono rare. 
     \item \textbf{\texttt{LinkedList}}: Non ha problemi di capacità finita, ma ogni elemento aggiunto comporta la creazione di un nuovo oggetto in memoria, rendendola meno efficiente in scenari ad alto volume di dati.
 \end{itemize}
 
 \section{L'Interfaccia Collection}
 
-L'interfaccia \texttt{Collection} rappresenta la radice (il "fondamento") della gerarchia delle classi di collezione. Ogni struttura dati che contiene oggetti (ad eccezione delle \textit{Map}) implementa questa interfaccia.
+L'interfaccia \texttt{Collection<E>} è la radice della gerarchia per le strutture dati che gestiscono gruppi di oggetti (ad eccezione delle \textit{Map}). Essa definisce un set di operazioni standard che garantiscono l'interoperabilità tra diverse implementazioni. Di seguito, esaminiamo i metodi di uso più comune. 
 
-Sebbene l'interfaccia contenga numerosi metodi, ne evidenziamo due come pilastri essenziali:
+\subsection*{Operazioni di Query (Ispezione)}
 
-\begin{lstlisting}[caption={Metodi base dell'interfaccia Collection}]
-public interface Collection<E> {
-   boolean add(E element);
-   Iterator<E> iterator();
-   // ... altri metodi
+Questi metodi permettono di ottenere informazioni sullo stato della collezione senza modificarla.
+
+\begin{itemize}
+    \item \texttt{int size()}: Restituisce il numero di elementi.
+    \item \texttt{boolean isEmpty()}: Equivalente a \texttt{size() == 0}.
+    \item \texttt{boolean contains(Object o)}: Verifica la presenza di un elemento. 
+\end{itemize}
+
+
+\subsection*{Operazioni di Modifica}
+
+\begin{itemize}
+    \item \texttt{boolean add(E element)}: Restituisce \textbf{\texttt{true}} se l'aggiunta ha effettivamente modificato la collezione, \textbf{\texttt{false}} altrimenti. Ad esempio, in una \texttt{List}, il metodo \texttt{add} restituirà quasi sempre \texttt{true}; invece, in un \textbf{\texttt{Set}} (che non ammette duplicati), se provi ad aggiungere un oggetto già presente, il metodo restituirà \texttt{false}, segnalando che l'operazione non ha avuto effetto.
+    \item \texttt{boolean remove(Object o)}: Rimuove una singola istanza dell'elemento, se presente. Il valore restituito segue la stessa logica di \texttt{add}
+    \item \texttt{void clear()}: Rimuove tutti gli elementi, svuotando la collezione.
+\end{itemize}
+
+\subsection*{Operazioni Bulk (di Massa)}
+
+Questi metodi sono fondamentali per manipolare interi set di dati (es. confrontare liste di ID o filtrare risultati). Per \texttt{addAll}, \texttt{removeAll} e \texttt{retainAll} il valore di ritorno indica se la struttura dati è stata mutata, per \texttt{containsAll} il \texttt{boolean} rappresenta l'esito logico del test di inclusione.
+
+\begin{itemize}
+    \item \texttt{boolean addAll(Collection<? extends E> c)}: \textbf{Unione}. Aggiunge tutti gli elementi della collezione \texttt{c} alla collezione corrente. 
+    \item \texttt{boolean removeAll(Collection<?> c)}: \textbf{Differenza}. Rimuove dalla collezione corrente tutti gli elementi che sono presenti anche in \texttt{c}. 
+    \item \texttt{boolean retainAll(Collection<?> c)}: \textbf{Intersezione}. Rimuove dalla collezione corrente tutti gli elementi che \textbf{non} sono contenuti in \texttt{c}, mantenendo solo i comuni. 
+    \item \texttt{boolean containsAll(Collection<?> c)}: \textbf{Inclusione}. Verifica se la collezione corrente contiene tutti gli elementi della collezione \texttt{c}. 
+\end{itemize}
+
+\subsection*{Conversione in Array}
+
+Nonostante la potenza delle collezioni, a volte è necessario interfacciarsi con API legacy che richiedono array classici.
+\begin{itemize}
+    \item \texttt{Object[] toArray()}: Restituisce un array di oggetti.
+    \item \texttt{<T> T[] toArray(T[] a)}: Versione tipizzata. Se l'array \texttt{a} è abbastanza grande, i dati vengono inseriti lì; altrimenti, viene creato un nuovo array dello stesso tipo.
+\end{itemize}
+
+\subsection*{Metodi Default e Approccio Funzionale (Java 8+)}
+
+Con l'introduzione delle lambda, l'interfaccia si è arricchita di metodi \texttt{default} molto potenti:
+
+\begin{itemize}
+    \item \texttt{boolean removeIf(Predicate<? super E> filter)}: Rimuove tutti gli elementi che soddisfano una determinata condizione. È molto più efficiente e pulito di un ciclo manuale con iteratore.
+    \item \texttt{Stream<E> stream()}: Il punto d'ingresso per la \textit{Stream API}, essenziale per trasformazioni e filtraggi complessi in stile dichiarativo. Tratteremo gli \textit{Stream} in un capitolo successivo. 
+\end{itemize}
+
+\subsection{Il Concetto di Operazioni Opzionali}
+Quasi tutti i metodi che abbiamo elencato non sono di default e ciò potrebbe indurre a pensare che \textit{tutte} le collezioni concrete in Java implementino tutti questi metodi. Tuttavia, questo può essere fuorviante: il framework Java gestisce la varietà delle strutture dati (es. collezioni a dimensione fissa o non modificabili) attraverso il concetto di \textbf{metodi opzionali}.
+
+Invece di creare decine di sotto-interfacce, i progettisti di Java hanno preferito mantenere l'interfaccia \texttt{Collection} unica. 
+Se una specifica implementazione non supporta un metodo (ad esempio il metodo \texttt{add} in una collezione a sola lettura), il metodo viene comunque implementato, ma il suo corpo consiste nel lancio di una eccezione:
+
+\begin{lstlisting}[language=Java]
+public boolean add(E e) {
+    throw new UnsupportedOperationException();
 }
 \end{lstlisting}
 
-Il metodo \texttt{add} serve a inserire un elemento nella collezione. La sua particolarità risiede nel valore di ritorno:
-\begin{itemize}
-    \item Restituisce \textbf{\texttt{true}} se l'aggiunta ha effettivamente modificato la collezione.
-    \item Restituisce \textbf{\texttt{false}} se la collezione è rimasta invariata.
-\end{itemize}
-
-\medskip
-
-In una \texttt{List}, il metodo \texttt{add} restituirà quasi sempre \texttt{true}. Tuttavia, in un \textbf{\texttt{Set}} (che non ammette duplicati), se provi ad aggiungere un oggetto già presente, il metodo restituirà \texttt{false}, segnalando che l'operazione non ha avuto effetto.
-
-Il metodo \texttt{iterator} restituisce un oggetto che implementa l'interfaccia \texttt{Iterator}. È lo strumento standard fornito dal framework per "visitare" gli elementi uno ad uno, indipendentemente dalla struttura dati sottostante.
-
-\begin{tip}[]
-Nonostante esistano metodi più moderni (come gli \textit{Stream} o il ciclo \textit{for-each}), capire l'interfaccia \texttt{Collection} e il suo \texttt{iterator} è fondamentale per capire come Java astrae il concetto di "gruppo di oggetti".
-\end{tip}
+\begin{warningbox}[Attenzione a Runtime]
+Poiché l'obbligo di implementazione è soddisfatto formalmente, il compilatore non segnalerà errori. L'errore emergerà solo a \textbf{runtime}. Questo è un motivo in più per cui è fondamentale conoscere bene la documentazione della classe concreta che si sta istanziando.
+\end{warningbox}
 
 \section{Iteratori}
+
 Per scorrere gli elementi di una collezione, il Java Collections Framework non si affida agli indici (che sarebbero inefficienti per strutture come le liste concatenate), ma utilizza l'interfaccia \texttt{Iterator<E>}; essa definisce il meccanismo standard per visitare gli elementi di una collezione uno alla volta. 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{iterator.pdf} 
+    \caption{l'iteratore come cursore \textbf{tra} elementi}
+    \label{fig: iteratore}
+\end{figure}
+A livello astratto, si può immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura \ref{fig: iteratore}).
+
+
 
 L'interfaccia \texttt{Iterator} definisce quattro metodi principali:
-\begin{itemize}
-    \item \texttt{E next()}: Restituisce l'elemento successivo e sposta il cursore avanti.
-    \item \texttt{boolean hasNext()}: Restituisce \texttt{true} se ci sono ancora elementi da scorrere.
-    \item \texttt{void remove()}: Rimuove l'ultimo elemento restituito dall'ultimo \texttt{next()}.
-    \item \texttt{void forEachRemaining(Consumer<? super E> action)}: Esegue un'azione su tutti gli elementi rimanenti.
-\end{itemize}
-
 \begin{lstlisting}[language=Java]
 public interface Iterator<E> {
    boolean hasNext();
@@ -101,17 +141,12 @@ public interface Iterator<E> {
 }
 \end{lstlisting}
 
-È utile immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura a seguire).
 \begin{itemize}
-    \item Quando chiami \texttt{next()}, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
-    \item Il metodo \texttt{remove()} cancella l'elemento restituito dall'ultima chamata di \texttt{next}; esso è soggetto a vincoli: può essere chiamato solo dopo una chiamata a \texttt{next} (in concetto è: prima lo devo leggere, poi lo posso cancellare) e solo \textbf{una volta} dopo ogni chiamata a \texttt{next()} (non si può chiamare due volte di fila senza un \texttt{next} in mezzo). Se uno di questi vincoli non viene rispettato, si riceve una \texttt{IllegalStateException}.
+    \item \texttt{E next()}: Chiamando questo metodo, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
+    \item \texttt{boolean hasNext()}: Restituisce \texttt{true} se ci sono ancora elementi da scorrere.
+    \item \texttt{void remove()}: Cancella l'elemento restituito dall'ultima chamata di \texttt{next}; esso è soggetto a vincoli: può essere chiamato solo dopo una chiamata a \texttt{next} (in concetto è: prima lo devo leggere, poi lo posso cancellare) e solo \textbf{una volta} dopo ogni chiamata a \texttt{next()} (non si può chiamare due volte di fila senza un \texttt{next} in mezzo). Se uno di questi vincoli non viene rispettato, si riceve una \texttt{IllegalStateException}.
+    \item \texttt{void forEachRemaining(Consumer<? super E> action)}: Esegue un'azione su tutti gli elementi rimanenti.
 \end{itemize}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{iterator.pdf} 
-    \caption{l'iteratore come cursore \textbf{tra} elementi}
-\end{figure}
 
 \begin{dettagli}[]
     Da notare che nel codice dell'interfaccia i metodi \texttt{remove()} e \texttt{forEachRemaining()} sono segnati come default. Questo significa che chi implementa l'interfaccia non è obbligato a scriverne il corpo se non ne ha bisogno.

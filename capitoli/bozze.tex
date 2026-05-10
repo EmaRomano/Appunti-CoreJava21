@@ -12,6 +12,7 @@
     \item \textbf{Costruttori canonici nei records}: par. 4.7.2.
     \item \textbf{seconda parte delle lambdas da fare/rivedere}: a partire da par. 6.2.5.
     \item \textbf{logging}
+    \item \textbf{seconda parte delle limitazioni sui generics}
 \end{itemize}
 
 
@@ -164,6 +165,50 @@ Questo permette di astrarre il sistema di logging, delegando a \texttt{System} i
 \begin{warningbox}
 Nel contesto dei server e delle applicazioni web, l'uso di \texttt{System.exit()} e la manipolazione diretta di \texttt{System.out} sono sconsigliati. Si preferisce delegare la chiusura al contenitore dell'applicazione e utilizzare i framework di logging per l'output, garantendo così la stabilità e la tracciabilità del sistema.
 \end{warningbox}
+
+\subsection{Le Classi Astratte "Ponte"}
+
+Per evitare che gli sviluppatori debbano scrivere decine di metodi ogni volta che creano una nuova collezione, il JDK fornisce delle classi astratte chiamate \textbf{\textit{Abstract Skeleton Implementations}}:
+\begin{itemize}
+    \item \texttt{AbstractCollection}
+    \item \texttt{AbstractList}
+    \item \texttt{AbstractSet}
+\end{itemize}
+
+Queste classi implementano già la maggior parte dei metodi (come \texttt{containsAll}, \texttt{removeAll}, \texttt{toString}) basandosi sui metodi fondamentali \texttt{iterator} e \texttt{size}.
+
+\begin{tip}
+Se un giorno dovessi creare una tua collezione personalizzata, non implementare direttamente l'interfaccia \texttt{Collection}. Estendi invece \texttt{AbstractCollection}: dovrai implementare solo \texttt{iterator()} e \texttt{size()}, e avrai tutti gli altri metodi (compresi quelli bulk) già pronti e funzionanti.
+\end{tip}
+
+Per capire come queste classi riescano a implementare metodi complessi senza sapere come sono memorizzati i dati, osserviamo come \texttt{AbstractCollection} implementa il metodo \texttt{contains(Object o)}.
+
+\begin{lstlisting}[language=Java, caption={Logica di AbstractCollection.contains}]
+public boolean contains(Object o) {
+    Iterator<E> it = iterator(); // Metodo astratto!
+    if (o == null) {
+        while (it.hasNext())
+            if (it.next() == null) return true;
+    } else {
+        while (it.hasNext())
+            if (o.equals(it.next())) return true;
+    }
+    return false;
+}
+\end{lstlisting}
+
+\begin{observation}
+\texttt{AbstractCollection} non ha idea se la collezione sia un array o una lista concatenata. Tuttavia, sa che ogni collezione \textbf{deve} fornire un \texttt{Iterator}. Usando quell'unico metodo (che rimane astratto nella classe skeleton), può fornire un'implementazione funzionante di \texttt{contains}, \texttt{toArray}, \texttt{toString} e molti altri.
+\end{observation}
+
+\begin{dettagli}[Perché sono classi astratte?]
+Sono astratte perché non implementano i "metodi primitivi" fondamentali:
+\begin{itemize}
+    \item \texttt{iterator()}
+    \item \texttt{size()}
+\end{itemize}
+Senza questi due, la classe non può funzionare, quindi non può essere istanziata. Una classe concreta come \texttt{ArrayList} estende \texttt{AbstractList} e fornisce l'implementazione di questi metodi base, "sbloccando" automaticamente tutte le funzionalità ereditate dallo scheletro.
+\end{dettagli}
 
 
 
