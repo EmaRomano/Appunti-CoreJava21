@@ -133,13 +133,7 @@ Poiché l'obbligo di implementazione è soddisfatto formalmente, il compilatore 
 
 \section{Iteratori}
 
-Per scorrere gli elementi di una collezione, il Java Collections Framework non si affida agli indici (che sarebbero inefficienti per strutture come le liste concatenate), ma utilizza l'interfaccia \texttt{Iterator<E>}; essa definisce il meccanismo standard per visitare gli elementi di una collezione uno alla volta. 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{iterator.pdf} 
-    \caption{l'iteratore come cursore \textbf{tra} elementi}
-    \label{fig: iteratore}
-\end{figure}
+Per scorrere gli elementi di una collezione, il Java Collections Framework non si affida agli indici (che sarebbero inefficienti per strutture come le liste concatenate), ma utilizza l'interfaccia \texttt{Iterator<E>}; essa definisce il meccanismo standard per visitare gli elementi di una collezione uno alla volta.
 A livello astratto, si può immaginare l'iteratore come un cursore posizionato \textbf{tra} gli elementi (si veda la figura \ref{fig: iteratore}).
 
 L'interfaccia \texttt{Iterator} definisce quattro metodi principali:
@@ -151,6 +145,13 @@ public interface Iterator<E> {
    default void forEachRemaining(Consumer<? super E> action);
 }
 \end{lstlisting}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{iterator.pdf} 
+    \caption{l'iteratore come cursore \textbf{tra} elementi}
+    \label{fig: iteratore}
+\end{figure}
 
 \begin{itemize}
     \item \texttt{boolean hasNext()}: Restituisce \texttt{true} se ci sono ancora elementi da scorrere.
@@ -233,6 +234,63 @@ Per quanto riguarda l'ordine in cui gli elementi vengono visitati, il comportame
 \begin{tip}[Scelta della Collezione]
 Se l'ordine dei dati è irrilevante (es. sommare dei totali o contare occorrenze), l'incertezza sull'ordine di visita non è un problema. Se invece l'ordine è parte della logica di business (es. una lista di transazioni cronologiche), è vitale scegliere una collezione che garantisca l'ordinamento come \texttt{ArrayList} o \texttt{TreeSet}.
 \end{tip}
+
+\section{Le Classi Astratte "Ponte"}
+
+Per evitare che gli sviluppatori debbano scrivere decine di metodi ogni volta che creano una nuova collezione, il JDK fornisce delle classi astratte chiamate \textbf{\textit{Abstract Skeleton Implementations}}:
+\begin{itemize}
+    \item \texttt{AbstractCollection}
+    \item \texttt{AbstractList}
+    \item \texttt{AbstractSet}
+\end{itemize}
+
+Queste classi implementano già la maggior parte dei metodi (come \texttt{containsAll}, \texttt{removeAll}, \texttt{toString}) basandosi sui metodi fondamentali \texttt{iterator} e \texttt{size}.
+
+\begin{tip}
+Se un giorno dovessi creare una tua collezione personalizzata, non implementare direttamente l'interfaccia \texttt{Collection}. Estendi invece \texttt{AbstractCollection}: dovrai implementare solo \texttt{iterator()} e \texttt{size()}, e avrai tutti gli altri metodi (compresi quelli bulk) già pronti e funzionanti.
+\end{tip}
+
+Per capire come queste classi riescano a implementare metodi complessi senza sapere come sono memorizzati i dati, osserviamo come \texttt{AbstractCollection} implementa il metodo \texttt{contains(Object o)}.
+
+\begin{lstlisting}[language=Java, caption={Logica di AbstractCollection.contains}]
+public boolean contains(Object o) {
+    Iterator<E> it = iterator(); // Metodo astratto!
+    if (o == null) {
+        while (it.hasNext())
+            if (it.next() == null) return true;
+    } else {
+        while (it.hasNext())
+            if (o.equals(it.next())) return true;
+    }
+    return false;
+}
+\end{lstlisting}
+
+\begin{observation}
+\texttt{AbstractCollection} non ha idea se la collezione sia un array o una lista concatenata. Tuttavia, sa che ogni collezione \textbf{deve} fornire un \texttt{Iterator}. Usando quell'unico metodo (che rimane astratto nella classe skeleton), può fornire un'implementazione funzionante di \texttt{contains}, \texttt{toArray}, \texttt{toString} e molti altri.
+\end{observation}
+
+Quando una classe concreta estende \texttt{AbstractCollection}, il carico di lavoro dello sviluppatore è ridotto, ma non nullo. 
+
+\begin{itemize}
+    \item \textbf{Metodi Obbligatori}: La classe concreta deve fornire le implementazioni di \texttt{iterator()} e \texttt{size()}.
+    \item \textbf{Collezioni Mutabili}: Se la collezione deve permettere la modifica, è necessario implementare anche il metodo \texttt{add()}. In caso contrario, il metodo \texttt{add()} ereditato lancerà una \texttt{UnsupportedOperationException}.
+    \item \textbf{Ottimizzazione}: Sebbene \texttt{AbstractCollection} fornisca già le implementazioni di molti metodi concreti, la classe figlia è libera di sovrascriverli se può offrire un'implementazione più efficiente (ad esempio, sfruttando un indice o una tabella hash interna per evitare lo scorrimento lineare).
+\end{itemize}
+
+\begin{dettagli}
+    L'approccio basato sulle "classi ponte" è oggi considerato parzialmente superato dal punto di vista del design. Sarebbe stato preferibile avere questi metodi direttamente nell'interfaccia \texttt{Collection} come metodi \texttt{default}, ma questa funzionalità non esisteva quando il framework fu progettato.
+
+    Tuttavia, nelle versioni recenti sono stati aggiunti diversi metodi \texttt{default}:
+    \begin{itemize}
+    \item \textbf{Stream API}: Metodi per l'elaborazione dei dati (trattati nel Volume II).
+    \item \textbf{Conversione}: Metodi \texttt{toArray} più flessibili.
+    \item \textbf{Rimozione Condizionale}: Il metodo \texttt{removeIf}.
+\end{itemize}
+\end{dettagli}
+
+
+
 
 
 
