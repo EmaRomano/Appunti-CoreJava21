@@ -7,6 +7,10 @@
     \label{fig:collection-hierarchy}
 \end{figure}
 
+Il \textit{Java Collections Framework} (JCF) si presenta come un'architettura gerarchica vasta e articolata. Per navigare in questo "groviglio" di interfacce e classi, adotteremo un \textbf{approccio top-down}: inizieremo l'analisi dalle astrazioni più elevate per poi scendere progressivamente verso le specializzazioni e le implementazioni concrete.
+
+Il punto di partenza è rappresentato dalle interfacce radice, \textbf{\texttt{Iterable}} e \textbf{\texttt{Collection}}, che stabiliscono i requisiti minimi e i comportamenti comuni a quasi tutti i contenitori di dati in Java. 
+
 \section{Separazione tra Interfaccia e Implementazione}
 
 Il \textit{Java Collections Framework} adotta un approccio fondamentale della programmazione a oggetti: la netta separazione tra le \textbf{interfacce} (che definiscono il comportamento) e le \textbf{implementazioni} concrete (che definiscono le strutture dati e le prestazioni). Per illustrare bene questo concetto e i suoi vantaggi, esaminiamo il seguente esempio. 
@@ -231,6 +235,8 @@ Entrambi questi metodi utilizzano l'interfaccia funzionale \texttt{Consumer<? su
 
 Per quanto riguarda l'ordine in cui gli elementi vengono visitati, il comportamento dipende esclusivamente dal tipo di collezione; ad esempio, per un {\texttt{ArrayList}} l'iteratore è \textbf{predicibile}: inizia dall'indice 0 e incrementa di uno a ogni passo; per un \textbf{\texttt{HashSet}}, l'iteratore visita gli elementi in ordine \textbf{essenzialmente casuale} e non si può fare alcuna assunzione sulla sequenza di uscita.
 
+Se in una collezione l'iteratore è predicibile, si dice che ha un \textbf{encounter order} (ordine di incontro).
+
 \begin{tip}[Scelta della Collezione]
 Se l'ordine dei dati è irrilevante (es. sommare dei totali o contare occorrenze), l'incertezza sull'ordine di visita non è un problema. Se invece l'ordine è parte della logica di business (es. una lista di transazioni cronologiche), è vitale scegliere una collezione che garantisca l'ordinamento come \texttt{ArrayList} o \texttt{TreeSet}.
 \end{tip}
@@ -288,6 +294,154 @@ Quando una classe concreta estende \texttt{AbstractCollection}, il carico di lav
     \item \textbf{Rimozione Condizionale}: Il metodo \texttt{removeIf}.
 \end{itemize}
 \end{dettagli}
+
+\section{La Gerarchia \texttt{Collection}}
+Esaminiamo ora alcune specifiche interfacce della parte del framework che si dirama da \texttt{Collection}.
+\subsection{L'Interfaccia List}
+
+Una \texttt{List} è una collezione ordinata in cui ogni elemento ha una posizione precisa. L'accesso agli elementi può avvenire in due modi:
+\begin{enumerate}
+    \item \textbf{Accesso Sequenziale}: Utilizzando un iteratore per visitare gli elementi uno dopo l'altro.
+    \item \textbf{Accesso Casuale (Random Access)}: Utilizzando un indice intero per saltare direttamente a una posizione specifica (come in un array).
+\end{enumerate}
+
+\medskip
+
+Per l'accesso casuale, l'interfaccia definisce metodi specifici per manipolare la lista tramite indici:
+\begin{itemize}
+    \item \texttt{void add(int index, E element)}: Inserisce un elemento in una posizione specifica.
+    \item \texttt{E remove(int index)}: Rimuove e restituisce l'elemento alla posizione indicata.
+    \item \texttt{E get(int index)}: Restituisce l'elemento alla posizione indicata.
+    \item \texttt{E set(int index, E element)}: Sostituisce l'elemento in una posizione e restituisce quello precedente.
+\end{itemize}
+
+\begin{warningbox}[L'ambiguità di remove con List<Integer>]
+Esiste un'insidia comune quando si usa una lista di interi (\texttt{List<Integer>}). Esistono due versioni del metodo \texttt{remove}:
+\begin{itemize}
+    \item \texttt{E remove(int index)}: Rimuove l'elemento all'indice specificato.
+    \item \texttt{boolean remove(Object o)}: Rimuove la prima occorrenza dell'oggetto specificato.
+\end{itemize}
+Se passi un valore \texttt{int}, Java sceglierà \textbf{sempre} la versione che accetta l'indice, senza eseguire l'autoboxing a \texttt{Integer}. Per rimuovere l'elemento con valore 0 (e non l'elemento all'indice 0), devi scrivere: \texttt{list.remove(Integer.valueOf(0))}.
+\end{warningbox}
+
+\begin{dettagli}
+    Horstmann evidenzia un difetto strutturale: l'interfaccia \texttt{List} raggruppa collezioni basate su array (veloci nell'accesso casuale) e collezioni basate su liste concatenate (lente nell'accesso casuale). Probabilmente sarebbe stato meglio usare due interfacce diverse per i due tipi. 
+
+    Per permettere agli algoritmi di distinguere queste due tipologie a runtime, Java 1.4 ha introdotto l'interfaccia \textbf{\texttt{RandomAccess}}. Si tratta di un'\textit{interfaccia marcatore (tagging interface)} che non contiene metodi e serve solo a "etichettare" classi come \texttt{ArrayList} per segnalare che supportano l'accesso a tempo costante. È possibile testarla con l'operatore \texttt{instanceof}:
+    \begin{lstlisting}[language=Java]
+        if (list instanceof RandomAccess) {
+            // Posso usare un ciclo for classico con get(i) -> O(1)
+        } else {
+            // Meglio usare un iteratore o for-each -> O(n) complessivo
+        }
+    \end{lstlisting}
+\end{dettagli}
+
+\subsection{L'Interfaccia Set (Insiemi)}
+
+L'interfaccia \texttt{Set<E>} definisce una collezione che non ammette duplicati. Sebbene dichiari gli stessi metodi di \texttt{Collection}, la distinzione è puramente \textbf{concettuale} e \textbf{semantica} (cambia il \textit{contratto}):
+\begin{enumerate}
+    \item Permette al programmatore di scrivere metodi che accettano esplicitamente \textit{solo} insiemi, forzando l'unicità dei dati a livello di tipo.
+    \item Definisce un criterio di uguaglianza diverso da quello della \texttt{List}: per un set l'ordine è un dettaglio irrilevante per l'identità della collezione.
+\end{enumerate}
+
+\medskip
+
+Per oggetti di tipo \texttt{Set} devono quindi valere:
+\begin{itemize}
+    \item \textbf{Rifiuto dei duplicati}: Il metodo \texttt{add(E element)} deve garantire che l'elemento venga aggiunto solo se non è già presente. Se l'elemento esiste già, il metodo restituisce \texttt{false} e non modifica la collezione.
+    \item \textbf{Uguaglianza (\texttt{equals})}: Due set sono considerati uguali se contengono gli stessi elementi, indipendentemente dall'ordine in cui sono stati inseriti.
+    \item \textbf{Coerenza Hash}: Il metodo \texttt{hashCode()} deve essere implementato in modo che due set con gli stessi elementi generino lo stesso codice hash.
+\end{itemize}
+
+\begin{warningbox}[Il test di uguaglianza]
+Il metodo \texttt{equals} di una classe che implementa \texttt{Set} deve verificare che l'oggetto passato come argomento sia a sua volta un \texttt{Set}. Non è sufficiente che sia una \texttt{Collection} generica; questo protegge dalla possibilità che un \texttt{Set} e una \texttt{List} (che seguono contratti di uguaglianza diversi) vengano erroneamente considerati uguali.
+\end{warningbox}
+
+\subsection{SequencedCollection (Java 21+)}
+
+A partire da Java 21, il framework introduce l'interfaccia \textbf{\texttt{SequencedCollection<E>}} per fornire un accesso uniforme al primo e all'ultimo elemento di una collezione che possiede un ordine di incontro (\textit{encounter order}), cioè per cui un iteratore sia \textbf{predicibile}.
+
+Prima di questa interfaccia, le operazioni sulla testa e sulla coda della collezione erano frammentate in metodi diversi tra \texttt{List}, \texttt{Deque} e \texttt{SortedSet}. \texttt{SequencedCollection} raggruppa queste operazioni sotto un unico contratto.
+
+\begin{lstlisting}[language=Java, caption={Metodi di SequencedCollection}]
+interface SequencedCollection<E> extends Collection<E> {
+    // Accesso e modifica
+    void addFirst(E e);
+    void addLast(E e);
+    E getFirst();
+    E getLast();
+    E removeFirst();
+    E removeLast();
+    
+    // Vista invertita
+    SequencedCollection<E> reversed();
+}
+\end{lstlisting}
+
+\begin{observation}
+Il metodo \texttt{reversed()} non crea una copia della collezione, ma fornisce una \textbf{vista} in ordine inverso. Qualsiasi modifica alla collezione originale si riflette nella vista e viceversa, con un'efficienza di $O(1)$.
+\end{observation}
+
+L'interfaccia \textbf{\texttt{SequencedSet<E>}} estende sia \texttt{Set} che \texttt{SequencedCollection}. 
+\begin{itemize}
+    \item È implementata da classi che mantengono l'ordine di inserimento (es:\texttt{LinkedHashSet}) o l'ordine di ordinamento (es: \texttt{TreeSet}).
+    \item Il metodo \texttt{reversed()} in questa interfaccia restituisce un \texttt{SequencedSet} anziché una \texttt{Collection} generica, permettendo di mantenere le proprietà di unicità anche nella vista invertita.
+\end{itemize}
+
+\begin{tip}[]
+Se devi scrivere un metodo che accetta qualsiasi cosa sia "ordinata" (lista o set ordinato), considera \texttt{SequencedCollection} come tipo del parametro. Questo potrà rendere il codice molto più flessibile.
+\end{tip}
+
+Da \texttt{SequencedSet} si diramano inoltre versioni più sofisticate dell'interfaccia \texttt{Set} che vengono utilizzate quando non ci si accontenta dell'unicità, ma si ha bisogno che gli elementi siano mantenuti in un ordine specifico.
+
+\begin{itemize}
+    \item \textbf{\texttt{SortedSet<E>}}: Questa interfaccia espone il \texttt{Comparator} utilizzato per l'ordinamento e definisce metodi per ottenere "viste" di sotto-insiemi della collezione (es. tutti gli elementi minori di un certo valore).
+    \item \textbf{\texttt{NavigableSet<E>}}: Estende \texttt{SortedSet} aggiungendo metodi per la ricerca di elementi "vicini" (prossimo o precedente) rispetto a un valore dato. 
+\end{itemize}
+
+\begin{observation}
+Queste interfacce sono implementate dalla classe \textbf{\texttt{TreeSet}} che, di fatto, non è altro che un albero binario di ricerca bilanciato (nello specifico, \textit{Red-Black})
+\end{observation}
+
+\subsection{Queue e Deque}
+
+Le code sono fondamentali per la gestione di flussi di dati in cui l'ordine di elaborazione è critico.
+
+La \texttt{Queue<E>} è progettata per il processamento di elementi in ordine FIFO. L'approccio di Java per le code è molto pragmatico: ogni operazione ha due varianti, una lancia un'eccezione se l'operazione fallisce per effetto di una coda vuota o piena (alcune implementazioni hanno capacità limitata), l'altra restituisce un valore speciale (\texttt{null} o \texttt{false}). 
+
+I metodi \texttt{element()}/\texttt(peek()) restituiscono la testa della coda senza rimuoverla. 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Operazione} & \textbf{Eccezione} & \textbf{Valore Speciale (null/false)} \\ \hline
+Inserimento         & \texttt{add(e)}    & \texttt{offer(e)}                    \\ \hline
+Rimozione           & \texttt{remove()}  & \texttt{poll()}                     \\ \hline
+Ispezione           & \texttt{element()} & \texttt{peek()}                     \\ \hline
+\end{tabular}
+\caption{Metodi dell'interfaccia Queue}
+\end{table}
+
+\begin{tip}
+    Molte librerie di messaggistica (come RabbitMQ o le code interne di Spring) usano questi contratti. Sapere che poll() non ti manderà in crash l'applicazione se la coda è vuota (a differenza di remove()) è la base per scrivere codice robusto che non "esplode" sotto carico.
+\end{tip}
+
+La \texttt{Deque<E>} (Double-Ended Queue) permette l'accesso ad entrambi i capi della collezione. Eredita da \texttt{Queue} e aggiunge versioni \texttt{First} e \texttt{Last} per ogni metodo (es. \texttt{addFirst}, \texttt{pollLast}).
+
+\begin{tip}[Deque come Stack]
+In Java, la classe \texttt{Stack} è considerata obsoleta. Se hai bisogno di una struttura LIFO (Last-In-First-Out), il Java Collections Framework raccomanda l'uso di una \texttt{Deque}:
+\begin{itemize}
+    \item \texttt{push(e)} equivale a \texttt{addFirst(e)}.
+    \item \texttt{pop()} equivale a \texttt{removeFirst()}.
+\end{itemize}
+\end{tip}
+
+\begin{observation}
+Con l'introduzione di Java 21, \texttt{Deque} estende, oltre a \texttt{Queue}, anche \texttt{SequencedCollection}, rendendo i suoi metodi \texttt{getFirst}, \texttt{getLast}, ecc., coerenti con il resto del framework.
+\end{observation}
+
 
 
 
