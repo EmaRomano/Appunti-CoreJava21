@@ -102,6 +102,19 @@ Con l'introduzione delle lambda, l'interfaccia si è arricchita di metodi \textt
     \item \texttt{Stream<E> stream()}: Il punto d'ingresso per la \textit{Stream API}, essenziale per trasformazioni e filtraggi complessi in stile dichiarativo. Tratteremo gli \textit{Stream} in un capitolo successivo. 
 \end{itemize}
 
+\begin{warningbox}[Rischio di Errori a Runtime per Parametri Legacy]
+Un dettaglio tecnico sottile ma cruciale riguarda il tipo dei parametri di alcuni metodi fondamentali come \texttt{contains}, \texttt{remove} e le operazioni bulk. Sebbene la collezione sia generica (\texttt{Collection<E>}), questi metodi accettano parametri di tipo \texttt{Object} o \texttt{Collection<?>}.
+
+Il \textit{Java Collections Framework} è stato progettato prima dell'introduzione dei tipi generici. Per mantenere la compatibilità con il codice legacy, i parametri di \texttt{contains} e \texttt{remove} sono rimasti di tipo \texttt{Object}. 
+Questo significa che il compilatore non segnalerà errori se si tenta di cercare o rimuovere un oggetto di tipo errato.
+
+\begin{lstlisting}[language=Java, caption={Esempio di errore di tipo non rilevato}]
+    Collection<Path> paths = ...;
+    // Errore logico: cerco di rimuovere una String da una collezione di Path
+    paths.remove("/tmp"); // Compila correttamente, ma non avra' alcun effetto
+\end{lstlisting}
+\end{warningbox}
+
 \subsection{Il Concetto di Operazioni Opzionali}
 Quasi tutti i metodi che abbiamo elencato non sono di default e ciò potrebbe indurre a pensare che \textit{tutte} le collezioni concrete in Java implementino tutti questi metodi. Tuttavia, questo può essere fuorviante: il framework Java gestisce la varietà delle strutture dati (es. collezioni a dimensione fissa o non modificabili) attraverso il concetto di \textbf{metodi opzionali}.
 
@@ -140,8 +153,8 @@ public interface Iterator<E> {
 \end{lstlisting}
 
 \begin{itemize}
-    \item \texttt{E next()}: Chiamando questo metodo, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
     \item \texttt{boolean hasNext()}: Restituisce \texttt{true} se ci sono ancora elementi da scorrere.
+    \item \texttt{E next()}: Chiamando questo metodo, il cursore "salta" oltre l'elemento successivo e restituisce un riferimento all'elemento che ha appena saltato.
     \item \texttt{void remove()}: Cancella l'elemento restituito dall'ultima chamata di \texttt{next}; esso è soggetto a vincoli: può essere chiamato solo dopo una chiamata a \texttt{next} (in concetto è: prima lo devo leggere, poi lo posso cancellare) e solo \textbf{una volta} dopo ogni chiamata a \texttt{next()} (non si può chiamare due volte di fila senza un \texttt{next} in mezzo). Se uno di questi vincoli non viene rispettato, si riceve una \texttt{IllegalStateException}.
     \item \texttt{void forEachRemaining(Consumer<? super E> action)}: Esegue un'azione su tutti gli elementi rimanenti.
 \end{itemize}

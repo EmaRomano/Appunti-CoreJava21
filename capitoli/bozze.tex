@@ -210,6 +210,14 @@ Sono astratte perché non implementano i "metodi primitivi" fondamentali:
 Senza questi due, la classe non può funzionare, quindi non può essere istanziata. Una classe concreta come \texttt{ArrayList} estende \texttt{AbstractList} e fornisce l'implementazione di questi metodi base, "sbloccando" automaticamente tutte le funzionalità ereditate dallo scheletro.
 \end{dettagli}
 
+\section{Snippets vari da inserire}
+-------------------------------------------------------
+Esiste un paradosso apparente: le interfacce non possono estendere le classi (nemmeno \texttt{Object}), eppure possiamo chiamare \texttt{.toString()} o \texttt{.equals()} su qualsiasi variabile di tipo interfaccia. 
+
+Questo accade perché Java aggiunge implicitamente le firme dei metodi pubblici di \texttt{Object} a ogni interfaccia.
+
+-------------------------------------------------------
+
 
 
 

@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1778432844.09737 "/home/emanuele/latex_workspace/Appunti CoreJava21/main.tex" "main.pdf" "main" 1778432845.67965 0
+["pdflatex"] 1778487721.87271 "/home/emanuele/latex_workspace/Appunti CoreJava21/main.tex" "main.pdf" "main" 1778487723.4656 0
   "/home/emanuele/latex_workspace/Appunti CoreJava21/main.tex" 1778405490.34842 1023 2544b6956229c8e5b6efcea85a50c0af ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free0.enc" 1622837620 3083 a707712f77b073b3833e4b1334a30e99 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free1.enc" 1622837620 3042 0e2b14b9be7d01075a4c4591d5d1781b ""
@@ -274,17 +274,17 @@
   "capitoli/06-eccezioni-e-altro.tex" 1777889452.51059 50726 3194e19d63516144a13a9e28d3c5ac03 ""
   "capitoli/07-generics.aux" 1778404979.89474 5153 aa31692595d8498c49e40a29bb54744a ""
   "capitoli/07-generics.tex" 1778404907.08259 50638 12e6d9a71e87369ad59614e3c1ebcf44 ""
-  "capitoli/08-collections.aux" 1778432845.26879 3026 181980989cc4a202d1f9c2dde278760a "pdflatex"
-  "capitoli/08-collections.tex" 1778432843.84755 15123 97998e4328c50ac4822343274bc9fe0a ""
+  "capitoli/08-collections.aux" 1778487723.06344 3173 30ac990fa5331b16ce64e2c82549f791 "pdflatex"
+  "capitoli/08-collections.tex" 1778487719.97244 16179 39e7184c8b604050768c25a7faf2c889 ""
   "capitoli/appendice-accessori-teoria.tex" 1778337399.49784 4626 0140b681865a31844a8e146e0d7171e4 ""
   "capitoli/appendice-riferimento-rapido.tex" 1775730944.11045 3326 09c7d54953027f5768279b5f571011a5 ""
-  "capitoli/bozze.tex" 1778413923.82326 12959 f28c96092e62f06d427f6b9497bb818a ""
+  "capitoli/bozze.tex" 1778486992.28998 13445 1171c9f00ce805c355fa455eb878c1ea ""
   "images//JCollFramewk.pdf" 1778339643.09289 1444982 d0d5d61aa3d40adadc2019c6a5c42b9d ""
   "images//iterator.pdf" 1778352272.96638 686115 8a69b679827b94b174d85c0a9e647618 ""
-  "main.aux" 1778432845.48578 5253 dfa73b49959d55fb25354706435a78eb "pdflatex"
-  "main.out" 1778432845.49378 6001 00c44a6ab849f8953784f919c8974f57 "pdflatex"
+  "main.aux" 1778487723.27145 5385 f13ef910c53b03f697277cb3759cb725 "pdflatex"
+  "main.out" 1778487723.27999 6200 2b662f2c3b473e3d51d219298012c325 "pdflatex"
   "main.tex" 1778405490.34842 1023 2544b6956229c8e5b6efcea85a50c0af ""
-  "main.toc" 1778432845.49432 17752 0dc9b536085f3c7cd11e012f2b7e4d65 "pdflatex"
+  "main.toc" 1778487723.28111 17843 88b3f7013b18442c5cab4ad07e3847d8 "pdflatex"
   "preambolo.tex" 1777889088.71375 4529 76fec61e0c3d9e24ba968ac563690627 ""
   (generated)
   "capitoli/08-collections.aux"
