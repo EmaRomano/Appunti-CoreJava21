@@ -34,6 +34,7 @@ L'hashing risolve problemi critici in diversi settori:
 Poiché l'insieme dei possibili input è infinito, mentre l'insieme dei possibili valori hash (numeri interi o stringhe di lunghezza fissa) è finito, esiste la possibilità teorica che due input diversi producano lo stesso hash. Questo evento è chiamato \textbf{collisione}.
 Un buon algoritmo di hash riduce drasticamente la probabilità di collisioni, e i sistemi informatici (come la JVM di Java) sono progettati per gestire correttamente questi rari casi di "omonimia digitale".
 
+
 \section{L'Array Circolare (Circular Array)}
 \label{appendix circ array}
 
@@ -59,3 +60,98 @@ Quando un indice raggiunge la fine dell'array fisico, "salta" alla posizione $0$
 Questa struttura permette operazioni di inserimento e rimozione in \textbf{tempo costante} $O(1)$.
 
 Sebbene circolare, l'array ha comunque una dimensione fisica limitata. Quando l'array è pieno (ovvero quando \texttt{head == tail}), Java deve allocare un nuovo array più grande e copiare gli elementi. Tuttavia, questa operazione avviene raramente se la capacità iniziale è ben calibrata.
+
+\section{La Struttura Dati Heap}
+
+Lo \textbf{Heap} (o cumulo) è una struttura dati basata su albero che soddisfa proprietà specifiche di forma e ordine. Nonostante sia concettualmente un albero binario, la sua implementazione più efficiente e comune avviene tramite un \textbf{array dinamico}, eliminando l'overhead dei puntatori.
+
+Un Heap deve rispettare due vincoli strutturali:
+
+\begin{enumerate}
+    \item \textbf{Proprietà della Forma}: L'albero deve essere un \textbf{albero binario quasi completo}. Ciò significa che tutti i livelli sono completamente riempiti, ad eccezione eventualmente dell'ultimo, che deve essere riempito da sinistra a destra.
+    \item \textbf{Proprietà dello Heap (Ordine)}:
+    \begin{itemize}
+        \item \textbf{Min-Heap}: Il valore di ogni nodo è maggiore o uguale al valore del suo nodo padre. La radice contiene il valore minimo. (Implementazione di default della \texttt{PriorityQueue} in Java).
+        \item \textbf{Max-Heap}: Il valore di ogni nodo è minore o uguale al valore del suo nodo padre. La radice contiene il valore massimo.
+    \end{itemize}
+\end{enumerate}
+
+\medskip
+
+La genialità dello heap risiede nella sua mappatura implicita in un array. Dato un elemento memorizzato all'indice $i$ (partendo da 0), è possibile calcolare la posizione dei suoi parenti tramite semplici operazioni aritmetiche:
+
+\begin{itemize}
+    \item \textbf{Figlio sinistro}: $2i + 1$
+    \item \textbf{Figlio destro}: $2i + 2$
+    \item \textbf{Padre}: $\lfloor (i - 1) / 2 \rfloor$
+\end{itemize}
+
+\medskip
+
+Questa rappresentazione garantisce la \textbf{contiguità della memoria}, rendendo lo heap estremamente veloce grazie alla \textit{cache locality}.
+
+\subsection*{Operazioni Principali}
+
+Le operazioni devono mantenere intatte le due proprietà sopra descritte. Quando un nuovo elemento viene aggiunto:
+\begin{enumerate}
+    \item Viene inserito nella prima posizione libera (l'ultima cella dell'array) per mantenere la forma dell'albero.
+    \item Viene confrontato con il padre. Se la proprietà dell'ordine è violata (es. nel Min-Heap il nuovo elemento è più piccolo del padre), i due vengono scambiati.
+    \item Il processo continua risalendo l'albero finché la proprietà non è ripristinata.
+\end{enumerate}
+\textbf{Complessità}: $O(\log n)$, corrispondente all'altezza dell'albero.
+
+\medskip
+
+Rimuovere la radice (l'elemento con priorità massima) è l'operazione cardine:
+\begin{enumerate}
+    \item Si preleva il valore della radice.
+    \item L'ultimo elemento dell'array (il più a destra dell'ultimo livello) viene spostato nella radice.
+    \item Si confronta la nuova radice con i suoi figli. Se viola la proprietà dell'ordine, viene scambiata con il figlio minore (nel caso del Min-Heap).
+    \item L'elemento "affonda" lungo l'albero finché non trova la sua corretta collocazione.
+\end{enumerate}
+\textbf{Complessità}: $O(\log n)$.
+
+\medskip
+
+Analisi delle Prestazioni:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Operazione} & \textbf{Complessità} & \textbf{Descrizione} \\ \hline
+\texttt{peek()}     & $O(1)$               & Accesso immediato alla radice. \\ \hline
+\texttt{add()}      & $O(\log n)$          & Inserimento con risalita. \\ \hline
+\texttt{poll()}     & $O(\log n)$          & Estrazione con ripristino (heapify). \\ \hline
+\texttt{buildHeap}  & $O(n)$               & Creazione di uno heap da un array disordinato. \\ \hline
+\end{tabular}
+\caption{Complessità computazionale dello Heap}
+\end{table}
+
+\begin{observation}
+Sebbene la ricerca di un elemento generico sia $O(n)$ (perché lo heap non è un albero binario di ricerca), esso è imbattibile per la gestione delle priorità, dove l'unico interesse è accedere rapidamente all'elemento "più importante".
+\end{observation}
+
+\section{La Coda a Priorità (Priority Queue)}
+
+La \textbf{Coda a Priorità} è un Tipo di Dato Astratto (ADT) che estende il concetto di coda classica. Mentre in una coda standard (FIFO, si pensi ad esempio alla fila al supermercato) l'ordine di uscita è determinato esclusivamente dal tempo di arrivo, in una coda a priorità ogni elemento è associato a un valore di \textbf{priorità} (si pensi ad esempio alla fila al pronto soccorso).
+
+In una coda a priorità, l'ordine di estrazione segue queste regole:
+\begin{enumerate}
+    \item Un elemento con priorità maggiore viene servito prima di un elemento con priorità minore.
+    \item Se due elementi hanno la stessa priorità, vengono serviti secondo il loro ordine nella coda (solitamente FIFO, sebbene non sia sempre garantito da tutte le implementazioni).
+\end{enumerate}
+
+\medskip
+
+Le operazioni fondamentali definite dall'ADT sono:
+\begin{itemize}
+    \item \texttt{insert(item, priority)}: Aggiunge un elemento con una data priorità.
+    \item \texttt{peek()}: Restituisce l'elemento con la priorità massima (o minima) senza rimuoverlo.
+    \item \texttt{pull()} (o \texttt{pop}): Rimuove e restituisce l'elemento con la priorità massima (o minima).
+\end{itemize}
+
+\medskip
+
+La scelta standard per implementare una coda a piorità è un Min-heap in cui la "priorità" è determinata dal valore stesso dell'elemento (o da un \texttt{Comparator}).
+

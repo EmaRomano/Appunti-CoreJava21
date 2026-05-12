@@ -295,7 +295,7 @@ Quando una classe concreta estende \texttt{AbstractCollection}, il carico di lav
 \end{itemize}
 \end{dettagli}
 
-\section{La Gerarchia \texttt{Collection}}
+\section{Interfacce della Gerarchia \texttt{Collection}}
 Esaminiamo ora alcune specifiche interfacce della parte del framework che si dirama da \texttt{Collection}.
 \subsection{L'Interfaccia List}
 
@@ -441,6 +441,144 @@ In Java, la classe \texttt{Stack} è considerata obsoleta. Se hai bisogno di una
 \begin{observation}
 Con l'introduzione di Java 21, \texttt{Deque} estende, oltre a \texttt{Queue}, anche \texttt{SequencedCollection}, rendendo i suoi metodi \texttt{getFirst}, \texttt{getLast}, ecc., coerenti con il resto del framework.
 \end{observation}
+
+\section{Classi \texttt{Collection} Concrete}
+
+In questo paragrafo abbandoniamo l'astrazione delle interfacce per analizzare come Java memorizza fisicamente i dati. La scelta della classe concreta influisce drasticamente sulla complessità algoritmica e sull'efficienza della memoria.
+
+Abbiamo già accennato ad alcune di queste classi, qui riepiloghiamo quanto detto e completiamo con ulteriori classi non ancora menzionate.
+
+\subsection{Il Motore ad Array (Contiguità Fisica)}
+
+Le classi in questo gruppo utilizzano un array interno. La caratteristica principale è la \textbf{contiguità della memoria}, che favorisce la velocità di accesso e l'efficienza della cache della CPU. Sia \texttt{ArrayList} che \texttt{ArrayDeque} si basano su un array che viene ridimensionato quando la capacità massima viene raggiunta. Quando l'array interno è pieno, Java ne alloca uno nuovo più grande e vi sposta gli elementi. Sebbene la singola operazione di copia sia $O(n)$, essa avviene così raramente che, spalmata su migliaia di inserimenti, il costo medio (costo \textbf{ammortizzato}) rimane $O(1)$.
+
+\subsubsection*{ArrayList}
+È l'implementazione di \texttt{List} più utilizzata. Quando la capacità massima è raggiunta, cresce solitamente del 50\% della capacità corrente.
+
+\begin{itemize}
+    \item \textbf{Accesso Casuale}: $O(1)$ tramite indice.
+    \item \textbf{Inserimento/Rimozione}: $O(n)$ nel caso peggiore (perché deve "spostare" gli elementi), ma l'aggiunta in coda ha un costo \textbf{ammortizzato} di $O(1)$.
+\end{itemize}
+
+
+\subsubsection*{ArrayDeque}
+Introdotta per superare i limiti di \texttt{Stack} e \texttt{LinkedList}, è una coda a doppia entrata basata su un array circolare. Quando la capacità massima è raggiunta, cresce solitamente del 100\% della capacità corrente.
+
+\begin{bestpractice}
+È la scelta più efficiente per implementare sia \textbf{Pile} (Stack) che \textbf{Code} (Queue). È sensibilmente più veloce di \texttt{LinkedList} perché non deve creare un oggetto "nodo" per ogni elemento inserito.
+\end{bestpractice}
+
+\subsection{Il Motore a Nodi: \texttt{LinkedList}}
+
+Non è altro che una lista doppiamente concatenata (\textit{doubly linked list}): ogni elemento è memorizzato in un nodo che contiene un riferimento al nodo precedente e a quello successivo.
+
+Nonostante sia un classico accademico, nel Java moderno \texttt{LinkedList} è raramente la scelta migliore:
+\begin{enumerate}
+    \item \textbf{Cache Miss}: I nodi sono sparsi nella RAM, obbligando la CPU a continui e lenti recuperi dalla memoria principale.
+    \item \textbf{Overhead}: Ogni nodo richiede memoria extra per due puntatori (\texttt{next} e \texttt{prev}).
+    \item \textbf{Accesso}: Anche per le operazioni che sembrano $O(1)$, bisogna spesso scorrere la lista per raggiungere il punto desiderato ($O(n)$).
+\end{enumerate}
+
+\medskip
+
+Se \texttt{ArrayList} è quasi sempre superiore, quando dovremmo preferire \texttt{LinkedList}? La risposta risiede nel costo delle operazioni strutturali durante l'iterazione.
+
+\begin{itemize}
+    \item \textbf{Modifiche durante lo scorrimento}: Se il workflow prevede di scorrere una lista con un \texttt{ListIterator} e inserire/rimuovere elementi frequentemente nel mezzo, \texttt{LinkedList} opera in \textbf{$O(1)$}, mentre \texttt{ArrayList} rimane legata a un costo \textbf{$O(n)$} per lo spostamento dei dati.
+    \item \textbf{Assenza di picchi di latenza}: In \texttt{LinkedList} non esiste il concetto di "ridimensionamento". Ogni inserimento ha lo stesso costo costante, evitando il picco $O(n)$ tipico della copia degli array dinamici. Questo può essere rilevante se la struttura dati subisce numerosi ridimensionamenti o se si desidera una latenza più prevedibile.
+\end{itemize}
+
+\begin{warningbox}[]
+Attenzione: per inserire un elemento in una posizione specifica $i$, \texttt{LinkedList} deve comunque \textbf{trovare} quel punto scorrendo i nodi ($O(n)$). Il vantaggio $O(1)$ esiste \textbf{solo} se l'iteratore si trova già sulla posizione corretta.
+\end{warningbox}
+
+In conclusione, nella stragrande maggioranza delle applicazioni backend (web server, elaborazione dati, microservizi), i benefici della \textbf{Cache Locality} dell'array superano di gran lunga i vantaggi teorici dei puntatori. \textbf{Usa ArrayList di default.}
+
+\subsection{Il Motore Hash (Tabelle Hash)}
+\begin{itemize}
+    \item \textbf{HashSet}: Implementazione standard di \texttt{Set} che non garantisce alcun ordine di iterazione. \textbf{Prestazioni}: $O(1)$ per ricerca, inserimento e rimozione (se la funzione hash è buona).
+    \item \textbf{LinkedHashSet}: Variante di \texttt{HashSet} che mantiene una lista doppiamente concatenata tra gli elementi, combinando la velocità del \texttt{HashSet} con la capacità di ricordare l'ordine di inserimento. Dunque l'iterazione è predicibile e segue l'ordine in cui gli elementi sono stati aggiunti. È ideale per cache o sistemi dove l'ordine temporale è importante tanto quanto l'unicità.
+\end{itemize}
+
+\subsection{\texttt{EnumSet}: Prestazioni a Livello di Bit}
+
+\texttt{EnumSet} è un'implementazione speciale di \texttt{Set} progettata per tipi enumerativi. Non è una classe pubblica con costruttori, ma si ottiene tramite metodi factory statici.
+
+\begin{itemize}
+    \item \textbf{Meccanismo Interno}: Utilizza un \textbf{bit-vector}. Se l'enum ha $\le 64$ elementi (caso comunissimo), il set è memorizzato in un singolo \texttt{long}.
+    \item \textbf{Efficienza}: Le operazioni sono tradotte in istruzioni bitwise della CPU. È la collezione più veloce in assoluto per i tipi \texttt{enum}, con un consumo di memoria minimo.
+    \item \textbf{Null-Safety}: Non permette l'inserimento di elementi \texttt{null}.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption={Esempio di EnumSet}]
+// Creazione di un set con elementi specifici
+Set<Day> weekend = EnumSet.of(Day.SATURDAY, Day.SUNDAY);
+
+// Creazione di un set con tutti gli elementi dell'enum
+Set<Day> allDays = EnumSet.allOf(Day.class);
+\end{lstlisting}
+
+\begin{observation}
+L'ordine di iterazione in un \texttt{EnumSet} non dipende dall'ordine di inserimento, ma dall'\textbf{ordine di dichiarazione} delle costanti nell'Enum originale.
+\end{observation}
+
+\begin{bestpractice}
+In passato, per gestire i "flag" (es. permessi READ, WRITE, EXECUTE), si usavano costanti intere e maschere di bit manuali ($2^0, 2^1, 2^2$). In Java moderno, \texttt{EnumSet} offre la stessa efficienza dei bit ma con la sicurezza dei tipi (Type Safety) dell'orientamento agli oggetti.
+\end{bestpractice}
+
+
+\subsection{Il Motore ad Albero: \texttt{TreeSet}}
+
+Come già discusso nei paragrafi precedenti, utilizza un albero Red-Black per mantenere gli elementi costantemente ordinati.
+\begin{itemize}
+    \item \textbf{Prestazioni}: $O(\log n)$.
+    \item \textbf{Utilizzo}: Da preferire quando servono operazioni di "range" (es. estrarre tutti i valori tra $x$ e $y$) o quando l'ordinamento naturale è un requisito.
+\end{itemize}
+
+
+\subsection{Il Motore a Heap: \texttt{PriorityQueue}}
+
+Rappresenta una \textit{coda a priorità} implementata tramite un array dinamico che funge da \textit{Heap} (per entrambi i concetti, si veda in appendice). 
+
+\begin{itemize}
+    \item \textbf{Criterio di Priorità}: Se non viene fornito un \texttt{Comparator}, gli elementi devono implementare \texttt{Comparable} (ordinamento naturale).
+    \item \textbf{Min-Priority di default}: In Java, il valore più piccolo è quello con priorità più alta (testa della coda). Per una Max-Priority Queue, occorre invertire il comparatore: \texttt{Collections.reverseOrder()}.
+\end{itemize}
+
+\medskip
+
+L'efficienza della \texttt{PriorityQueue} deriva direttamente dall'uso dello heap come struttura dati sottostante:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Operazione} & \textbf{Complessità} & \textbf{Nota Tecnica} \\ \hline
+\texttt{peek()}     & $O(1)$               & La radice dello heap è sempre accessibile. \\ \hline
+\texttt{offer()}/\texttt{add()} & $O(\log n)$      & Richiede il "galleggiamento" (\textit{sift-up}). \\ \hline
+\texttt{poll()}     & $O(\log n)$          & Richiede l'affondamento (\textit{sift-down}). \\ \hline
+\texttt{remove(Object)} & $O(n)$           & \textbf{Attenzione}: richiede la ricerca lineare. \\ \hline
+\texttt{contains(Object)} & $O(n)$         & Lo heap non è ottimizzato per la ricerca. \\ \hline
+\texttt{heapify} (Costruttore) & $O(n)$    & Algoritmo di Floyd (costruzione in massa). \\ \hline
+\end{tabular}
+\caption{Complessità temporale della PriorityQueue}
+\end{table}
+
+\begin{bestpractice}[Efficienza di Massa]
+Se devi trasformare una collezione di $n$ elementi in una \texttt{PriorityQueue}, non fare $n$ inserimenti ($O(n \log n)$). Usa il costruttore che accetta una collezione: Java userà l'algoritmo di \textbf{Floyd} (\textit{heapify}) che costruisce lo heap in tempo \textbf{$O(n)$}.
+\end{bestpractice}
+
+\begin{warningbox}[Iterazione non ordinata]
+    L'iteratore restituito dal metodo \texttt{iterator()} \textbf{non} garantisce di percorrere gli elementi in ordine di priorità. L'ordine è quello interno dell'array dello heap.
+\end{warningbox}
+
+\begin{warningbox}[Gestione dei pareggi]
+        A differenza di quanto si potrebbe pensare, la \texttt{PriorityQueue} di Java \textbf{non garantisce} un ordine FIFO per elementi con la stessa priorità. Se l'ordine di arrivo è cruciale in caso di parità, è necessario includere un "timestamp" o un contatore nel comparatore.
+\end{warningbox}
+
+\begin{warningbox}[Modifica degli elementi]
+Se un oggetto già presente nella coda viene modificato in modo da cambiare la sua priorità (il risultato di \texttt{compareTo} cambia), lo heap \textbf{non si riposiziona automaticamente}. Questo corrompe la struttura dati. In questi casi, l'elemento deve essere rimosso e reinserito.
+\end{warningbox}
 
 
 
