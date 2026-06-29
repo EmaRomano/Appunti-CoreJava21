@@ -32,7 +32,7 @@ Introdotto con Java 9, lo strumento \textbf{jshell} fornisce un ambiente interat
 
 JShell è un sistema \textit{Read-Eval-Print Loop}. A differenza del ciclo standard (\textit{edit-compile-run}), il REPL legge l'input dell'utente, valuta l'espressione, stampa il risultato e attende l'istruzione successiva.
 
-\subsubsection*{Caratteristiche principali}
+\paragraph{Caratteristiche principali}:
 \begin{itemize}
     \item \textbf{Assenza di Boilerplate}: Non è necessario definire classi o il metodo \texttt{main} per eseguire istruzioni.
     \item \textbf{Variabili Implicite}: Le espressioni valutate senza assegnazione vengono memorizzate in variabili generate automaticamente (es. \texttt{\$1}, \texttt{\$2}).
@@ -144,7 +144,7 @@ La seguente tabella riassume gli 8 tipi primitivi di Java, evidenziando le carat
 
 \section{Stringhe}
 
-In linguaggi come Python è fondamentale la distinzione tra tipi mutabili e immutabili, resa piuttosto evidente dal fatto che oggetti mutabili hanno spesso un equivalente immutabile (si pensi alla coppia \texttt{list}/\texttt{tuple}). In Java questo aspetto è meno immediato sintatticamente, ma altrettanto cruciale.
+In linguaggi come Python è fondamentale la distinzione tra tipi mutabili e immutabili, resa piuttosto evidente dal fatto che oggetti mutabili hanno spesso un equivalente immutabile (si pensi a \texttt{list}/\texttt{tuple}). In Java questo aspetto è meno immediato sintatticamente, ma altrettanto cruciale.
 
 In particolare, gli oggetti \texttt{String} sono \textbf{immutabili}: una volta creati, il loro stato non può essere alterato. Ogni tentativo di modifica produce, di fatto, un nuovo oggetto con un riferimento diverso in memoria.
 
@@ -195,7 +195,7 @@ E fondamentale distinguere tra stringhe \textit{letterali} e stringhe \textit{di
 \end{example}
 
 \begin{tip}[Il metodo \texttt{intern()}]
-    Esiste un modo per forzare una stringa dinamica nel Pool: il metodo \texttt{s.intern()}. Se invocato, Java controlla se esiste gia una stringa uguale nel Pool: se sì, restituisce il riferimento esistente; altrimenti, aggiunge la stringa allo Pool e ne restituisce il riferimento.
+    Esiste un modo per forzare una stringa dinamica nel Pool: il metodo \texttt{s.intern()}. Se invocato, Java controlla se esiste già una stringa uguale nel Pool: se sì, restituisce il riferimento esistente; altrimenti, aggiunge la stringa allo Pool e ne restituisce il riferimento.
     Il metodo \texttt{intern()} è una scelta vincente in scenari di \textbf{Data Deduplication}:
 
 \begin{itemize}
