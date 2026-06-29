@@ -241,6 +241,67 @@ Se in una collezione l'iteratore è predicibile, si dice che ha un \textbf{encou
 Se l'ordine dei dati è irrilevante (es. sommare dei totali o contare occorrenze), l'incertezza sull'ordine di visita non è un problema. Se invece l'ordine è parte della logica di business (es. una lista di transazioni cronologiche), è vitale scegliere una collezione che garantisca l'ordinamento come \texttt{ArrayList} o \texttt{TreeSet}.
 \end{tip}
 
+\subsection{L'Interfaccia \texttt{ListIterator}}
+
+Mentre \texttt{Iterator} permette solo lo scorrimento in avanti, \textbf{\texttt{ListIterator}} è una specializzazione per le liste che permette la navigazione bidirezionale e la modifica della struttura durante l'iterazione. \textbf{Implementazioni}: È fornita da tutte le classi della gerarchia \texttt{List} (\texttt{ArrayList}, \texttt{LinkedList}, \texttt{Vector})
+
+\begin{table}[ht]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Metodo} & \textbf{Descrizione} \\ \hline
+\texttt{next() / previous()} & Sposta il cursore e restituisce l'elemento saltato. \\ \hline
+\texttt{hasNext() / hasPrevious()} & Verifica la presenza di elementi nelle due direzioni. \\ \hline
+\texttt{add(e)} & Inserisce un elemento nella posizione del cursore. \\ \hline
+\texttt{set(e)} & Sostituisce l'ultimo elemento restituito da \texttt{next}/\texttt{previous}. \\ \hline
+\texttt{nextIndex() / previousIndex()} & Restituisce l'indice dell'elemento che verrebbe restituito. \\ \hline
+\end{tabular}
+}
+\caption{Metodi principali di ListIterator}
+\end{table}
+
+\begin{warningbox}[L'importanza in LinkedList]
+In una \texttt{LinkedList}, l'unico modo efficiente ($O(1)$) per inserire o rimuovere ripetutamente elementi nel mezzo della lista è posizionarsi con un \texttt{ListIterator} nella posizione desiderata. Senza di esso, ogni operazione di accesso richiederebbe uno scorrimento lineare $O(n)$ dalla testa della lista ogni singola volta. 
+\end{warningbox}
+
+\begin{tip}
+    Capita raramente di usare previous(), ma non è così raro usare \texttt{ListIterator} per trasformare una lista mentre la si scorre.
+    L'iteratore standard permette solo di rimuovere (\texttt{remove()}), mentre il \texttt{ListIterator} permette di sostituire un elemento (\texttt{set()}) o aggiungerne uno nuovo (\texttt{add()}) esattamente in quel punto, senza mandare in crash la collezione con una \texttt{ConcurrentModificationException}.
+\end{tip}
+
+\begin{tip}
+    Sebbene per \texttt{ArrayList} sia possibile sostituire elementi tramite indice senza causare eccezioni, l'uso di \texttt{ListIterator} rimane fondamentale per ragioni di {Sicurezza Strutturale}: Permette di aggiungere (\texttt{add()}) o rimuovere elementi durante l'iterazione. Mentre \texttt{myList.add()} causerebbe una \texttt{ConcurrentModificationException} in un ciclo \textit{for-each}, \texttt{myIterator.add()} aggiorna correttamente lo stato dell'iteratore.
+\end{tip}
+
+\subsection{Sicurezza e Iterazione: Perché l'Indice è Pericoloso}
+
+La scelta del ciclo per scorrere una collezione non è solo una questione di stile o di "zucchero sintattico", ma una decisione ingegneristica che impatta sulla robustezza del codice.
+
+L'utilizzo di un indice (\texttt{for(int i=0; i < list.size(); i++)}) è considerato \textbf{pericoloso} se la lista viene modificata durante il ciclo.
+
+\begin{itemize}
+    \item \textbf{Problema}: Quando si rimuove l'elemento all'indice $i$, tutti gli elementi successivi scalano a sinistra. Al prossimo incremento ($i++$), il ciclo salterà l'elemento che è appena scalato nella posizione $i$.
+    \item \textbf{Comportamento}: Il codice non crasha, ma produce risultati errati e imprevedibili (\textit{silent failure}).
+\end{itemize}
+
+\medskip
+
+Nonostante la superiorità dell'iteratore per la sicurezza, il ciclo \texttt{for} con indice rimane lo strumento d'elezione in scenari specifici.
+
+\begin{enumerate}
+    \item \textbf{Sincronizzazione di più Collezioni}: Quando è necessario accedere a due o più strutture dati simultaneamente utilizzando la stessa posizione relativa.
+    \item \textbf{Calcoli basati sulla Posizione}: Quando l'indice $i$ è un parametro della formula matematica o della logica di business.
+    \item \textbf{Accesso Non-Sequenziale}: Algoritmi che richiedono salti (\texttt{i += k}), scansioni a ritroso o partizionamento (es. \textit{Binary Search}, \textit{QuickSort}).
+    \item \textbf{Prestazioni su Primitivi}: Negli array di tipi primitivi, evita l'overhead di creazione degli oggetti \texttt{Iterator} e favorisce le ottimizzazioni della CPU.
+\end{enumerate}
+
+\begin{tip}
+    Per scorrere qualsiasi tipo di struttura dati, prediligi l'uso di iteratori oppure, per la sola lettura, \textit{enhanced for}.
+
+    Usa il ciclo con indice come un \textbf{bisturi}: quando la struttura dati è un array semplice o quando la logica dell'algoritmo non è una semplice "visita" di tutti gli elementi, ma una manipolazione basata sulla loro coordinata spaziale.
+\end{tip}
+
 \section{Le Classi Astratte "Ponte"}
 
 Per evitare che gli sviluppatori debbano scrivere decine di metodi ogni volta che creano una nuova collezione, il JDK fornisce delle classi astratte chiamate \textbf{\textit{Abstract Skeleton Implementations}}:
@@ -568,12 +629,8 @@ L'efficienza della \texttt{PriorityQueue} deriva direttamente dall'uso dello hea
 Se devi trasformare una collezione di $n$ elementi in una \texttt{PriorityQueue}, non fare $n$ inserimenti ($O(n \log n)$). Usa il costruttore che accetta una collezione: Java userà l'algoritmo di \textbf{Floyd} (\textit{heapify}) che costruisce lo heap in tempo \textbf{$O(n)$}.
 \end{bestpractice}
 
-\begin{warningbox}[Iterazione non ordinata]
-    L'iteratore restituito dal metodo \texttt{iterator()} \textbf{non} garantisce di percorrere gli elementi in ordine di priorità. L'ordine è quello interno dell'array dello heap.
-\end{warningbox}
-
 \begin{warningbox}[Gestione dei pareggi]
-        A differenza di quanto si potrebbe pensare, la \texttt{PriorityQueue} di Java \textbf{non garantisce} un ordine FIFO per elementi con la stessa priorità. Se l'ordine di arrivo è cruciale in caso di parità, è necessario includere un "timestamp" o un contatore nel comparatore.
+        A differenza di quanto si potrebbe pensare, la \texttt{PriorityQueue} di Java \textbf{non garantisce} un ordine FIFO per elementi con la stessa priorità. Se l'ordine di arrivo è cruciale in caso di parità, è necessario includere un "timestamp" o un contatore nel comparatore. Stesso discorso vale per l'ordine di iterazione. 
 \end{warningbox}
 
 \begin{warningbox}[Modifica degli elementi]
