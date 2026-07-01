@@ -647,7 +647,8 @@ Se devi trasformare una collezione di $n$ elementi in una \texttt{PriorityQueue}
 Se un oggetto già presente nella coda viene modificato in modo da cambiare la sua priorità (il risultato di \texttt{compareTo} cambia), lo heap \textbf{non si riposiziona automaticamente}. Questo corrompe la struttura dati. In questi casi, l'elemento deve essere rimosso e reinserito.
 \end{warningbox}
 
-\section{L'Interfaccia Map}
+\section{Mappe}
+\subsection{L'Interfaccia Map}
 
 L'interfaccia \texttt{Map<K, V>} rappresenta una struttura dati che non fa parte della gerarchia \texttt{Collection}. Invece di memorizzare elementi singoli, una mappa gestisce associazioni tra \textbf{Chiavi} (Key) e \textbf{Valori} (Value). Il contratto fondamentale di una mappa stabilisce che le chiavi devono essere \textbf{uniche} (non sono ammessi duplicati), mentre i valori possono essere ripetuti. Di seguito, esaminiamo i metodi di uso più comune, raggruppati in parallelo con quelli delle collezioni.
 
@@ -698,9 +699,125 @@ L'interfaccia \texttt{Map} ha beneficiato enormemente dell'introduzione dei meto
 \begin{itemize}
     \item \texttt{V getOrDefault(Object key, V defaultValue)}: Se la chiave esiste, restituisce il suo valore; altrimenti restituisce \texttt{defaultValue} senza inserirlo nella mappa. Elimina la necessità di continui controlli \texttt{if (map.containsKey(...))}.
     \item \texttt{V putIfAbsent(K key, V value)}: Inserisce la coppia solo se la chiave non è già mappata a un valore (o se è mappata a \texttt{null}).
-    \item \texttt{void forEach(BiConsumer<? super K, ? super V> action)}: Permette di iterare su chiavi e valori in modo funzionale e pulito tramite una lambda (es. \texttt{map.forEach((k, v) -> System.out.println(k + ":" + v))}).
-    \item \texttt{V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction)}: Molto usato per costruire mappe di collezioni o cache. Se la chiave manca, esegue la funzione per calcolare il valore, lo inserisce e lo restituisce in un solo colpo.
+    \item \texttt{void forEach(BiConsumer<? super K, ? super V> action)}: Permette di iterare su chiavi e valori in modo funzionale e pulito tramite una lambda, ad esempio: \begin{center}
+                \texttt{map.forEach((k, v) -> System.out.println(k + ":" + v))}   
+            \end{center}.
+    \item \texttt{V computeIfAbsent(K key, Function<? super K, ? extends V> mF)} (\texttt{mF} sta per "mapping function"): Molto usato per costruire mappe di collezioni o cache. Se la chiave manca, esegue la funzione per calcolare il valore, lo inserisce e lo restituisce in un solo colpo.
 \end{itemize}
+
+\subsection{La Classe Astratta "Ponte" per le Mappe}
+
+Esattamente come avviene per le collezioni, il JDK fornisce una \textbf{\textit{Abstract Skeleton Implementation}} per le mappe, allo scopo di ridurre al minimo lo sforzo richiesto per implementare l'interfaccia \texttt{Map<K, V>}: la classe \textbf{\texttt{AbstractMap}}.
+
+Questa classe fornisce un'implementazione di base per quasi tutti i metodi dell'interfaccia (come \texttt{containsKey}, \texttt{containsValue}, \texttt{get}, \texttt{isEmpty}), basando la propria logica su un unico metodo fondamentale che la classe concreta dovrà fornire: \texttt{entrySet()}.
+
+\begin{tip}
+Se un giorno dovessi creare una mappa personalizzata, non implementare direttamente l'interfaccia \texttt{Map}. Estendi invece \texttt{AbstractMap}: ti basterà fornire l'implementazione del metodo \texttt{entrySet()} per ereditare una mappa funzionante (in sola lettura).
+\end{tip}
+
+Per capire il livello di astrazione di questa architettura, osserviamo come \texttt{AbstractMap} riesca a implementare un metodo complesso come \texttt{containsValue(Object value)} senza avere la minima idea di come la mappa memorizzi fisicamente le coppie:
+
+\begin{lstlisting}[language=Java, caption={Logica di AbstractMap.containsValue}]
+public boolean containsValue(Object value) {
+    Iterator<Map.Entry<K,V>> i = entrySet().iterator(); // Metodo astratto!
+    if (value == null) {
+        while (i.hasNext()) {
+            Entry<K,V> e = i.next();
+            if (e.getValue() == null) return true;
+        }
+    } else {
+        while (i.hasNext()) {
+            Entry<K,V> e = i.next();
+            if (value.equals(e.getValue())) return true;
+        }
+    }
+    return false;
+}
+\end{lstlisting}
+
+\texttt{AbstractMap} ignora se la struttura sottostante sia una tabella hash o un albero. Sfrutta semplicemente il fatto che ogni mappa \textbf{deve} poter restituire il set delle sue \textit{Entry}. Iterando su quel set, può risolvere la ricerca del valore.
+
+Quando una classe concreta estende \texttt{AbstractMap}, le regole di ingaggio cambiano leggermente rispetto alle collezioni generiche, soprattutto per una questione di \textbf{prestazioni}:
+
+\begin{itemize}
+    \item \textbf{Metodi Obbligatori}: La classe figlia deve fornire l'implementazione di \texttt{entrySet()} (che deve restituire un set di istanze \texttt{Map.Entry}).
+    \item \textbf{Mappe Mutabili}: Per permettere l'inserimento di nuovi dati, è necessario sovrascrivere il metodo \texttt{put(K key, V value)}, che altrimenti lancerà una \urlstyle{tt}\nolinkurl{UnsupportedOperationException}.
+    \item \textbf{Ottimizzazione (Critica)}: Sebbene \texttt{AbstractMap} fornisca già un'implementazione per \texttt{get(Object key)} e \texttt{containsKey(Object key)}, queste implementazioni di default eseguono una \textbf{ricerca lineare} ($O(n)$) iterando su tutto l'\texttt{entrySet}. Poiché lo scopo primario di una mappa è l'accesso istantaneo tramite chiave, la classe figlia \textbf{deve assolutamente sovrascrivere} questi metodi sfruttando la propria struttura fisica (es. il calcolo dell'hash o la discesa nell'albero) per riportare le prestazioni a $O(1)$ o $O(\log n)$.
+\end{itemize}
+
+\begin{dettagli}[La Classe Dictionary: Un reperto fossile]
+Consultando la gerarchia originale di Java o alcuni vecchi diagrammi, è possibile imbattersi nella classe astratta \textbf{\texttt{Dictionary}}. 
+
+Si tratta di un artefatto obsoleto risalente a Java 1.0, precedente alla nascita del \textit{Collections Framework}. Fu creata come superclasse per la vecchia struttura \texttt{Hashtable}. Nel codice Java moderno, \texttt{Dictionary} è considerata \textit{deprecated} a livello concettuale: non deve \textbf{mai} essere estesa o utilizzata nei nuovi progetti. L'unica astrazione corretta per i dizionari di dati è l'interfaccia \texttt{Map} e la sua scheletro \texttt{AbstractMap}.
+\end{dettagli}
+
+\subsection{SequencedMap e Mappe Ordinate (Java 21+)}
+
+Prima di esplorare le interfacce specifiche, è utile fissare un concetto teorico fondamentale: a livello logico e matematico, \textbf{una mappa può essere pensata come una funzione definita su un dominio finito}.
+In questo parallelismo, il "dominio" della funzione è costituito dall'insieme delle chiavi. Poiché le chiavi non ammettono duplicati, questo dominio logico non è altro che un \textbf{\texttt{Set}}. Di conseguenza, il modo in cui una mappa mantiene (o non mantiene) l'ordine dei suoi elementi dipende fisicamente e logicamente dal tipo di set che funge da struttura portante per le sue chiavi.
+
+Seguendo l'evoluzione introdotta con Java 21, il framework definisce l'interfaccia \textbf{\texttt{SequencedMap<K, V>}} per uniformare l'accesso alle estremità delle mappe dotate di un ordine di incontro (\textit{encounter order}) predicibile (come \texttt{LinkedHashMap} o \texttt{TreeMap}).
+
+\begin{lstlisting}[language=Java, caption={Metodi principali di SequencedMap}]
+interface SequencedMap<K, V> extends Map<K, V> {
+    // Accesso e modifica alle estremita'
+    Map.Entry<K,V> firstEntry();
+    Map.Entry<K,V> lastEntry();
+    Map.Entry<K,V> pollFirstEntry();
+    Map.Entry<K,V> pollLastEntry();
+    V putFirst(K k, V v);
+    V putLast(K k, V v);
+
+    // Viste ordinate (covarianza dei tipi di ritorno)
+    SequencedSet<K> sequencedKeySet();
+    SequencedCollection<V> sequencedValues();
+    SequencedSet<Map.Entry<K,V>> sequencedEntrySet();
+    
+    // Vista invertita
+    SequencedMap<K,V> reversed();
+}
+\end{lstlisting}
+
+\begin{observation}
+In perfetta simmetria con le collezioni, il metodo \texttt{reversed()} non clona la mappa, ma ne restituisce una \textbf{vista} speculare con efficienza $O(1)$. 
+Inoltre, i metodi che restituiscono le "viste" dei dati (es. \texttt{sequencedKeySet()}) sfruttano la covarianza per restituire strutture che implementano a loro volta le interfacce \texttt{Sequenced}, garantendo la corretta propagazione dell'ordine al dominio della mappa.
+\end{observation}
+
+Esattamente come avviene per i Set, da \texttt{SequencedMap} si diramano interfacce più sofisticate, pensate per scenari in cui la mappa non deve solo ricordare l'ordine di inserimento, ma deve mantenere il dominio delle chiavi costantemente \textbf{ordinato secondo un criterio logico} (es. ordine alfabetico o numerico).
+
+\begin{itemize}
+    \item \textbf{\texttt{SortedMap<K, V>}}: Lo specchio di \texttt{SortedSet}. Espone il \texttt{Comparator} utilizzato per l'ordinamento delle chiavi e fornisce metodi per ottenere "sotto-mappe" (viste parziali, come \texttt{subMap}, \texttt{headMap}, \texttt{tailMap}) basate su un range di chiavi.
+    \item \textbf{\texttt{NavigableMap<K, V>}}: Estende \texttt{SortedMap} (in modo analogo a \texttt{NavigableSet}), aggiungendo metodi per la ricerca di prossimità. Permette di trovare la chiave o l'\texttt{Entry} "strettamente maggiore" (\texttt{higherEntry}) o "minore o uguale" (\texttt{floorEntry}) rispetto a una chiave target.
+\end{itemize}
+
+\begin{observation}
+Queste interfacce avanzate sono implementate dalla classe concreta \textbf{\texttt{TreeMap}} che, analogamente a \texttt{TreeSet}, si appoggia a un \textit{albero binario di ricerca bilanciato} (Red-Black Tree) per mantenere il set delle chiavi costantemente ordinato con un costo algoritmico di $O(\log n)$.
+\end{observation}
+
+\subsection{Classi Map Concrete}
+
+Dal punto di vista logico e matematico, come abbiamo stabilito, una mappa è una funzione definita su un \texttt{Set} (il suo dominio). Sarebbe quindi naturale dedurre che una \texttt{HashMap} sia strutturalmente costruita "utilizzando" un \texttt{HashSet}.
+
+Nella realtà fisica del framework Java, tuttavia, accade l'\textbf{esatto opposto}. Per ragioni di ottimizzazione del codice, gli architetti del JDK hanno sviluppato prima i complessi motori fisici delle mappe, e hanno poi implementato i Set come semplici "involucri" (\textit{wrapper}) attorno ad esse.
+
+\begin{itemize}
+    \item \textbf{\texttt{HashMap}}: È il motore fisico reale (basato sull'array di bucket e l'hashing). Un \texttt{HashSet} non è altro che una \texttt{HashMap} in cui il "valore" di ogni coppia è un oggetto fittizio ignorato dal sistema.
+    \item \textbf{\texttt{LinkedHashMap}}: Aggiunge la lista doppiamente concatenata alla tabella hash per mantenere l'ordine. Il \texttt{LinkedHashSet} si appoggia internamente a questa esatta struttura.
+    \item \textbf{\texttt{TreeMap}}: Implementa fisicamente l'albero Red-Black. Il \texttt{TreeSet} è solo un adattatore che delega la gestione dei dati a una \texttt{TreeMap} dietro le quinte.
+\end{itemize}
+
+\medskip
+
+Avendo già studiato approfonditamente il comportamento fisico dei motori ad array, hash e alberi nel capitolo precedente, non è necessario ripeterne l'analisi prestazionale in questa sede. La complessità algoritmica (es. $O(1)$ per l'hash, $O(\log n)$ per gli alberi), le dinamiche di collisione e i meccanismi di ordinamento \textbf{sono letteralmente gli stessi}, poiché le classi \texttt{Map} rappresentano le reali fondamenta strutturali dell'intero framework.
+
+\begin{warningbox}[Null-Safety nelle Mappe]
+La gestione dei valori \texttt{null} non è uniforme nel framework ed è una fonte comune di \texttt{NullPointerException} a runtime:
+\begin{itemize}
+    \item \texttt{HashMap} e \texttt{LinkedHashMap} sono totalmente tolleranti: ammettono \textbf{una} chiave \texttt{null} e un numero arbitrario di valori \texttt{null}.
+    \item \texttt{TreeMap} non permette chiavi \texttt{null} (lanciando un'eccezione non appena l'albero tenta di chiamare \texttt{compareTo}), ma ammette valori \texttt{null}.
+    \item \texttt{EnumMap} non permette chiavi \texttt{null} a causa del vincolo sul tipo enumerativo.
+\end{itemize}
+\end{warningbox}
 
 
 
