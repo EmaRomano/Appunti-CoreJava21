@@ -62,6 +62,7 @@ Questa struttura permette operazioni di inserimento e rimozione in \textbf{tempo
 Sebbene circolare, l'array ha comunque una dimensione fisica limitata. Quando l'array è pieno (ovvero quando \texttt{head == tail}), Java deve allocare un nuovo array più grande e copiare gli elementi. Tuttavia, questa operazione avviene raramente se la capacità iniziale è ben calibrata.
 
 \section{La Struttura Dati Heap}
+\label{heap}
 
 Lo \textbf{Heap} (o cumulo) è una struttura dati basata su albero che soddisfa proprietà specifiche di forma e ordine. Nonostante sia concettualmente un albero binario, la sua implementazione più efficiente e comune avviene tramite un \textbf{array dinamico}, eliminando l'overhead dei puntatori.
 
@@ -71,7 +72,7 @@ Un Heap deve rispettare due vincoli strutturali:
     \item \textbf{Proprietà della Forma}: L'albero deve essere un \textbf{albero binario quasi completo}. Ciò significa che tutti i livelli sono completamente riempiti, ad eccezione eventualmente dell'ultimo, che deve essere riempito da sinistra a destra.
     \item \textbf{Proprietà dello Heap (Ordine)}:
     \begin{itemize}
-        \item \textbf{Min-Heap}: Il valore di ogni nodo è maggiore o uguale al valore del suo nodo padre. La radice contiene il valore minimo. (Implementazione di default della \texttt{PriorityQueue} in Java).
+        \item \textbf{Min-Heap}: Il valore di ogni nodo è maggiore o uguale al valore del suo nodo padre. Di conseguenza, la radice contiene il valore minimo. (Implementazione di default della \texttt{PriorityQueue} in Java).
         \item \textbf{Max-Heap}: Il valore di ogni nodo è minore o uguale al valore del suo nodo padre. La radice contiene il valore massimo.
     \end{itemize}
 \end{enumerate}
@@ -133,6 +134,7 @@ Sebbene la ricerca di un elemento generico sia $O(n)$ (perché lo heap non è un
 \end{observation}
 
 \section{La Coda a Priorità (Priority Queue)}
+\label{codaAPriorità}
 
 La \textbf{Coda a Priorità} è un Tipo di Dato Astratto (ADT) che estende il concetto di coda classica. Mentre in una coda standard (FIFO, si pensi ad esempio alla fila al supermercato) l'ordine di uscita è determinato esclusivamente dal tempo di arrivo, in una coda a priorità ogni elemento è associato a un valore di \textbf{priorità} (si pensi ad esempio alla fila al pronto soccorso).
 
@@ -153,5 +155,5 @@ Le operazioni fondamentali definite dall'ADT sono:
 
 \medskip
 
-La scelta standard per implementare una coda a piorità è un Min-heap in cui la "priorità" è determinata dal valore stesso dell'elemento (o da un \texttt{Comparator}).
+La scelta standard per implementare una coda a priorità è un Min-heap (vedi paragrafo precedente) in cui la "priorità" è determinata dal valore stesso dell'elemento (o da un \texttt{Comparator}).
 

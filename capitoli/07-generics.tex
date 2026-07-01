@@ -217,7 +217,7 @@ Poiché il tipo di ritorno di un metodo cancellato è solitamente \texttt{Object
 Data la chiamata \texttt{Employee buddy = buddies.getFirst();}, la traduzione nel bytecode avviene in due passaggi:
 
 \begin{enumerate}
-    \item Chiamata al metodo \textit{raw} \texttt{Pair.getFirst()} (ritorna \texttt{Object}).
+    \item Chiamata al metodo \textit{raw} d'istanza \texttt{getFirst()} della classe \texttt{Pair} (ritorna \texttt{Object}).
     \item Conversione (\textit{cast}) del valore ritornato da \texttt{Object} a \texttt{Employee}.
 \end{enumerate}
 
@@ -270,7 +270,7 @@ Per evitare che il polimorfismo fallisca, il compilatore genera automaticamente 
     \begin{enumerate}
         \item \textbf{Analisi delle Firme}: Identifica un metodo nella sottoclasse che corrisponde a un metodo della superclasse generica (es. \texttt{setSecond(LocalDate)} vs \texttt{setSecond(T)}).
         \item \textbf{Previsione della Cancellazione}: Calcola come appariranno le firme nel bytecode (es. \texttt{LocalDate} rimane tale, ma \texttt{T} diventa \texttt{Object}).
-        \item \textbf{Rilevamento del Conflitto}: Se le firme cancellate non coincidono, il metodo non e' piu' un \textit{override} valido per la JVM.
+        \item \textbf{Rilevamento del Conflitto}: Se le firme cancellate non coincidono, il metodo non è più un \textit{override} valido per la JVM.
         \item \textbf{Sintesi}: Genera automaticamente un metodo con la firma cancellata della superclasse che delega il lavoro al metodo della sottoclasse.
     \end{enumerate}
 

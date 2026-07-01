@@ -471,7 +471,7 @@ Le code sono fondamentali per la gestione di flussi di dati in cui l'ordine di e
 
 La \texttt{Queue<E>} è progettata per il processamento di elementi in ordine FIFO. L'approccio di Java per le code è molto pragmatico: ogni operazione ha due varianti, una lancia un'eccezione se l'operazione fallisce per effetto di una coda vuota o piena (alcune implementazioni hanno capacità limitata), l'altra restituisce un valore speciale (\texttt{null} o \texttt{false}). 
 
-I metodi \texttt{element()}/\texttt(peek()) restituiscono la testa della coda senza rimuoverla. 
+I metodi \texttt{element()}/\texttt{peek()} restituiscono la testa della coda senza rimuoverla. 
 
 \begin{table}[ht]
 \centering
@@ -599,7 +599,7 @@ Come già discusso nei paragrafi precedenti, utilizza un albero Red-Black per ma
 
 \subsection{Il Motore a Heap: \texttt{PriorityQueue}}
 
-Rappresenta una \textit{coda a priorità} implementata tramite un array dinamico che funge da \textit{Heap} (per entrambi i concetti, si veda in appendice). 
+Rappresenta una \textit{coda a priorità} implementata tramite un array dinamico che funge da \textit{Heap} (per entrambi i concetti, si vedano in appendice i richiami \ref{heap} e \ref{codaAPriorità}). 
 
 \begin{itemize}
     \item \textbf{Criterio di Priorità}: Se non viene fornito un \texttt{Comparator}, gli elementi devono implementare \texttt{Comparable} (ordinamento naturale).
