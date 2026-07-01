@@ -34,6 +34,67 @@ L'hashing risolve problemi critici in diversi settori:
 Poiché l'insieme dei possibili input è infinito, mentre l'insieme dei possibili valori hash (numeri interi o stringhe di lunghezza fissa) è finito, esiste la possibilità teorica che due input diversi producano lo stesso hash. Questo evento è chiamato \textbf{collisione}.
 Un buon algoritmo di hash riduce drasticamente la probabilità di collisioni, e i sistemi informatici (come la JVM di Java) sono progettati per gestire correttamente questi rari casi di "omonimia digitale".
 
+\section{Tabelle Hash in Java}
+\label{hashTables}
+In Java, una tabella hash è implementata come un \textbf{array di liste concatenate} (o \textit{array di nodi}). Ogni singolo slot (o cella) di questo array prende il nome di \textbf{bucket} (secchio).
+
+Per determinare l'esatta posizione di un oggetto all'interno della tabella, il sistema esegue, a livello concettuale, due operazioni:
+\begin{enumerate}
+    \item Calcola l'hash code dell'oggetto (chiamando il metodo \texttt{hashCode()}).
+    \item Riduce questo numero intero \textit{modulo} la capacità totale dell'array (il numero di bucket).
+\end{enumerate}
+
+Il resto della divisione rappresenta l'indice del bucket che ospiterà l'elemento. Ad esempio, se un oggetto ha un hash code pari a \texttt{76268} e la tabella ha \texttt{128} bucket, l'oggetto verrà posizionato nel bucket all'indice \texttt{108} (poiché $76268 \pmod{128} = 108$).
+
+Se si è fortunati, il bucket calcolato risulta vuoto e l'elemento viene semplicemente inserito. Tuttavia, è frequente imbattersi in un bucket già occupato da un altro elemento: questo evento prende il nome di \textbf{collisione hash} (\textit{hash collision}). 
+In caso di collisione, il nuovo elemento viene aggiunto alla lista concatenata presente in quel bucket. Durante la ricerca, la JVM dovrà scorrere i nodi di questa lista e utilizzare il metodo \texttt{equals()} per confrontare il nuovo oggetto con quelli già presenti, verificandone l'effettiva presenza. Se gli hash code sono distribuiti in modo sufficientemente casuale e il numero di bucket è adeguato, ogni lista conterrà pochissimi elementi, mantenendo il tempo di ricerca medio a $O(1)$.
+
+\begin{dettagli}[La Verità sull'Indice: Bitwise AND e Potenze di 2]
+La spiegazione matematica tramite l'operatore modulo (\texttt{\%}) è corretta sul piano logico, ma \textbf{non} corrisponde a ciò che accade fisicamente nella JVM. L'operazione di divisione è computazionalmente costosa per la CPU. 
+
+Nel codice sorgente reale del JDK, l'indice non viene calcolato con il modulo, bensì tramite un'operazione binaria estremamente veloce (\textbf{Bitwise AND}):
+\begin{lstlisting}[language=Java]
+index = (n - 1) & hash; // dove n e' il numero totale di bucket
+\end{lstlisting}
+
+Affinché questa operazione bit a bit restituisca esattamente lo stesso risultato di \texttt{hash \% n}, esiste un vincolo ingegneristico assoluto: \textbf{la capacità dell'array deve sempre essere una potenza di 2} (16, 32, 64, 128, ecc.). 
+
+Se in fase di costruzione si passa al costruttore una capacità iniziale arbitraria (es. \texttt{new HashMap<>(30)}), Java non creerà un array di 30 elementi, ma lo arrotonderà automaticamente e silenziosamente alla successiva potenza di due più vicina (in questo caso, 32). La capacità di default è fissata a 16. 
+\end{dettagli}
+
+\paragraph{Ottimizzazioni Interne e Fattore di Carico}
+
+Sebbene l'hashing garantisca, in media, prestazioni eccellenti ($O(1)$), esistono situazioni critiche che la JVM deve saper gestire, come funzioni hash mal progettate o veri e propri attacchi informatici volti a generare collisioni intenzionali per bloccare il sistema.
+
+A partire da Java 8, se il numero di collisioni in un singolo bucket supera una specifica soglia (attualmente fissata a 8 elementi) e la tabella è sufficientemente grande, la lista concatenata si trasforma automaticamente in un albero binario bilanciato (\textit{Red-Black Tree}). Questo processo degrada le prestazioni in modo controllato a $O(\log n)$, scongiurando il caso peggiore di $O(n)$.
+
+Tuttavia, affinché la JVM possa costruire questo albero in modo efficiente, è fondamentale che gli oggetti utilizzati come chiavi implementino l'interfaccia \texttt{Comparable}. In caso contrario, in assenza di un ordinamento naturale esplicito, la JVM dovrà ripiegare su complessi meccanismi di \textit{fallback} basati sugli indirizzi di memoria, penalizzando le prestazioni.
+
+Oltre alla gestione delle singole collisioni, è necessario monitorare il riempimento globale della tabella. Se l'array interno si riempie eccessivamente, la probabilità di collisioni aumenta vertiginosamente. Per evitare questo scenario, interviene un parametro chiamato \textbf{Fattore di Carico} (\textit{Load Factor}).
+
+Il fattore di carico è un valore decimale che determina la soglia massima di riempimento prima che la tabella venga ridimensionata. In Java, il valore di default è \textbf{0.75}. Ciò significa che quando la tabella è piena al 75\% della sua capacità, scatta un'operazione computazionalmente costosa detta \textbf{Rehashing}:
+\begin{enumerate}
+    \item Viene allocato un nuovo array interno con il doppio della capacità rispetto al precedente.
+    \item Tutti gli elementi della vecchia tabella vengono ricalcolati (ri-hashati) e inseriti nel nuovo array.
+    \item La vecchia tabella viene abbandonata per essere poi gestita dal \textit{Garbage Collector}.
+\end{enumerate}
+
+Per la maggior parte delle applicazioni backend, il fattore di carico di default (0.75) rappresenta il perfetto compromesso tra efficienza in termini di tempo di esecuzione e occupazione di memoria. Tuttavia, i continui rehashing possono rallentare l'applicazione se non gestiti correttamente.
+
+\begin{bestpractice}[Inizializzazione Preventiva]
+Se si conosce in anticipo il volume approssimativo dei dati da gestire, è buona norma inizializzare la tabella con una capacità corretta fin dall'inizio, evitando inutili e pesanti operazioni di rehashing.
+
+La capacità iniziale ottimale non corrisponde al numero esatto degli elementi attesi, ma deve tener conto del fattore di carico:
+\[ \text{Capacità Ottimale} = \frac{\text{Elementi Attesi}}{\text{Load Factor}} \]
+
+A partire da \textbf{Java 19}, il framework mette a disposizione dei comodi \textit{factory methods} statici che eseguono questo calcolo matematico in automatico al posto dello sviluppatore:
+\begin{lstlisting}[language=Java]
+// Il metodo calcola la capacita' ottimale per 10.000 elementi
+HashSet<String> mySet = HashSet.newHashSet(10000);
+HashMap<String, Integer> myMap = HashMap.newHashMap(5000);
+\end{lstlisting}
+\end{bestpractice}
+
 
 \section{L'Array Circolare (Circular Array)}
 \label{appendix circ array}

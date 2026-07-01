@@ -556,10 +556,19 @@ Attenzione: per inserire un elemento in una posizione specifica $i$, \texttt{Lin
 In conclusione, nella stragrande maggioranza delle applicazioni backend (web server, elaborazione dati, microservizi), i benefici della \textbf{Cache Locality} dell'array superano di gran lunga i vantaggi teorici dei puntatori. \textbf{Usa ArrayList di default.}
 
 \subsection{Il Motore Hash (Tabelle Hash)}
+Per richiami sulle tabelle hash in Java, si veda \ref{hashTables}
 \begin{itemize}
     \item \textbf{HashSet}: Implementazione standard di \texttt{Set} che non garantisce alcun ordine di iterazione. \textbf{Prestazioni}: $O(1)$ per ricerca, inserimento e rimozione (se la funzione hash è buona).
     \item \textbf{LinkedHashSet}: Variante di \texttt{HashSet} che mantiene una lista doppiamente concatenata tra gli elementi, combinando la velocità del \texttt{HashSet} con la capacità di ricordare l'ordine di inserimento. Dunque l'iterazione è predicibile e segue l'ordine in cui gli elementi sono stati aggiunti. È ideale per cache o sistemi dove l'ordine temporale è importante tanto quanto l'unicità.
 \end{itemize}
+
+\begin{danger}[Mutabilità degli Elementi e Invarianza dell'Hash]
+Presta estrema attenzione alla modifica (\textit{mutazione}) dello stato degli oggetti dopo averli inseriti in un \texttt{Set} (o come chiavi in una \texttt{HashMap}). 
+
+Se i campi modificati partecipano al calcolo del metodo \texttt{hashCode()}, il valore hash dell'oggetto cambierà a seguito della mutazione. Di conseguenza, l'elemento rimarrà fisicamente intrappolato nel bucket associato al suo \textbf{vecchio} hash code, ma qualsiasi successiva operazione di ricerca (\texttt{contains}), rimozione (\texttt{remove}) o inserimento calcolerà l'indice basandosi sul \textbf{nuovo} valore hash. 
+
+Questo comportamento corrompe l'integrità della struttura dati: l'oggetto modificato diventerà virtualmente "invisibile" alle successive query della mappa o del set, causando fallimenti logici silenziosi (\textit{silent failures}) ed errori di business incredibilmente difficili da tracciare a runtime. Come regola generale, gli elementi inseriti nelle tabelle hash dovrebbero preferibilmente essere \textbf{immutabili}.
+\end{danger}
 
 \subsection{\texttt{EnumSet}: Prestazioni a Livello di Bit}
 
