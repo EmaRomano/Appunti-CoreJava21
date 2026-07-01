@@ -59,7 +59,7 @@ Perché scegliere l'una o l'altra? L'interfaccia è agnostica riguardo alle pres
 
 L'interfaccia \texttt{Collection<E>} è la radice della gerarchia per le strutture dati che gestiscono gruppi di oggetti (ad eccezione delle \textit{Map}). Essa definisce un set di operazioni standard che garantiscono l'interoperabilità tra diverse implementazioni. Di seguito, esaminiamo i metodi di uso più comune. 
 
-\subsection*{Operazioni di Query (Ispezione)}
+\paragraph{Operazioni di Query (Ispezione)}
 
 Questi metodi permettono di ottenere informazioni sullo stato della collezione senza modificarla.
 
@@ -70,7 +70,8 @@ Questi metodi permettono di ottenere informazioni sullo stato della collezione s
 \end{itemize}
 
 
-\subsection*{Operazioni di Modifica}
+\paragraph{Operazioni di Modifica}
+:
 
 \begin{itemize}
     \item \texttt{boolean add(E element)}: Restituisce \textbf{\texttt{true}} se l'aggiunta ha effettivamente modificato la collezione, \textbf{\texttt{false}} altrimenti. Ad esempio, in una \texttt{List}, il metodo \texttt{add} restituirà quasi sempre \texttt{true}; invece, in un \textbf{\texttt{Set}} (che non ammette duplicati), se provi ad aggiungere un oggetto già presente, il metodo restituirà \texttt{false}, segnalando che l'operazione non ha avuto effetto.
@@ -78,7 +79,7 @@ Questi metodi permettono di ottenere informazioni sullo stato della collezione s
     \item \texttt{void clear()}: Rimuove tutti gli elementi, svuotando la collezione.
 \end{itemize}
 
-\subsection*{Operazioni Bulk (di Massa)}
+\paragraph{Operazioni Bulk (di Massa)}
 
 Questi metodi sono fondamentali per manipolare interi set di dati (es. confrontare liste di ID o filtrare risultati). Per \texttt{addAll}, \texttt{removeAll} e \texttt{retainAll} il valore di ritorno indica se la struttura dati è stata mutata, per \texttt{containsAll} il \texttt{boolean} rappresenta l'esito logico del test di inclusione.
 
@@ -89,7 +90,7 @@ Questi metodi sono fondamentali per manipolare interi set di dati (es. confronta
     \item \texttt{boolean containsAll(Collection<?> c)}: \textbf{Inclusione}. Verifica se la collezione corrente contiene tutti gli elementi della collezione \texttt{c}. 
 \end{itemize}
 
-\subsection*{Conversione in Array}
+\paragraph{Conversione in Array}
 
 Nonostante la potenza delle collezioni, a volte è necessario interfacciarsi con API legacy che richiedono array classici.
 \begin{itemize}
@@ -97,7 +98,7 @@ Nonostante la potenza delle collezioni, a volte è necessario interfacciarsi con
     \item \texttt{<T> T[] toArray(T[] a)}: Versione tipizzata. Se l'array \texttt{a} è abbastanza grande, i dati vengono inseriti lì; altrimenti, viene creato un nuovo array dello stesso tipo.
 \end{itemize}
 
-\subsection*{Metodi Default e Approccio Funzionale (Java 8+)}
+\paragraph{Metodi Default e Approccio Funzionale (Java 8+)}
 
 Con l'introduzione delle lambda, l'interfaccia si è arricchita di metodi \texttt{default} molto potenti:
 
@@ -645,6 +646,61 @@ Se devi trasformare una collezione di $n$ elementi in una \texttt{PriorityQueue}
 \begin{warningbox}[Modifica degli elementi]
 Se un oggetto già presente nella coda viene modificato in modo da cambiare la sua priorità (il risultato di \texttt{compareTo} cambia), lo heap \textbf{non si riposiziona automaticamente}. Questo corrompe la struttura dati. In questi casi, l'elemento deve essere rimosso e reinserito.
 \end{warningbox}
+
+\section{L'Interfaccia Map}
+
+L'interfaccia \texttt{Map<K, V>} rappresenta una struttura dati che non fa parte della gerarchia \texttt{Collection}. Invece di memorizzare elementi singoli, una mappa gestisce associazioni tra \textbf{Chiavi} (Key) e \textbf{Valori} (Value). Il contratto fondamentale di una mappa stabilisce che le chiavi devono essere \textbf{uniche} (non sono ammessi duplicati), mentre i valori possono essere ripetuti. Di seguito, esaminiamo i metodi di uso più comune, raggruppati in parallelo con quelli delle collezioni.
+
+\paragraph{Operazioni di Query (Ispezione)}
+
+Questi metodi permettono di ottenere informazioni sullo stato della mappa e di cercare elementi senza modificarla. Notare che la ricerca è divisa tra chiavi e valori.
+
+\begin{itemize}
+    \item \texttt{int size()}: Restituisce il numero di associazioni chiave-valore presenti.
+    \item \texttt{boolean isEmpty()}: Equivalente a \texttt{size() == 0}.
+    \item \texttt{boolean containsKey(Object key)}: Verifica se la mappa contiene la chiave specificata. È un'operazione estremamente veloce ($O(1)$ nella maggior parte delle implementazioni).
+    \item \texttt{boolean containsValue(Object value)}: Verifica se la mappa contiene una o più istanze del valore specificato. Spesso richiede una ricerca lineare ($O(n)$).
+    \item \texttt{V get(Object key)}: Restituisce il valore associato alla chiave, oppure \texttt{null} se la chiave non è presente.
+\end{itemize}
+
+\paragraph{Operazioni di Modifica}
+
+A differenza delle collezioni, i metodi di modifica delle mappe restituiscono spesso il valore precedentemente associato alla chiave, fornendo un feedback immediato sulle sostituzioni.
+
+\begin{itemize}
+    \item \texttt{V put(K key, V value)}: Inserisce una nuova associazione. Se la chiave era già presente, il vecchio valore viene sovrascritto e \textbf{restituito} dal metodo. Se la chiave è nuova, restituisce \texttt{null}.
+    \item \texttt{V remove(Object key)}: Rimuove l'associazione per la chiave specificata e restituisce il valore che è stato appena rimosso (o \texttt{null} se non esisteva).
+    \item \texttt{void clear()}: Rimuove tutte le associazioni, svuotando la mappa.
+\end{itemize}
+
+\paragraph{Operazioni Bulk (di Massa)}
+
+Per le mappe, le operazioni di massa si concentrano principalmente sull'unione di dizionari diversi.
+
+\begin{itemize}
+    \item \texttt{void putAll(Map<? extends K, ? extends V> m)}: \textbf{Unione}. Copia tutte le associazioni dalla mappa \texttt{m} alla mappa corrente. Se ci sono chiavi coincidenti, i valori della mappa \texttt{m} sovrascrivono quelli attuali.
+\end{itemize}
+
+\paragraph{Le "Viste" (Views) della Mappa}
+
+Poiché una mappa non è una \texttt{Collection} e non possiede un iteratore proprio, per scorrere i suoi elementi è necessario estrarre una delle sue tre "viste". Queste viste sono supportate dalla mappa originale: le modifiche alla vista si riflettono sulla mappa e viceversa.
+
+\begin{itemize}
+    \item \texttt{Set<K> keySet()}: Restituisce un set contenente tutte le chiavi (è un \texttt{Set} perché le chiavi sono uniche).
+    \item \texttt{Collection<V> values()}: Restituisce una collezione contenente tutti i valori (è una generica \texttt{Collection} perché i valori possono contenere duplicati).
+    \item \texttt{Set<Map.Entry<K, V>> entrySet()}: Restituisce un set di oggetti \texttt{Map.Entry}. Ogni \texttt{Entry} rappresenta la singola coppia inseparabile Chiave-Valore. È il metodo più efficiente per iterare su entrambi contemporaneamente.
+\end{itemize}
+
+\paragraph{Metodi Default e Approccio Funzionale (Java 8+)}
+
+L'interfaccia \texttt{Map} ha beneficiato enormemente dell'introduzione dei metodi \texttt{default}, che hanno snellito drasticamente il codice per la gestione dei valori nulli e delle operazioni condizionali.
+
+\begin{itemize}
+    \item \texttt{V getOrDefault(Object key, V defaultValue)}: Se la chiave esiste, restituisce il suo valore; altrimenti restituisce \texttt{defaultValue} senza inserirlo nella mappa. Elimina la necessità di continui controlli \texttt{if (map.containsKey(...))}.
+    \item \texttt{V putIfAbsent(K key, V value)}: Inserisce la coppia solo se la chiave non è già mappata a un valore (o se è mappata a \texttt{null}).
+    \item \texttt{void forEach(BiConsumer<? super K, ? super V> action)}: Permette di iterare su chiavi e valori in modo funzionale e pulito tramite una lambda (es. \texttt{map.forEach((k, v) -> System.out.println(k + ":" + v))}).
+    \item \texttt{V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction)}: Molto usato per costruire mappe di collezioni o cache. Se la chiave manca, esegue la funzione per calcolare il valore, lo inserisce e lo restituisce in un solo colpo.
+\end{itemize}
 
 
 
