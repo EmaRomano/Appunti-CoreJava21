@@ -640,7 +640,7 @@ Prima di Java 8, quando si voleva gestire un click di un bottone, si doveva scri
 
 Tuttavia, le Inner Classes restano superiori quando:
 \begin{itemize}
-    \item si deve implementare un'interfaccia con molti metodi (le Lambda funzionano solo con le interfacce funzionali, che hanno un solo metodo).
+    \item si deve implementare un'interfaccia con molti metodi (le Lambda funzionano solo con le interfacce funzionali, che hanno un solo metodo astratto e \textit{proprio}).
     \item la logica da implementare è complessa e richiede più di poche righe di codice.
     \item si ha bisogno di mantenere uno stato interno complesso (variabili di istanza) che non può essere gestito efficacemente con variabili locali "catturate" da una lambda.
 \end{itemize}

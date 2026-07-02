@@ -13,6 +13,7 @@
     \item \textbf{seconda parte delle lambdas da fare/rivedere}: a partire da par. 6.2.5.
     \item \textbf{logging}
     \item \textbf{seconda parte delle limitazioni sui generics}
+    \item \textbf{capitolo collections a partire dal paragrafo 5}
 \end{itemize}
 
 
@@ -175,6 +176,135 @@ Questo accade perché Java aggiunge implicitamente le firme dei metodi pubblici 
 
 
 -------------------------------------------------------
+
+\section{Logging [BOZZE DA RIPRENDERE]}
+
+Tutti i programmatori Java conoscono il rito del "debugging tramite stampa": inserire chiamate a \texttt{System.out.println} nei punti critici del codice per capire cosa stia succedendo. Una volta risolto il problema, queste istruzioni vengono rimosse, per poi essere reinserite al bug successivo.
+
+I framework di \textbf{logging} sono progettati per superare questo ciclo inefficiente, offrendo una soluzione permanente, professionale e configurabile.
+
+Il logging non è una semplice "stampa a video evoluta", ma un sistema di tracciamento che offre:
+\begin{itemize}
+    \item \textbf{Persistenza}: Registrare i messaggi su file o database, non solo sulla console.
+    \item \textbf{Granularità}: Classificare i messaggi per importanza (es. INFO, WARNING, SEVERE).
+    \item \textbf{Configurabilità}: Attivare o disattivare i messaggi senza modificare o ricompilare il codice.
+\end{itemize}
+
+\medskip
+
+In un'applicazione professionale, l'uso di \texttt{System.out.println} è considerato una cattiva pratica. Considera questo scenario: un server subisce un guasto alle 3 di notte mentre processa dei pagamenti. L' "utente" in questo caso non è un essere umano che interagisce in tempo reale, ma un processo automatico che gira in background. Senza un log persistente su file, l'errore svanirebbe nel nulla e sarebbe impossibile ricostruire l'accaduto il mattino seguente. Il logging è la "scatola nera" per quando non si è presenti a guardare la console.
+
+\subsection{Architettura del Logging: Facciate e Implementazioni}
+
+Nel mondo Java, il logging non è un blocco monolitico. Per garantire flessibilità, si utilizza un'architettura divisa in due parti:
+
+\begin{itemize}
+    \item \textbf{Frontend (façade/API)}: È il codice (es. \texttt{logger.log(...)}) che il programmatore scrive. Definisce \textit{come} si inviano i messaggi. Esempi: \textbf{SLF4J}, \textbf{Platform Logging API (JEP 264)}.
+    \item \textbf{Backend (Implementation)}: È il motore che decide \textit{dove} vanno i messaggi (file, console, rete) e come formattarli. Esempi: \textbf{java.util.logging (JUL)}, \textbf{Log4j}, \textbf{Logback}.
+\end{itemize}
+
+\medskip
+
+Utilizzare una "facciata" (come SLF4J o la Platform API) permette di cambiare il motore di logging in futuro senza dover modificare una singola riga di codice nel resto dell'applicazione. Basta cambiare una configurazione esterna.
+
+Anche se nel mondo enterprise si usano spesso Log4j o Logback, studiare il backend standard del JDK (JUL) è importante per tre motivi:
+\begin{enumerate}
+    \item \textbf{Fondamenta}: Offre una base solida per capire come funzionano tutti gli altri framework.
+    \item \textbf{Semplicità e Sicurezza}: Essendo parte del JDK, è più "snello" e meno soggetto ad attacchi informatici. 
+    \item \textbf{Zero Dipendenze}: Non richiede librerie esterne, rendendolo perfetto per piccoli progetti o moduli di sistema.
+\end{enumerate} 
+
+\begin{warningbox}[Sicurezza e Log4j]
+La complessità eccessiva può essere un pericolo. Il famoso attacco hacker a \textbf{Log4j} (Log4Shell) è stato possibile proprio a causa di funzionalità oscure e troppo potenti che permettevano l'esecuzione di codice malevolo tramite un semplice messaggio di log.
+\end{warningbox}
+
+Di seguito, salvo avviso contrario, faremo dunque riferimento a JEP 264 per il frontend e a JUL per il backend.
+
+\subsection{L'interfaccia \texttt{System.Logger}}
+Come abbiamo accennato alla fine di \ref{sec: classi statiche}, oltre alle classi, si possono annidare anche le interfacce. \texttt{System.Logger} è proprio un esempio di \textbf{Nested Interface}: la classe \textbf{System} funge da \textit{namespace} per l'interfaccia \texttt{Logger} quindi, quando scriviamo \texttt{System.Logger}, il punto (\texttt{.}) non indica l'accesso a un metodo o a una variabile di istanza, ma l'accesso a un \textbf{tipo} definito all'interno dell'ambito (scope) della classe \texttt{System}.
+
+Questa scelta di design non è estetica, ma strutturale:
+\begin{itemize}
+    \item \textbf{Namespacing}: Evita di creare nomi globali troppo generici come \texttt{Logger} nel pacchetto \texttt{java.lang}, che potrebbero andare in conflitto con altre librerie.
+    \item \textbf{Accoppiamento Logico}: Indica chiaramente che l'interfaccia esiste \textit{solo} in funzione dei servizi offerti dalla classe ospite.
+    \item \textbf{Incapsulamento}: Permette di raggruppare tipi correlati senza "inquinare" il file system con decine di piccoli file \texttt{.java}.
+\end{itemize}
+
+\medskip
+
+Se analizzassimo il codice sorgente del JDK, la struttura apparirebbe qualitativamente così:
+
+\begin{lstlisting}[language=Java, caption={Struttura semplificata di System.java}]
+public final class System {
+    // Campi e metodi statici (out, err, getProperty...)
+    
+    /** * Interfaccia annidata statica. 
+     * In Java, le interfacce annidate sono implicitamente 'static'.
+     */
+    public interface Logger {
+        enum Level { ALL, TRACE, DEBUG, INFO, WARNING, ERROR, OFF }
+        void log(Level level, String msg);
+        // ... altri metodi abstract ...
+    }
+
+    public static Logger getLogger(String name) {
+        // Restituisce un'implementazione concreta fornita dal backend
+    }
+}
+\end{lstlisting}
+
+
+Ricordiamo che per utilizzare un tipo annidato, la sintassi segue la gerarchia di contenimento:
+
+\begin{enumerate}
+    \item \textbf{Dichiarazione del tipo}: si usa il nome della classe esterna come prefisso:\\ \texttt{System.Logger mioLogger;}
+    \item \textbf{Accesso ai membri del tipo annidato}: se l'interfaccia annidata contiene a sua volta delle enumerazioni (come \texttt{Level}), la catena si allunga:\\ \texttt{System.Logger.Level.INFO}.
+\end{enumerate}
+
+
+\begin{tip}
+Ricorda: un'interfaccia annidata è sempre \texttt{static}, anche se non lo scrivi esplicitamente. Questo significa che può essere utilizzata senza dover creare un'istanza della classe esterna (cosa che nel caso di \texttt{System} sarebbe comunque impossibile, avendo il costruttore privato).
+\end{tip}
+
+\subsection{Ottenimento e Utilizzo del Logger}
+
+L'ottenimento di un logger non avviene tramite l'operatore \texttt{new}, ma attraverso il metodo statico \texttt{System.getLogger()}. L'argomento del metodo è una stringa che rappresenta il nome del logger; questo nome può essere arbitrario, ma è considerata una \textit{best practice} utilizzare il nome del package (o della classe) in cui si generano i messaggi. 
+
+Questo approccio permette di sfruttare la \textbf{gerarchia dei nomi} per una configurazione granulare. Di fatto, il sistema utilizza un meccanismo di \textbf{caching} concettualmente analogo a quello della \textit{String Pool}: la prima chiamata al metodo con un determinato nome crea il logger, mentre tutte le chiamate successive con lo stesso nome restituiscono il medesimo oggetto già esistente.
+
+\begin{lstlisting}[language=Java, caption={Recupero di un Logger}]
+System.Logger logger = System.getLogger("com.myapp");
+\end{lstlisting}
+
+\begin{tip}
+Poiché i logger con lo stesso nome sono condivisi, è prassi comune dichiararli come \texttt{private static final}. Questo garantisce che la variabile non venga riassegnata e che sia disponibile a livello di classe.
+\end{tip}
+
+Una volta ottenuto il logger, è possibile registrare messaggi specificando il \textbf{livello di importanza}. La sintassi base della \textit{Platform Logging API} è la seguente:
+
+\begin{lstlisting}[language=Java, caption={Esempio di registrazione di un messaggio}]
+logger.log(System.Logger.Level.INFO, "Apertura del file " + filename);
+\end{lstlisting}
+
+A differenza di una stampa manuale, il sistema di logging produce un record strutturato. Ecco un esempio di come appare il messaggio precedente in console (usando il backend JUL):
+
+\begin{lstlisting}[language=bash]
+Apr 28, 2026 10:20:00 AM com.myapp.Main read
+INFO: Apertura del file dati.txt
+\end{lstlisting}
+
+Il logger si comporta come un segretario scrupoloso. Oltre al messaggio fornito dal programmatore, esso cattura e stampa automaticamente i seguenti \textbf{metadati}:
+\begin{itemize}
+    \item \textbf{Timestamp}: Data e ora precisa dell'evento.
+    \item \textbf{Nome della Classe}: Il nome completo (\textit{Fully Qualified Name}) della classe chiamante, nel nostro caso \texttt{com.myapp.Main}.
+    \item \textbf{Nome del Metodo}: Il nome del metodo all'interno del quale è stata invocata la scrittura del log, nel nostro caso \texttt{read}.
+    \item \textbf{Livello}: L'etichetta di severità (\texttt{INFO}, \texttt{WARNING}, ecc.).
+\end{itemize}
+
+\medskip
+
+Il fatto che il nome della classe e del metodo siano inclusi \textbf{automaticamente} è un vantaggio enorme in fase di debug. Non è più necessario scrivere manualmente \texttt{"Errore nel metodo read(): ..."}, poiché il logger "sa" già dove si trova grazie all'analisi dello stack trace.
+
 
 
 

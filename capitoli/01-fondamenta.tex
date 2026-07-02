@@ -165,7 +165,7 @@ Apparentemente questa scelta progettuale potrebbe sembrare inefficiente sotto il
     Se una stringa fosse mutabile, un thread malevolo potrebbe cambiare il contenuto del percorso di un file un istante dopo che il sistema di sicurezza ha autorizzato l'accesso, ma un istante prima dell'apertura effettiva. Questo bug è noto come \textbf{Time-of-Check to Time-of-Use (TOCTOU)}.
 
     \item \textbf{Caching dell'Hashcode (Performance)} \\
-    \textbf{\textcolor{green!60!black}{[DA RIVEDERE DOPO AVER FATTO BENE HASHCODE E COLLECTIONS]}}Poiché il contenuto di una \texttt{String} non cambia mai, Java ne calcola l'hashcode una sola volta e lo memorizza in \textit{cache}. Questo rende le stringhe estremamente veloci quando usate come chiavi nelle \texttt{HashMap} o nei \texttt{HashSet}. Se la stringa fosse mutabile, l'hash andrebbe ricalcolato ad ogni operazione di ricerca o inserimento.
+    Poiché il contenuto di una \texttt{String} non cambia mai, Java ne calcola l'hashcode una sola volta e lo memorizza in \textit{cache}. Questo rende le stringhe estremamente veloci quando usate come chiavi nelle \texttt{HashMap} o nei \texttt{HashSet}. Se la stringa fosse mutabile, l'hash andrebbe ricalcolato ad ogni operazione di ricerca o inserimento.
 
     \item \textbf{Thread Safety} \\
     In contesti multi-core, gli oggetti immutabili sono \textit{thread-safe} per definizione. Non è necessario implementare blocchi o meccanismi di sincronizzazione complessi (che rallentano l'esecuzione) per evitare che due thread modifichino la stessa stringa contemporaneamente, corrompendo i dati.

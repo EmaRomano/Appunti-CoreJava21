@@ -765,6 +765,56 @@ anagrafica.forEach((nome, eta) -> {
 
 Questo approccio è oggi considerato lo standard per la pura lettura sequenziale dei dati, mentre il ciclo \textit{for-each} su \texttt{Map.Entry} rimane insostituibile quando è necessario modificare i valori tramite \texttt{setValue()} durante lo scorrimento o uscire anticipatamente dal ciclo tramite \texttt{break}.
 
+\subsection{Pattern Operativi di Aggiornamento}
+
+Una delle operazioni più delicate quando si lavora con le mappe è l'aggiornamento di un valore esistente, a causa del rischio intrinseco di incappare in chiavi non ancora registrate. La gestione manuale di queste casistiche produce codice verboso e prono a \texttt{NullPointerException}. Per questo motivo, Java fornisce metodi funzionali progettati per risolvere specifici e frequentissimi scenari di business.
+
+\paragraph{Pattern 1: Il Contatore (Frequenze e Statistiche)}
+Uno scenario tipico è il conteggio delle occorrenze (es. contare quante volte una parola appare in un file). L'approccio ingenuo:
+\begin{lstlisting}[language=Java]
+counts.put(word, counts.get(word) + 1); // PERICOLO: Se 'word' e' nuova, get() restituisce null
+\end{lstlisting}
+
+Per evitare l'eccezione, si potrebbe usare \texttt{getOrDefault} oppure \texttt{putIfAbsent}, ma Java offre una soluzione definitiva e concisa con il metodo \textbf{\texttt{merge()}}. Questo metodo inserisce un valore iniziale se la chiave non esiste, altrimenti applica una funzione per combinare il vecchio valore con quello nuovo:
+\begin{lstlisting}[language=Java, caption={Uso ottimale di merge per i contatori}]
+// Se 'word' non esiste, inserisce 1. 
+// Se esiste, somma il valore precedente a 1 tramite Integer::sum
+counts.merge(word, 1, Integer::sum);
+\end{lstlisting}
+
+\paragraph{Pattern 2: Il Multi-Dizionario (Mappe di Collezioni)}
+Un altro scenario frequentissimo è l'associazione di molteplici valori a una singola chiave (es. un indice in cui a ogni "termine" corrisponde un set di "pagine" in cui compare). In questo caso, il tipo della mappa sarà \texttt{Map<String, Set<Integer>>}.
+
+Il modo migliore per aggiornare questa struttura è concatenare il metodo \textbf{\texttt{compute\allowbreak IfAbsent()}} con l'aggiunta alla collezione. Questo metodo, a differenza di \texttt{putIfAbsent}, è utilissimo perché restituisce sempre la collezione associata alla chiave (creandola al volo se mancante), permettendo di chiamare \texttt{.add()} nella stessa istruzione.
+
+\begin{lstlisting}[language=Java, caption={Costruzione di una Multimap con computeIfAbsent}]
+var index = new TreeMap<String, TreeSet<Integer>>();
+// ...
+// Costruisce il TreeSet al volo solo se la parola e' nuova, poi vi aggiunge la pagina
+index.computeIfAbsent(term, k -> new TreeSet<>()).add(pageNumber);
+\end{lstlisting}
+
+\begin{warningbox}[La Trappola dei Method Reference nei Costruttori]
+Nel codice precedente, si potrebbe essere tentati di sostituire la lambda \texttt{k -> new TreeSet<>()} con il method reference \texttt{TreeSet::new}. \textbf{Questo è un errore logico pericoloso}.
+
+Il metodo \texttt{computeIfAbsent} passa sempre la \textit{chiave} come argomento alla funzione di creazione. Poiché \texttt{TreeSet} non ha un costruttore che accetta una \texttt{String}, il compilatore bloccherebbe il codice.
+Il vero pericolo si nasconde quando i tipi coincidono. Supponiamo di avere una \texttt{Map<Integer, ArrayList<String>>} e di scrivere:
+\begin{lstlisting}[language=Java]
+// GRAVE ERRORE LOGICO
+mappa.computeIfAbsent(numero, ArrayList::new); 
+\end{lstlisting}
+La classe \texttt{ArrayList} possiede un costruttore che accetta un \texttt{int} per definire la sua capacità iniziale. Invece di creare semplicemente una lista vuota, la JVM istanzierà un array interno con una capacità pari al valore della chiave \texttt{numero}, sprecando un'enorme quantità di memoria in modo totalmente involontario.
+\end{warningbox}
+
+\begin{dettagli}[L'incoerenza nella gestione dei valori null]
+Le API dell'interfaccia \texttt{Map} presentano un'incoerenza storica riguardo al trattamento dei valori \texttt{null}, che è bene tenere a mente per il debugging: alcune funzioni considerano \texttt{null} come un valore valido, altre lo trattano come equivalente a "chiave assente".
+
+\begin{itemize}
+    \item \textbf{\texttt{getOrDefault}}: Appartiene al primo gruppo. Se una chiave è esplicitamente associata al valore \texttt{null}, il metodo restituirà \texttt{null} senza attivare il valore di default fornito.
+    \item \textbf{\texttt{putIfAbsent}}: Appartiene al secondo gruppo. Se una chiave è presente ma il suo valore è \texttt{null}, il metodo considererà lo spazio "libero" e sovrascriverà il \texttt{null} con il nuovo valore.
+\end{itemize}
+\end{dettagli}
+
 \subsection{La Classe Astratta "Ponte" per le Mappe}
 
 Esattamente come avviene per le collezioni, il JDK fornisce una \textbf{\textit{Abstract Skeleton Implementation}} per le mappe, allo scopo di ridurre al minimo lo sforzo richiesto per implementare l'interfaccia \texttt{Map<K, V>}: la classe \textbf{\texttt{AbstractMap}}.
@@ -879,7 +929,15 @@ La gestione dei valori \texttt{null} non è uniforme nel framework ed è una fon
 \end{itemize}
 \end{warningbox}
 
+\begin{dettagli}[Mappe Specializzate: WeakHashMap e IdentityHashMap]
+Il framework fornisce due ulteriori implementazioni concrete di \texttt{Map}, progettate per risolvere problemi architetturali molto specifici nel backend, legati alla gestione della memoria e all'identità degli oggetti.
 
+\begin{itemize}
+    \item \textbf{\texttt{WeakHashMap}}: In una normale \texttt{HashMap}, l'inserimento di un oggetto come chiave crea un \textit{riferimento forte} (\textit{strong reference}), impedendo al \textit{Garbage Collector} (GC) di liberare la memoria occupata da quell'oggetto finché la mappa non viene svuotata. La \texttt{WeakHashMap} utilizza invece \textit{riferimenti deboli}. Se una chiave non è più referenziata da nessun'altra parte dell'applicazione, il GC è autorizzato a distruggerla; quando ciò accade, la mappa rimuove automaticamente e silenziosamente l'intera \textit{Entry}. È la struttura d'elezione per implementare sistemi di \textbf{caching} sicuri, prevenendo i \textit{memory leak}.
+
+    \item \textbf{\texttt{IdentityHashMap}}: Questa mappa viola intenzionalmente il contratto standard del framework. Per stabilire se due chiavi sono identiche, \textbf{non usa} il metodo \texttt{equals()}, ma utilizza l'operatore di uguaglianza fisica \texttt{==} (confrontando i puri indirizzi di memoria). Anche per il calcolo del bucket ignora il metodo \texttt{hashCode()} sovrascritto dall'utente e usa il \texttt{System.identityHashCode()}. È utilizzata quasi esclusivamente dagli sviluppatori di framework (es. serializzatori JSON come Jackson o ORM come Hibernate) per tenere traccia degli oggetti visitati ed evitare cicli infiniti durante l'attraversamento di grafi di oggetti complessi.
+\end{itemize}
+\end{dettagli}
 
 
 
