@@ -648,6 +648,8 @@ Se un oggetto già presente nella coda viene modificato in modo da cambiare la s
 \end{warningbox}
 
 \section{Mappe}
+Dopo aver esaminato la parte di framework che si dirama da \texttt{Iterable} e \texttt{Collection}, procediamo in modo analogo per le mappe. Seguiremo anche qui un approccio top-down, partendo dall'alto della gerarchia e scendendo fino alle classi concrete. 
+
 \subsection{L'Interfaccia Map}
 
 L'interfaccia \texttt{Map<K, V>} rappresenta una struttura dati che non fa parte della gerarchia \texttt{Collection}. Invece di memorizzare elementi singoli, una mappa gestisce associazioni tra \textbf{Chiavi} (Key) e \textbf{Valori} (Value). Il contratto fondamentale di una mappa stabilisce che le chiavi devono essere \textbf{uniche} (non sono ammessi duplicati), mentre i valori possono essere ripetuti. Di seguito, esaminiamo i metodi di uso più comune, raggruppati in parallelo con quelli delle collezioni.
@@ -682,16 +684,6 @@ Per le mappe, le operazioni di massa si concentrano principalmente sull'unione d
     \item \texttt{void putAll(Map<? extends K, ? extends V> m)}: \textbf{Unione}. Copia tutte le associazioni dalla mappa \texttt{m} alla mappa corrente. Se ci sono chiavi coincidenti, i valori della mappa \texttt{m} sovrascrivono quelli attuali.
 \end{itemize}
 
-\paragraph{Le "Viste" (Views) della Mappa}
-
-Poiché una mappa non è una \texttt{Collection} e non possiede un iteratore proprio, per scorrere i suoi elementi è necessario estrarre una delle sue tre "viste". Queste viste sono supportate dalla mappa originale: le modifiche alla vista si riflettono sulla mappa e viceversa.
-
-\begin{itemize}
-    \item \texttt{Set<K> keySet()}: Restituisce un set contenente tutte le chiavi (è un \texttt{Set} perché le chiavi sono uniche).
-    \item \texttt{Collection<V> values()}: Restituisce una collezione contenente tutti i valori (è una generica \texttt{Collection} perché i valori possono contenere duplicati).
-    \item \texttt{Set<Map.Entry<K, V>> entrySet()}: Restituisce un set di oggetti \texttt{Map.Entry}. Ogni \texttt{Entry} rappresenta la singola coppia inseparabile Chiave-Valore. È il metodo più efficiente per iterare su entrambi contemporaneamente.
-\end{itemize}
-
 \paragraph{Metodi Default e Approccio Funzionale (Java 8+)}
 
 L'interfaccia \texttt{Map} ha beneficiato enormemente dell'introduzione dei metodi \texttt{default}, che hanno snellito drasticamente il codice per la gestione dei valori nulli e delle operazioni condizionali.
@@ -704,6 +696,74 @@ L'interfaccia \texttt{Map} ha beneficiato enormemente dell'introduzione dei meto
             \end{center}.
     \item \texttt{V computeIfAbsent(K key, Function<? super K, ? extends V> mF)} (\texttt{mF} sta per "mapping function"): Molto usato per costruire mappe di collezioni o cache. Se la chiave manca, esegue la funzione per calcolare il valore, lo inserisce e lo restituisce in un solo colpo.
 \end{itemize}
+
+\subsection{Iterazione e le "Viste" della Mappa}
+
+Una delle differenze architetturali più marcate tra le Collezioni e le Mappe riguarda l'iterazione. L'interfaccia \texttt{Map} \textbf{non} estende \texttt{Iterable}. Di conseguenza, una mappa non possiede un iteratore proprio e il compilatore non permette di utilizzare il costrutto \textit{for-each} direttamente sull'oggetto mappa.
+
+Il motivo di questa scelta progettuale è semantico: un iteratore è un cursore monodimensionale (scorre una riga di elementi), mentre una mappa è una struttura bidimensionale (associa chiavi a valori). Per scorrere i dati di una mappa, è necessario prima chiederle di proiettare la sua struttura bidimensionale in una forma monodimensionale. Questa proiezione prende il nome di \textbf{Vista} (\textit{View}).
+
+Esistono tre viste fondamentali, tutte supportate dalla mappa originale (significa che se rimuovi un elemento dalla vista, questo scompare anche dalla mappa):
+
+\begin{itemize}
+    \item \texttt{Set<K> keySet()}: Restituisce l'insieme delle chiavi. Essendo chiavi, la vista è rigorosamente un \texttt{Set}.
+    \item \texttt{Collection<V> values()}: Restituisce l'insieme dei valori. Poiché i valori possono essere duplicati, la vista è una generica \texttt{Collection}.
+    \item \texttt{Set<Map.Entry<K, V>> entrySet()}: Restituisce un \texttt{Set} di oggetti \texttt{Map.Entry}. Questa è la vista più potente e utilizzata.
+\end{itemize}
+
+\paragraph{L'Interfaccia \texttt{Map.Entry}}
+
+\texttt{Map.Entry<K, V>} è un'interfaccia nidificata staticamente all'interno dell'interfaccia \texttt{Map}. Il suo unico scopo è incapsulare una singola associazione (una coppia inseparabile chiave-valore) in un unico oggetto. 
+
+Espone tre metodi fondamentali:
+\begin{itemize}
+    \item \texttt{K getKey()}: Restituisce la chiave della coppia.
+    \item \texttt{V getValue()}: Restituisce il valore della coppia.
+    \item \texttt{V setValue(V value)}: Sostituisce il valore attualmente associato alla chiave in questa specifica \textit{entry}, aggiornando automaticamente la mappa sottostante.
+\end{itemize}
+
+\paragraph{Pattern di Iterazione}
+
+Grazie alle viste, possiamo utilizzare i normali costrutti di iterazione visti per le collezioni. 
+
+\begin{lstlisting}[language=Java, caption={Iterazione tradizionale con for-each}]
+Map<String, Integer> anagrafica = ...;
+
+// 1. Scorrere solo le chiavi
+for (String nome : anagrafica.keySet()) {
+    System.out.println("Nome: " + nome);
+}
+
+// 2. Scorrere chiavi e valori (Approccio Consigliato)
+for (Map.Entry<String, Integer> entry : anagrafica.entrySet()) {
+    System.out.println("Nome: " + entry.getKey() + ", Eta': " + entry.getValue());
+}
+\end{lstlisting}
+
+\begin{bestpractice}[L'Anti-Pattern del KeySet]
+Un errore comune tra i programmatori junior è quello di iterare sul \texttt{keySet()} e richiamare il metodo \texttt{get()} all'interno del ciclo per ottenere il valore:
+
+\begin{lstlisting}[language=Java]
+// LENTO E INEFFICIENTE!
+for (String key : mappa.keySet()) {
+    Integer value = mappa.get(key); 
+    // Usa key e value
+}
+\end{lstlisting}
+Questo approccio è inefficiente perché costringe la mappa a ricalcolare l'hash e a cercare fisicamente l'elemento ($O(1)$ o $O(\log n)$) a ogni iterazione. Iterando direttamente sull'\texttt{entrySet()}, invece, la JVM ti consegna la coppia già "confezionata", abbattendo a zero il costo di ricerca del valore.
+\end{bestpractice}
+
+\paragraph{Iterazione Funzionale (Java 8+)}
+
+L'aggiunta dei metodi \texttt{default} ha introdotto un'alternativa sintattica estremamente pulita per scorrere le mappe, mascherando del tutto la necessità di estrarre manualmente l'\texttt{entrySet}. Il metodo \texttt{forEach} accetta un \texttt{BiConsumer} (un'azione che richiede due parametri di input).
+
+\begin{lstlisting}[language=Java, caption={Iterazione dichiarativa tramite Lambda}]
+anagrafica.forEach((nome, eta) -> {
+    System.out.println("Nome: " + nome + ", Eta': " + eta);
+});
+\end{lstlisting}
+
+Questo approccio è oggi considerato lo standard per la pura lettura sequenziale dei dati, mentre il ciclo \textit{for-each} su \texttt{Map.Entry} rimane insostituibile quando è necessario modificare i valori tramite \texttt{setValue()} durante lo scorrimento o uscire anticipatamente dal ciclo tramite \texttt{break}.
 
 \subsection{La Classe Astratta "Ponte" per le Mappe}
 
