@@ -631,6 +631,32 @@ public record Prodotto(String codice, double prezzo) {
 }
 \end{lstlisting}
 
+Come ulteriore esempio, mostriamo un record \texttt{Utente} che implementa sia un costruttore compatto per la validazione dei dati, sia un costruttore sovraccaricato per semplificare l'istanza dell'oggetto fornendo dei valori di default:
+
+\begin{lstlisting}[caption={Costruttori espliciti e overloading in un Record}]
+public record Utente(String username, String email, boolean attivo) {
+
+    // 1. Costruttore compatto
+    // Sostituisce l'implementazione generata per il costruttore canonico.
+    // I parametri sono implicitamente disponibili e verranno assegnati 
+    // ai campi finali in automatico al termine di questo blocco.
+    public Utente {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("L'username non puo' essere vuoto");
+        }
+        // Normalizzazione del dato prima dell'assegnazione implicita
+        email = email.toLowerCase(); 
+    }
+
+    // 2. Sovraccarico del costruttore (Overloading)
+    // Permette di creare un utente omettendo lo stato 'attivo'.
+    public Utente(String username, String email) {
+        // Delega obbligatoria al costruttore canonico tramite this(...)
+        this(username, email, true); 
+    }
+}
+\end{lstlisting}
+
 \begin{tip}[Quando usare un Record?]
 Usa un \textbf{record} invece di una classe tradizionale quando l'oggetto è completamente definito dal suo stato (i suoi attributi) e tali attributi sono \textbf{costanti} e si è sicuri di non doverne aggiungere altri in futuro. 
 
