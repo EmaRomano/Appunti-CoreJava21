@@ -506,28 +506,76 @@ public record Point(double x, double y) { }
 Questa singola riga di codice equivale a una classe completa che include:
 \begin{itemize}
     \item Campi privati e finali: \texttt{private final double x;}.
-    \item Un costruttore che inizializza i campi.
+    \item Un costruttore che inizializza i campi (\textit{costruttore canonico del record}).
     \item Metodi accessori (getters): \texttt{p.x()} e \texttt{p.y()} (nota l'assenza del prefisso \texttt{get}).
     \item Implementazioni standard di \texttt{toString()}, \texttt{equals()} e \texttt{hashCode()}.
 \end{itemize}
-\vspace{\baselineskip}
+
+\medskip
+
+Per comprendere appieno la mole di codice risparmiata, ecco la classe Java tradizionale (\textit{POJO}) che definisce a livello semantico lo stesso identico comportamento del record \texttt{Point}. 
+
+\begin{lstlisting}[caption={Classe Java equivalente al Record Point}]
+import java.util.Objects;
+
+public final class Point {
+    private final double x;
+    private final double y;
+
+    // Costruttore canonico
+    public Point(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    // Metodi accessori (senza prefisso 'get')
+    public double x() {
+        return x;
+    }
+
+    public double y() {
+        return y;
+    }
+
+    // Implementazione standard di equals
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Point point = (Point) o;
+        return Double.compare(point.x, x) == 0 &&
+               Double.compare(point.y, y) == 0;
+    }
+
+    // Implementazione standard di hashCode
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+
+    // Implementazione standard di toString
+    @Override
+    public String toString() {
+        return "Point[x=" + x + ", y=" + y + "]";
+    }
+}
+\end{lstlisting}
+
+Da notare che la classe equivalente è marcata come \texttt{final}, poiché i records in Java non supportano l'ereditarietà (non possono essere estesi da altre classi).
+
 
 Le caratteristiche principali dei record sono:
 \begin{itemize}
-    \item \textbf{Immutabilità:} I record sono progettati per essere "viste" immutabili di dati. Una volta creato, lo stato di un record non dovrebbe cambiare.
-    \item \textbf{Estensibilità:} Un record può implementare interfacce, definire metodi di istanza, metodi statici e costruttori personalizzati, ma \textbf{non può} aggiungere altri campi di istanza né estendere altre classi.
-    \item \textbf{Personalizzazione:} È possibile sovrascrivere i metodi generati automaticamente, ad esempio per aggiungere una logica di validazione nel costruttore.
+    \item \textbf{Immutabilità superficiale (Shallow Immutability):} I record sono progettati per trasportare dati immutabili. Una volta istanziato il record, i riferimenti ai suoi campi (le componenti) sono \texttt{final} e non possono essere riassegnati.
+    \item \textbf{Estensibilità e limiti:} Un record può implementare interfacce, definire metodi di istanza, metodi statici e campi statici. Tuttavia, \textbf{non può} aggiungere campi di istanza oltre a quelli dichiarati nell'intestazione. Inoltre, non può essere esteso (è implicitamente \texttt{final}) e non può estendere classi esplicite (poiché estende già nativamente \texttt{java.lang.Record}).
+    \item \textbf{Personalizzazione dei metodi:} È possibile effettuare l'override dei metodi generati automaticamente (\texttt{equals()}, \texttt{hashCode()} o \texttt{toString()}) per fornirne un'implementazione specifica.
+    \item \textbf{Costruttori espliciti e compatti:} Sebbene il compilatore generi automaticamente un costruttore \textit{canonico} (che accetta tutte le componenti del record), il programmatore può sostituirlo dichiarandolo esplicitamente. Per facilitare l'aggiunta di logica di validazione o normalizzazione dei dati, Java introduce il \textbf{costruttore compatto} (\textit{compact constructor}): un costruttore privo della lista dei parametri, che permette di omettere l'assegnazione finale ai campi, gestita implicitamente dal compilatore alla fine del blocco. 
+    \item \textbf{Sovraccarico dei costruttori (Overloading):} È possibile definire costruttori aggiuntivi con firme diverse, ma con un vincolo stringente: ogni costruttore secondario deve obbligatoriamente delegare l'inizializzazione al costruttore canonico, invocando \texttt{this(...)} come prima istruzione.
 \end{itemize}
 
 \begin{warningbox}[Attenzione alla mutabilità dei componenti]
     I componenti di un record sono implicitamente \textit{final}, quindi va ricordato ciò che abbiamo detto a proposito di tali campi: se un record ha come componente un oggetto mutabile (es. un array), l'immutabilità del record è solo superficiale; il riferimento all'array non può cambiare, ma gli elementi interni all'array sì. Per garantire la sicurezza, è preferibile usare solo tipi primitivi o immutabili come componenti.
 \end{warningbox}
-
-
-\textbf{Analogia con il C:} Per un programmatore C, il record è l'equivalente funzionale di una \texttt{struct} costante, ma con il vantaggio di avere già pronti tutti i metodi per il confronto e la visualizzazione testuale.
-
-\vspace{\baselineskip}
-
 
 Un esempio base di record:
 
@@ -547,16 +595,15 @@ public class Main {
     }
 }
 \end{lstlisting}
-\medskip % Spazio verticale pulito tra gli esempi
 
-\vspace{\baselineskip}
+\medskip 
 
 In questo esempio personalizziamo il comportamento interno del record:
 
 \begin{lstlisting}[language=Java, caption=Record con logica personalizzata]
 public record Prodotto(String codice, double prezzo) {
 
-    // 1. Override del costruttore (Compact Constructor)
+    // 1. Ridefinizione del costruttore (Compact Constructor)
     // Usato per validazione o normalizzazione
     public Prodotto {
         if (prezzo < 0) {
