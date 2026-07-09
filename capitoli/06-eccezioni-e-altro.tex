@@ -261,7 +261,7 @@ Il flusso di esecuzione è il seguente:
 \end{enumerate}
 
 \begin{warningbox}
-L'ordine dei blocchi \texttt{catch} e' fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, si devono sempre mettere le eccezioni **più specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **più generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la più specifica non verrà mai raggiunta.
+L'ordine dei blocchi \texttt{catch} è fondamentale. Java esegue il primo \texttt{catch} compatibile che trova. Pertanto, si devono sempre mettere le eccezioni **più specifiche** (es. \texttt{FileNotFoundException}) prima di quelle **più generiche** (es. \texttt{IOException} o \texttt{Exception}). Altrimenti, la più specifica non verrà mai raggiunta.
 \end{warningbox}
 
 A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identico modo, non è più necessario scrivere blocchi \texttt{catch} duplicati: basta usare la sintassi \textit{multi-catch} separando le classi con l'operatore \textit{pipe} (\texttt{|}). Oltre a rendere il codice più leggibile, questa pratica è più efficiente: il compilatore genera un unico blocco di \textit{bytecode} per le eccezioni condivise, riducendo la dimensione del file compilato.
