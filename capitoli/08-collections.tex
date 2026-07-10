@@ -939,9 +939,196 @@ Il framework fornisce due ulteriori implementazioni concrete di \texttt{Map}, pr
 \end{itemize}
 \end{dettagli}
 
+\section{Copie e Viste}
 
+Come abbiamo già accennato analizzando i metodi di ispezione delle mappe (ad esempio \texttt{keySet()} o \texttt{entrySet()}), il \textit{Java Collections Framework} fa un uso estensivo e fondamentale del concetto di \textbf{vista} (\textit{view}).
 
+Guardando l'intricata gerarchia delle interfacce e delle classi astratte (come \path{AbstractCollection} o \texttt{AbstractMap}), si potrebbe erroneamente dedurre che tale architettura sia sovradimensionata rispetto al modesto numero di classi concrete fisiche (come \texttt{ArrayList} o \texttt{HashMap}). In realtà, questa flessibilità strutturale serve proprio a supportare la creazione e la manipolazione delle viste.
 
+Una \textbf{vista} è un oggetto che restituisce l'implementazione di un'interfaccia standard del framework (come \texttt{Collection}, \texttt{Set} o \texttt{List}), ma che \textbf{non possiede} una propria struttura dati indipendente e contigua per memorizzare fisicamente gli elementi. Al contrario, è un oggetto "leggero" i cui metodi manipolano, ispezionano o proiettano in tempo reale i dati di una collezione originale sottostante.
 
+Per illustrare il meccanismo, riconsideriamo l'esempio del metodo \texttt{keySet()} di una mappa. A un primo sguardo, si potrebbe pensare che questo metodo allochi nuova memoria per istanziare un \texttt{HashSet}, esegua un ciclo per copiarvi tutte le chiavi della mappa e infine lo restituisca. \textbf{Fisicamente, non accade nulla di tutto questo.} 
 
+Il metodo restituisce in tempo costante ($O(1)$) un oggetto proxy che implementa l'interfaccia \texttt{Set}. Quando su questo Set si chiama il metodo \texttt{contains(k)}, l'oggetto delega la chiamata invocando \texttt{containsKey(k)} sulla mappa originale.
 
+\begin{observation}[Vantaggi Ingegneristici]
+L'impiego delle viste risolve due problemi cruciali nello sviluppo backend:
+\begin{enumerate}
+    \item \textbf{Efficienza Spaziale}: Evita la duplicazione massiva dei dati in RAM. Estrarre una vista non richiede mai la copia lineare ($O(n)$) degli elementi.
+    \item \textbf{Sincronizzazione e Coerenza}: Essendo la vista solo una "lente" attraverso cui guardare la collezione originale, qualsiasi modifica strutturale apportata tramite la vista si riflette istantaneamente e obbligatoriamente sulla collezione base, e viceversa.
+\end{enumerate}
+\end{observation}
+
+\subsection{Factory Method per Collezioni Leggere e Immodificabili}
+
+A partire da Java 9, il framework mette a disposizione una serie di metodi statici (factory) estremamente concisi per la creazione rapida di liste, set e mappe. Sebbene a livello logico queste vengano percepite dallo sviluppatore come normali collezioni, fisicamente esse sono istanze di speciali classi interne, fortemente ottimizzate e strettamente regolamentate.
+
+\paragraph{Collezioni rapide con \texttt{of()} e \texttt{ofEntries()}}
+
+Le interfacce \texttt{List}, \texttt{Set} e \texttt{Map} espongono il metodo factory \texttt{of(...)} per inizializzare collezioni al volo. Per le mappe con più di 10 associazioni, si utilizza invece \texttt{Map.ofEntries(...)} in combinazione con \texttt{Map.entry()}.
+
+\begin{lstlisting}[language=Java, caption={Creazione di collezioni tramite factory}]
+// Creazione di una Lista e di un Set
+List<String> names = List.of("Peter", "Paul", "Mary");
+Set<Integer> numbers = Set.of(1, 2, 3);
+
+// Creazione di una Mappa (fino a 10 coppie, alternate Chiave/Valore)
+Map<String, Integer> scores = Map.of("Peter", 2, "Paul", 3);
+
+// Creazione di una Mappa estesa (numero arbitrario di associazioni)
+Map<String, Integer> extendedScores = Map.ofEntries(
+    Map.entry("Peter", 2),
+    Map.entry("Paul", 3),
+    Map.entry("Mary", 5)
+);
+\end{lstlisting}
+
+Il contratto architetturale di queste collezioni è rigidissimo e differisce da quello delle collezioni classiche:
+
+\begin{enumerate}
+    \item \textbf{Immodificabilità assoluta}: Qualsiasi tentativo di aggiungere, rimuovere o modificare gli elementi (\texttt{add}, \texttt{remove}, \texttt{set}, \texttt{put}) solleverà istantaneamente una \path{UnsupportedOperationException}.
+    \item \textbf{Intolleranza ai \texttt{null}}: Non è permesso inserire valori, chiavi o elementi \texttt{null}. Il passaggio di un \texttt{null} ai factory genererà una \texttt{NullPointerException}.
+    \item \textbf{Rifiuto alla creazione dei duplicati}: A differenza di un \texttt{HashSet} che semplicemente ignora l'inserimento di un duplicato restituendo \texttt{false}, chiamare \texttt{Set.of(1, 1)} lancia una \texttt{IllegalArgumentException} a runtime.
+\end{enumerate}
+
+Questi vincoli permettono alla JVM di allocare oggetti estremamente compatti e privi dell'overhead tipico delle strutture espandibili. Ad esempio, \texttt{List.of("A")} non istanzia un \texttt{ArrayList} o un array sottostante sovradimensionato, ma un oggetto dedicato che occupa in memoria esattamente lo spazio per quel singolo riferimento.
+
+\begin{tip}[Rendere le collezioni modificabili]
+Se hai bisogno di inizializzare rapidamente una collezione, ma la logica di business richiede che questa possa essere modificata in seguito, puoi sfruttare queste viste come argomento per il costruttore di una collezione fisica mutabile. Il passaggio clonerà gli elementi nella nuova struttura dinamica:
+
+\begin{lstlisting}[language=Java]
+// namesList sara' una normale ArrayList modificabile
+List<String> mutableNames = new ArrayList<>(List.of("Peter", "Paul", "Mary"));
+\end{lstlisting}
+\end{tip}
+
+\paragraph{Liste ripetute con \texttt{Collections.nCopies()}}
+
+Un altro strumento peculiare è il metodo \texttt{Collections.nCopies(int n, T o)}, utilizzato per generare una lista contenente $n$ ripetizioni dello stesso elemento.
+
+Da un punto di vista dell'implementazione (la verità dietro l'astrazione), questo metodo è uno degli esempi più eleganti di \textbf{vista}. 
+
+L'istruzione \texttt{Collections.nCopies(1000, "Java")} \textbf{non alloca} un array da 1000 posizioni e \textbf{non copia} 1000 volte il riferimento alla stringa. Sarebbe uno spreco catastrofico di memoria.
+
+Al contrario, la chiamata istanzia un minuscolo oggetto (una speciale classe anonima immodificabile) che in RAM occupa solo lo spazio per due variabili:
+\begin{enumerate}
+    \item Un intero per la dimensione logica (\texttt{1000}).
+    \item Un singolo puntatore all'oggetto da ripetere (\texttt{"Java"}).
+\end{enumerate}
+Quando il codice chiamante esegue il metodo \texttt{get(i)}, l'oggetto semplicemente verifica che $i$ sia un indice valido per le dimensioni dichiarate e, in tal caso, restituisce quell'unico puntatore memorizzato.
+
+Questa vista è l'ideale quando si deve inizializzare massivamente una vera collezione con un valore di default, sfruttando l'allocazione a tempo costante $O(1)$:
+
+\begin{lstlisting}[language=Java, caption={Inizializzazione massiva tramite nCopies}]
+// Crea un'ArrayList vera di 1000 elementi, tutti inizializzati a "DEFAULT"
+List<String> defaultSettings = new ArrayList<>(Collections.nCopies(1000, "DEFAULT"));
+\end{lstlisting}
+
+\subsection{Copie e Viste Immodificabili}
+
+Nello sviluppo di applicazioni robuste, sorge frequentemente la necessità di passare strutture dati a metodi di terze parti o di esporre lo stato interno di un oggetto al mondo esterno. In questi scenari, esporre la collezione originale è estremamente pericoloso: qualsiasi componente esterno potrebbe modificarne il contenuto. Per proteggere i dati, Java offre due approcci strutturalmente e semanticamente opposti: le \textbf{copie indipendenti} e le \textbf{viste wrapper}.
+
+\paragraph{Copie Indipendenti con \texttt{copyOf}}
+
+A partire da Java 10, le interfacce \texttt{List}, \texttt{Set} e \texttt{Map} forniscono il metodo statico \texttt{copyOf(Collection)} per generare una collezione immodificabile a partire da una esistente.
+
+A differenza delle viste, questo metodo crea uno \textbf{snapshot} (un'istantanea indipendente) dei dati. Le modifiche successive alla collezione originale \textbf{non} avranno alcun effetto sulla copia restituita.
+Per questioni di ottimizzazione, se la collezione passata come argomento è \textit{già} una collezione immodificabile (ad esempio creata con \texttt{List.of()}), il framework evita di sprecare RAM: non alloca nulla di nuovo, ma restituisce semplicemente il riferimento all'oggetto originale ($O(1)$).
+
+\begin{bestpractice}[Il Caso d'Uso Tipico: La Copia Difensiva]
+L'uso principale di \texttt{copyOf} è la \textbf{Defensive Copy} (Copia Difensiva) per la creazione di classi di dominio immutabili. 
+
+Immagina un record \texttt{Fattura} che riceve una \texttt{List<Articolo>} nel costruttore. Se il costruttore si limitasse a salvare la lista o a creare una vista, il codice chiamante manterrebbe il riferimento alla lista originale e potrebbe aggiungere nuovi articoli \textit{dopo} che la fattura è stata emessa, violando la logica di business.
+Usando \texttt{List.copyOf()} nel costruttore, la \texttt{Fattura} "congela" lo stato della lista al momento della creazione, recidendo ogni legame con la collezione esterna e garantendo l'immutabilità architetturale.
+\end{bestpractice}
+
+\paragraph{Viste Wrapper con \texttt{Collections.unmodifiable...}}
+
+La classe di utilità \texttt{Collections} fornisce una serie di metodi storici (come \texttt{unmodifiableList}, \texttt{unmodifiableSet}, \path{unmodifiableMap}) che generano delle \textbf{viste}.
+
+A differenza di \texttt{copyOf}, questi metodi non copiano i dati. Creano un oggetto proxy che funge da "lente" (\textit{look at}) per guardare la collezione originale. 
+La vista delega ogni operazione di lettura alla collezione sottostante, ma intercetta e blocca ogni tentativo di modifica (\texttt{add}, \texttt{remove}, \texttt{set}), lanciando una \texttt{UnsupportedOperationException}.
+
+Poiché la vista non possiede dati propri, \textbf{ogni modifica apportata direttamente alla collezione originale si rifletterà immediatamente sulla vista}.
+
+\begin{lstlisting}[language=Java, caption={Comportamento dinamico della vista unmodifiable}]
+List<String> staff = new ArrayList<>();
+staff.add("Harry");
+
+// Creiamo una vista in sola lettura (wrapper)
+List<String> readOnlyStaff = Collections.unmodifiableList(staff);
+
+// readOnlyStaff.add("Ron"); // ERRORE: UnsupportedOperationException
+
+// Ma se modifichiamo l'originale...
+staff.add("Ron");
+
+// La vista "vede" la modifica! readOnlyStaff ora contiene 2 elementi.
+System.out.println(readOnlyStaff.size()); // Stampa: 2
+\end{lstlisting}
+
+\begin{danger}[L'Anomalia di \texttt{equals} in \texttt{unmodifiableCollection}]
+Esiste un'insidia architetturale molto pericolosa quando si utilizza il metodo generico \texttt{Collections.unmodifiableCollection(c)}. 
+
+Le interfacce \texttt{List} e \texttt{Set} hanno regole di uguaglianza incompatibili (una lista non può \textbf{mai} essere uguale a un set, anche se contengono gli stessi elementi). L'oggetto restituito da \texttt{unmodifiableCollection} implementa solo la radice \texttt{Collection}; non potendo sapere se la collezione che sta "avvolgendo" sia una lista o un set, \textbf{non ridefinisce il metodo \texttt{equals}}.
+
+Invece di delegare il controllo di uguaglianza alla collezione sottostante, eredita l'\texttt{equals} della classe \texttt{Object}, che si basa unicamente sull'identità in memoria (\texttt{==}).
+\begin{lstlisting}[language=Java]
+List<String> myList = new ArrayList<>(List.of("A", "B"));
+Collection<String> myView = Collections.unmodifiableCollection(myList);
+
+// Restituira' FALSE! (Invece del TRUE che ci si aspetterebbe)
+System.out.println(myView.equals(myList)); 
+\end{lstlisting}
+Per mantenere l'integrità del contratto \texttt{equals}, è categorico utilizzare i wrapper specifici (\texttt{unmodifiableList} per le liste o \texttt{unmodifiableSet} per i set), i quali delegano correttamente l'uguaglianza alla struttura sottostante.
+\end{danger}
+
+\subsection{Viste di Sotto-Intervalli (Sub-Ranges)}
+
+Oltre a creare viste dell'intera collezione, il \textit{Java Collections Framework} permette di estrarre viste parziali che limitano l'accesso a uno specifico intervallo di elementi. Conformemente al pattern architetturale delle viste, non viene allocata alcuna nuova struttura dati o array: le operazioni sul sotto-intervallo si riflettono direttamente in tempo reale sulla collezione originale.
+
+\paragraph{Sottoliste (\texttt{subList})}
+
+L'interfaccia \texttt{List} espone il metodo \texttt{subList(int fromIndex, int toIndex)}. Come quasi tutte le API del JDK che gestiscono indici, l'intervallo specificato è matematicamente \textbf{chiuso a sinistra e aperto a destra} ($[\text{fromIndex}, \text{toIndex})$). Questo significa che l'elemento in posizione \texttt{fromIndex} è incluso, mentre quello in \texttt{toIndex} è escluso.
+
+\begin{lstlisting}[language=Java, caption={Uso di subList per estrarre e manipolare una porzione}]
+List<String> staff = new ArrayList<>(List.of("A", "B", "C", "D", "E"));
+
+// Crea una vista degli elementi agli indici 1 e 2 ("B", "C")
+List<String> group2 = staff.subList(1, 3);
+
+// Qualsiasi modifica alla vista impatta la lista originale
+group2.clear(); 
+// Ora 'staff' contiene solo ["A", "D", "E"]
+\end{lstlisting}
+
+\begin{tip}[Cancellazione Massiva]
+L'idioma \texttt{list.subList(from, to).clear()} è in assoluto il modo più efficiente ed elegante per rimuovere un intero blocco contiguo di elementi da una lista con una singola istruzione.
+\end{tip}
+
+\paragraph{Sottoinsiemi e Sottomappe (\texttt{subSet}, \texttt{subMap})}
+
+Per le collezioni ordinate (\texttt{SortedSet} e \texttt{SortedMap}), non avendo a disposizione gli indici posizionali, le viste vengono generate fornendo direttamente gli elementi (o le chiavi) che fungono da delimitatori di intervallo. Anche in questo caso, per le interfacce base, l'intervallo rispetta il pattern $[\text{from}, \text{to})$.
+
+\begin{itemize}
+    \item \texttt{subSet(E fromElement, E toElement)}
+    \item \texttt{headSet(E toElement)}: Restituisce la vista di tutti gli elementi strettamente minori di \texttt{toElement}.
+    \item \texttt{tailSet(E fromElement)}: Restituisce la vista di tutti gli elementi maggiori o uguali a \texttt{fromElement}.
+\end{itemize}
+
+\begin{observation}[Inclusività in NavigableSet e NavigableMap]
+Le interfacce storiche \texttt{SortedSet} e \texttt{SortedMap} vincolavano lo sviluppatore al pattern standard. Per ottenere intervalli totalmente chiusi, si ricorreva a espedienti non ottimali. 
+Con l'introduzione di \texttt{NavigableSet} e \texttt{NavigableMap}, i metodi sono stati sovraccaricati con l'aggiunta di flag booleani che permettono di specificare esplicitamente l'inclusione o l'esclusione di entrambi gli estremi:
+\begin{lstlisting}[language=Java]
+// Crea un set con gli elementi tra "A" (incluso) e "D" (incluso)
+SortedSet<String> sub = words.subSet("A", true, "D", true);
+\end{lstlisting}
+\end{observation}
+
+\begin{danger}[La fragilità strutturale delle Viste]
+Essendo le viste dei puri "proxy" posizionali che puntano alla collezione sottostante, la loro validità logica dipende strettamente dall'integrità della struttura dati originale.
+
+Se si modifica strutturalmente la collezione originale (aggiungendo o rimuovendo elementi) \textbf{senza passare attraverso la vista}, l'indice logico della vista si corrompe. Qualsiasi successivo tentativo di utilizzare il \texttt{subList} (o \texttt{subSet}) causerà istantaneamente il lancio di una \texttt{ConcurrentModificationException}. 
+
+\textbf{Regola d'oro}: non appena si estrae una vista parziale, si deve utilizzare \textbf{esclusivamente} quella vista per manipolare la relativa porzione di dati; in alternativa, la vista deve essere considerata un oggetto usa-e-getta, da scartare immediatamente se la collezione madre subisce alterazioni dirette.
+\end{danger}
