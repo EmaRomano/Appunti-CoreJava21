@@ -195,7 +195,7 @@ E fondamentale distinguere tra stringhe \textit{letterali} e stringhe \textit{di
 \end{example}
 
 \begin{tip}[Il metodo \texttt{intern()}]
-    Esiste un modo per forzare una stringa dinamica nel Pool: il metodo \texttt{s.intern()}. Se invocato, Java controlla se esiste già una stringa uguale nel Pool: se sì, restituisce il riferimento esistente; altrimenti, aggiunge la stringa allo Pool e ne restituisce il riferimento.
+    Esiste un modo per forzare una stringa dinamica nel Pool: il metodo \texttt{s.intern()}. Se invocato, Java controlla se esiste già una stringa uguale nel Pool: se sì, restituisce il riferimento esistente; altrimenti, aggiunge la stringa al Pool e ne restituisce il riferimento.
     Il metodo \texttt{intern()} è una scelta vincente in scenari di \textbf{Data Deduplication}:
 
 \begin{itemize}
@@ -502,11 +502,12 @@ BigInteger reallyBig = new BigInteger("22223224462942044552973989346190996720666
 
 \begin{warningbox}[]
     Per \texttt{BigDecimal}, si deve \textbf{sempre} usare il costruttore che accetta una \texttt{String}. Il costruttore \texttt{BigDecimal(double)} è intrinsecamente prono a errori di arrotondamento dovuti alla rappresentazione binaria dei floating-point.
-\end{warningbox}
+
 
 Ad esempio, \texttt{new BigDecimal(0.1)} non produce esattamente $0.1$, ma una sequenza imprecisa (com'è noto da nozioni di architettura dei calcolatori, 0.1 in binario è un numero periodico infinito, quindi viene approssimato):
 $$0.1000000000000000055511151231257827021181583404541015625$$
-L'uso della stringa \texttt{"0.1"} garantisce invece la precisione esatta richiesta.\vspace{\baselineskip}
+L'uso della stringa \texttt{"0.1"} garantisce invece la precisione esatta richiesta.
+\end{warningbox}
 
 Poiché Java non supporta l'overloading degli operatori (a differenza di C++), non è possibile usare \texttt{+}, \texttt{-}, \texttt{*} o \texttt{/}. È necessario utilizzare i metodi d'istanza dedicati.
 

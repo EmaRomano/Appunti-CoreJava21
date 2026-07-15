@@ -1447,6 +1447,15 @@ INPUT capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT ./capitoli/appendice-accessori-teoria.tex
 INPUT capitoli/appendice-accessori-teoria.tex
+INPUT ./capitoli/bozze.tex
+INPUT capitoli/bozze.tex
+INPUT ./capitoli/bozze.tex
+INPUT capitoli/bozze.tex
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/rm-lmr10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/lmmi10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/lm/lmsy10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
 INPUT main.aux
 INPUT ./capitoli/01-fondamenta.aux
 INPUT capitoli/01-fondamenta.aux
