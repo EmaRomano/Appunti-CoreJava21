@@ -243,10 +243,10 @@ Il vantaggio principale della riservatezza dei metodi risiede nella libertà di 
 
 In Java, è possibile dichiarare un campo di istanza come \texttt{final}. Tale modificatore impone che la variabile venga inizializzata tassativamente entro la fine di ogni costruttore della classe. Una volta assegnato, il valore del campo non può più essere modificato.
 
-\subsection*{Tipi primitivi e Classi Immutabili}
+\paragraph{Tipi primitivi e Classi Immutabili}
 L'uso di \texttt{final} è particolarmente efficace con i tipi primitivi o con classi immutabili (ovvero classi i cui metodi non modificano mai lo stato dell'oggetto, come \texttt{String} o \texttt{LocalDate}). In questi casi, il campo diventa a tutti gli effetti una costante dopo la costruzione dell'oggetto.
 
-\subsection*{La trappola delle Classi Mutabili}
+\paragraph{La trappola delle Classi Mutabili}
 È necessario prestare attenzione quando si usa \texttt{final} con oggetti mutabili. 
 
 \begin{warningbox}[]
@@ -263,7 +263,7 @@ Ad esempio, un campo \texttt{private final StringBuilder evaluations} impedisce 
 
 Il modificatore \texttt{static} permette di definire membri che appartengono alla \textbf{classe} stessa piuttosto che alle singole istanze. 
 
-\subsection{Campi Statici (Variabili di Classe)}
+\paragraph{Campi Statici (Variabili di Classe)}
 Se un campo è dichiarato \texttt{static}, ne esiste un'unica copia condivisa da tutti gli oggetti della classe. Anche se non viene istanziato alcun oggetto, il campo statico è presente in memoria.
 
 \begin{example}
@@ -283,7 +283,7 @@ Mentre le variabili statiche sono rare (e vanno usate con cautela!) le costanti 
     È buona norma accedere ai membri statici usando il nome della classe (es. \texttt{Employee.nextId}) invece che tramite un riferimento a un oggetto (es. \texttt{harry.nextId}), per rendere subito chiaro a chi legge che il campo non appartiene all'istanza.
 \end{observation}
 
-\subsection{I Metodi Statici}
+\paragraph{I Metodi Statici}
 
 Qui il concetto è del tutto analogo a quello dei campi di istanza: si tratta di metodi comuni a tutta la classe. A differenza dei metodi di istanza, un metodo statico non ha un parametro implicito \texttt{this}; in altre parole, non riceve alcun riferimento a un'istanza specifica della classe quando viene invocato.
 
@@ -309,7 +309,7 @@ Una caratteristica potente di Java è che \textbf{ogni classe} può contenere un
     \item Se la classe è usata all'interno di un'applicazione più grande, il suo \texttt{main} viene semplicemente ignorato.
 \end{itemize}
 
-\subsection{Novità Java 21: Instance Main Methods (Preview)}
+\paragraph{Novità Java 21: Instance Main Methods (Preview)}
 A partire da Java 21, è stata introdotta una \textit{preview feature} che semplifica l'avvio dei programmi. In questa nuova modalità:
 \begin{itemize}
     \item Il \texttt{main} non deve più essere obbligatoriamente \texttt{static} o \texttt{public}.
@@ -330,7 +330,7 @@ Esiste spesso confusione sulla modalità con cui Java passa i parametri ai metod
 Il comportamento osservato differisce in base a ciò che la variabile contiene:
 \begin{itemize}
     \item \textbf{Tipi Primitivi:} La variabile contiene il valore numerico o booleano. Il metodo riceve una copia di tale valore; ogni modifica effettuata all'interno del metodo rimane locale e non influenza la variabile originale.
-    \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto. In questo caso si parlas di \textit{passaggio per copia del valore del riferimento}.
+    \item \textbf{Riferimenti a Oggetti:} La variabile contiene l'indirizzo di memoria dell'oggetto. Il metodo riceve una copia di questo indirizzo. Poiché sia la variabile originale che la copia puntano allo stesso oggetto, è possibile modificarne lo stato interno, ma \textbf{non è possibile} far sì che la variabile originale punti a un nuovo oggetto. In questo caso si parla di \textit{passaggio per copia del valore del riferimento}.
 \end{itemize}
 
 \begin{tip}[Il fallimento dello swap]
@@ -357,7 +357,7 @@ Un parametro dichiarato come \texttt{Type... name} viene trattato all'interno de
 \begin{lstlisting}[language=Java, caption={Esempio di funzione max con varargs}]
 public static double max(double... values) {
    double largest = Double.NEGATIVE_INFINITY;
-   for (double v : values) { // values e trattato come double[]
+   for (double v : values) { // values e' trattato come double[]
       if (v > largest) largest = v;
    }
    return largest;
@@ -406,7 +406,7 @@ double massimo = max(prezzi); // Legale: passa l'array direttamente
 
 In Java, un \textbf{Enum} non è una semplice lista di costanti intere (come in C o C++), ma una classe speciale che estende implicitamente la classe \texttt{java.lang.Enum}. Rappresenta un insieme fisso di costanti tipizzate, garantendo che una variabile di quel tipo possa assumere solo uno dei valori predefiniti.
 
-L'utilizzo degli \texttt{enum} è considerato una \textit{best practice} per diversi motivi:
+L'utilizzo degli \texttt{enum} (laddove sensato) è considerato una \textit{best practice} per diversi motivi:
 \begin{itemize}
     \item \textbf{Type Safety}: Impedisce il passaggio di valori non validi (evitando l'uso di "Magic Numbers" o costanti \texttt{int}).
     \item \textbf{Namespace}: Le costanti sono confinate nel tipo enumerato, evitando conflitti di nomi.
@@ -423,7 +423,7 @@ public enum NomeEnum {
     // 1. Definizione delle costanti (devono apparire per prime)
     COSTANTE_A("Descrizione A", 10),
     COSTANTE_B("Descrizione B", 20),
-    COSTANTE_C; // Se non ci sono argomenti, il costruttore e di default
+    COSTANTE_C; // Se non ci sono argomenti, il costruttore e' di default
 
     // 2. Campi di istanza (solitamente private final per immutabilita)
     private final String descrizione;
@@ -607,7 +607,7 @@ public record Prodotto(String codice, double prezzo) {
     // Usato per validazione o normalizzazione
     public Prodotto {
         if (prezzo < 0) {
-            throw new IllegalArgumentException("Il prezzo non puo essere negativo");
+            throw new IllegalArgumentException("Il prezzo non puo' essere negativo");
         }
         codice = codice.toUpperCase(); // Normalizzazione
     }
