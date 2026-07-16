@@ -223,10 +223,10 @@ d.setTime(d.getTime() - (long) tenYearsInMilliseconds);
 
 Nella grande maggioranza dei casi, i metodi di una classe vengono dichiarati con il modificatore \texttt{public}, poiché costituiscono l'interfaccia attraverso cui il mondo esterno interagisce con l'oggetto. Tuttavia, esistono circostanze in cui è preferibile o necessario rendere un metodo \texttt{private}.
 
-\subsection*{Helper Methods e Pulizia del Codice}
+\paragraph{Helper Methods e Pulizia del Codice}
 Spesso, l'implementazione di un compito complesso richiede di spezzare il codice in diverse sotto-operazioni. Questi "metodi di supporto" (\textit{helper methods}) non dovrebbero far parte dell'interfaccia pubblica: potrebbero essere troppo legati all'attuale implementazione interna o richiedere un protocollo di chiamata specifico che non deve essere esposto all'utente della classe. Dichiarandoli privati, ci si assicura che vengano utilizzati solo internamente.
 
-\subsection*{Libertà di Evoluzione del Software}
+\paragraph{Libertà di Evoluzione del Software}
 Il vantaggio principale della riservatezza dei metodi risiede nella libertà di manutenzione. 
 \begin{itemize}
     \item \textbf{Metodi Pubblici:} Rappresentano un impegno verso chi utilizza la classe. Se un metodo è pubblico, non può essere rimosso o modificato drasticamente senza rischiare di "rompere" il codice esterno che vi fa affidamento.
