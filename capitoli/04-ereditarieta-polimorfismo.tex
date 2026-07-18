@@ -78,7 +78,7 @@ Spesso i metodi della superclasse non sono del tutto appropriati per la sottocla
 Tentare di implementare il metodo accedendo direttamente al campo della superclasse fallisce:
 \begin{lstlisting}[language=Java]
 public double getSalary() {
-    return salary + bonus; // ERRORE: salary e privato in Employee
+    return salary + bonus; // ERRORE: salary e' privato in Employee
 }
 \end{lstlisting}
 Anche se \texttt{Manager} è una sottoclasse, deve rispettare l'incapsulamento e usare l'interfaccia pubblica della superclasse.
@@ -373,7 +373,7 @@ public class Executive extends Employee {
 
     @Override
     public String description() {
-        // Se title e null, length() lancia NullPointerException
+        // Se title e' null, length() lancia NullPointerException
         return "Executive con titolo: " + title + " (lunghezza: " + title.length() + ")";
     }
 }
@@ -456,7 +456,7 @@ if (staff[i] instanceof Manager) {
 
 // Da Java 16 in poi (Pattern Matching)
 if (staff[i] instanceof Manager boss) {
-    boss.setBonus(5000); // boss e gia di tipo Manager
+    boss.setBonus(5000); // boss e' gia di tipo Manager
 }
 \end{lstlisting}
 
@@ -520,7 +520,7 @@ if (obj instanceof Point p) {
 L'oggetto viene \textbf{decostruito} sul posto. Non serve più una variabile d'appoggio per l'intero oggetto se ci servono solo i suoi componenti.
 \begin{lstlisting}[language=Java]
 if (obj instanceof Point(double x, double y)) {
-    // x e y sono variabili locali gia estratte e pronte all'uso!
+    // x e y sono variabili locali gia' estratte e pronte all'uso!
     System.out.println("Coordinate: " + x + ", " + y);
 }
 \end{lstlisting}
@@ -534,7 +534,7 @@ record Circle(Point center, double radius) {}
 
 // Recupero la coordinata X del centro di un cerchio obj in un colpo solo:
 if (obj instanceof Circle(Point(double x, double y), double r)) {
-    System.out.println("La X del centro e: " + x);
+    System.out.println("La X del centro e': " + x);
 }
 \end{lstlisting}
 
@@ -579,7 +579,7 @@ public class Employee {
 public class Administrator extends Employee {
     public void check(Employee e, Administrator a) {
         this.hireDay = ...; // OK: accesso al proprio campo ereditato
-        a.hireDay = ...;    // OK: a e un Administrator
+        a.hireDay = ...;    // OK: a e' un Administrator
         // e.hireDay = ...; // ERRORE: non puo spiare dentro un Employee generico
     }
 }
@@ -598,7 +598,7 @@ In Java, la classe \texttt{java.lang.Object} è l'antenata comune di tutte le cl
 
 Ogni classe in Java eredita quindi tutti i metodi di questa "superclasse cosmica" \texttt{Object}. Tuttavia, poiché \texttt{Object} è un'astrazione totale, le sue implementazioni di default sono necessariamente generiche e basate sull'identità fisica dell'oggetto piuttosto che sul suo stato logico.
 
-Affinché tali metodi possano eseguire azioni utili per le specifiche classi, è spesso cruciale effettuare l'override di questi metodi. Questa operazione è spesso delicata e bisogna sapere come eseguirla correttamente, altrimenti si rischia di introdurre bug difficili da diagnosticare.
+Affinché tali metodi possano eseguire azioni utili per le specifiche classi, è quasi sempre cruciale effettuare l'override di questi metodi. Questa operazione è spesso delicata e bisogna sapere come eseguirla correttamente, altrimenti si rischia di introdurre bug difficili da diagnosticare.
 
 Vedremo quindi come implementare correttamente i tre metodi principali: \texttt{equals()}, \texttt{hashCode()} e \texttt{toString()}.
 
@@ -633,7 +633,7 @@ public class Employee
          return false;
 
       // 4. Casting:
-      // Arrivati a questo punto, sappiamo che otherObject e un 
+      // Arrivati a questo punto, sappiamo che otherObject e' un 
       // Employee non nullo. Possiamo procedere al cast in sicurezza.
       Employee other = (Employee) otherObject;
 
@@ -698,7 +698,7 @@ Il design del metodo \texttt{equals()} deve rispettare i cinque principi stabili
 
 Vale la pena sapere che esistono due scuole di pensiero riguardo l'implementazione del metodo \texttt{equals()} quando si deve gestire il confronto tra una superclasse (\texttt{Employee}) e una sottoclasse (\texttt{Manager}).
 
-\subsubsection*{L'approccio \texttt{instanceof}}
+\paragraph{L'approccio \texttt{instanceof}}
 Molti programmatori usano \texttt{if (!(otherObject instanceof Employee))}. 
 \begin{itemize}
     \item \textbf{Pro}: Rispetta il \textit{Principio di Sostituzione di Liskov} (in pratica: posso usare un Manager ovunque sia richiesto un Employee).
@@ -706,7 +706,7 @@ Molti programmatori usano \texttt{if (!(otherObject instanceof Employee))}.
     Se \texttt{Employee.equals} usa \texttt{instanceof}, allora \texttt{e.equals(m)} sarà \texttt{true}. Per la regola di simmetria, anche \texttt{m.equals(e)} deve essere \texttt{true}. Tuttavia, un \texttt{Manager} ha campi extra (il bonus): se per essere simmetrico deve ignorare il bonus quando parla con un \texttt{Employee}, l'uguaglianza diventa logicamente inconsistente per la sottoclasse.
 \end{itemize}
 
-\subsubsection*{L'approccio \texttt{getClass()}}
+\paragraph{L'approccio \texttt{getClass()}}
 È quello usato nell'esempio di \texttt{Employee}.
 \begin{itemize}
     \item \textbf{Pro}: Garantisce la simmetria assoluta. Se le classi non sono identiche, il test fallisce subito.
@@ -715,7 +715,7 @@ Molti programmatori usano \texttt{if (!(otherObject instanceof Employee))}.
 
 
 
-\subsubsection*{La Soluzione di Horstmann: Due Scenari}
+\paragraph{La Soluzione di Horstmann: Due Scenari}
 Non esiste una regola unica, ma due scenari di design:
 
 \begin{enumerate}
@@ -824,7 +824,7 @@ public class Employee {
     Se la classe contiene dei campi che sono \textbf{array}, \texttt{Objects.hash()} non ne verificherà il contenuto (userebbe l'hash dell'indirizzo di memoria dell'array). In questo caso specifico, è necessario utilizzare il metodo \texttt{Arrays.hashCode()} per calcolare un hash basato sui singoli elementi dell'array. Per lo stesso motivo, usare \texttt{Arrays.deepHashCode} per array multidimensionali.
 \end{warningbox}
 
-\subsubsection*{Approfondimento: Calcolo manuale e Performance}
+\paragraph{Approfondimento: Calcolo manuale e Performance}
 
 Sebbene \texttt{Objects.hash()} sia la scelta standard, in scenari di \textbf{alta performance} o in sistemi legacy, si preferisce il calcolo manuale. Il metodo \texttt{Objects.hash}, infatti, essendo un metodo \textit{varargs}, crea un array temporaneo a ogni invocazione, introducendo un overhead che può diventare significativo in cicli critici.
 
@@ -855,7 +855,7 @@ Il metodo \texttt{toString()} restituisce una stringa che rappresenta il valore 
 
 Sovrascrivere questo metodo è considerata una \textit{best practice} fondamentale per facilitare il debugging e il logging, poiché permette di ispezionare lo stato dell'oggetto in modo immediato.
 
-\subsubsection*{Convenzione di Formattazione}
+\paragraph{Convenzione di Formattazione}
 Horstmann raccomanda un formato standard per la stringa restituita:
 \begin{center}
     \texttt{NomeClasse[campo1=valore1, campo2=valore2, ...]}
@@ -875,7 +875,7 @@ public String toString() {
 
 
 
-\subsubsection*{Invocazione Implicita}
+\paragraph{Invocazione Implicita}
 Un aspetto potente di \texttt{toString()} è che viene invocato \textbf{automaticamente} dal compilatore in due casi comuni:
 \begin{enumerate}
     \item Quando un oggetto viene concatenato a una stringa: \texttt{"Dati: " + myObject}.
@@ -901,7 +901,7 @@ Nonostante la loro sintassi semplificata, i Record rimangono pienamente inseriti
 
 Proprio perché estendono implicitamente \texttt{java.lang.Record}:
 \begin{enumerate}
-    \item Un record \textbf{non puo estendere} altre classi.
+    \item Un record \textbf{non può estendere} altre classi.
     \item Un record \textbf{è sempre \texttt{final}}, il che significa che nessuna classe può estendere un record.
 \end{enumerate} \vspace{\baselineskip}
 
@@ -967,8 +967,36 @@ public sealed class Shape permits Circle, Square, Triangle {
 
 I motivi principali per utilizzare le classi sigillate sono:
 \begin{itemize}
-    \item creare gerarchie "customizzate" e controllate, evitando che chiunque possa estendere una classe e potenzialmente rompere l'integrità del design.
-    \item \textbf{Controllo del Dominio}: Utile quando si modella una struttura dati "finita" (come i tipi di un formato dati come JSON).
+    \item \textbf{Gerarchie Controllate}: Evitare che chiunque possa estendere una classe e potenzialmente rompere l'integrità del design.
+    \item \textbf{Controllo del Dominio}: Utile quando si modella una struttura dati "finita" (come i tipi di un formato dati, es. JSON).
     \item \textbf{Analisi Esaustiva}: Il compilatore può verificare se in uno \texttt{switch} abbiamo coperto tutti i casi possibili della gerarchia, rendendo superfluo il ramo \texttt{default}.
 \end{itemize}
 
+\paragraph{I Vincoli delle Sottoclassi}
+
+Il meccanismo di sigillatura impone regole ferree sulle classi figlie. Ogni classe elencata nella clausola \texttt{permits} deve estendere la classe sigillata e \textbf{deve obbligatoriamente} dichiarare uno dei seguenti tre modificatori per esplicitare come prosegue (o termina) la gerarchia:
+
+\begin{enumerate}
+    \item \textbf{\texttt{final}}: Impedisce ulteriori estensioni. La gerarchia si chiude definitivamente su questo ramo. È la scelta più comune (ed è il comportamento intrinseco se la sottoclasse è un \texttt{record}).
+    \item \textbf{\texttt{sealed}}: Permette a questa sottoclasse di essere a sua volta estesa, ma solo da un nuovo set ristretto e definito di classi (richiede una propria clausola \texttt{permits}).
+    \item \textbf{\texttt{non-sealed}}: Interrompe la sigillatura per questo specifico ramo. Da questo punto in giù, la classe torna a essere "aperta" e chiunque potrà estenderla. \textit{Nota: Java ha introdotto questo modificatore con il trattino, un'eccezione rispetto alla sintassi tradizionale}.
+\end{enumerate}
+
+\begin{lstlisting}[language=Java, caption={Esempio dei modificatori obbligatori}]
+// 1. Ramo chiuso: non estensibile
+public final class Circle extends Shape { ... }
+
+// 2. Ramo sigillato: controllato a sua volta
+public sealed class Square extends Shape permits ColoredSquare { ... }
+
+// 3. Ramo aperto: estensibile liberamente
+public non-sealed class Triangle extends Shape { ... }
+\end{lstlisting}
+
+\paragraph{Regole di Compilazione e Package}
+
+Per garantire che il compilatore possa verificare la validità della gerarchia, tutte le sottoclassi permesse devono trovarsi nello \textbf{stesso modulo} della classe sigillata (o nello \textbf{stesso package} se si opera in moduli senza nome, come avviene nei progetti base).
+
+\begin{observation}[Omissione di \texttt{permits}]
+    Se la classe sigillata e le sue sottoclassi sono definite tutte all'interno dello \textbf{stesso file sorgente} (ad esempio definendo più classi top-level in un solo file \texttt{.java} o usando classi annidate), è possibile omettere la clausola \texttt{permits}. Il compilatore inferirà automaticamente l'elenco delle classi permesse analizzando il file.
+\end{observation}
