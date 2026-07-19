@@ -200,7 +200,7 @@ public void setAge(int age) throws IllegalArgumentException {
 
 È fondamentale non confondere queste due parole chiave, simili ma con scopi diversi:
 \begin{itemize}
-    \item \textbf{\texttt{throws}}: Si usa nella \textbf{firma del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
+    \item \textbf{\texttt{throws}}: Si usa nella \textbf{testata del metodo} per avvertire il compilatore e il chiamante che quel metodo può lanciare determinate eccezioni.
     \item \textbf{\texttt{throw}}: Si usa nel \textbf{corpo del metodo} per lanciare effettivamente l'oggetto eccezione.
 \end{itemize}
 \vspace{\baselineskip}
@@ -222,7 +222,7 @@ Horstmann riassume efficacemente l'idea con una frase suggestiva: \textit{"se si
 
 
 \begin{observation}
-    Ciò che diremo per i metodi varrà anche per i costruttori. Un metodo o un costruttore può lanciare più di un tipo di eccezione; in questo caso basta elencarle dopo lo specificatore \texttt{throws} separate da virgole (se necessario).
+    Quanto detto (e diremo) per i metodi vale anche per i costruttori. Un metodo o un costruttore può lanciare più di un tipo di eccezione; in questo caso basta elencarle dopo lo specificatore \texttt{throws} separate da virgole (se necessario).
 \end{observation}
 
 \subsection{Il Blocco \texttt{try-catch}: gestione locale}
@@ -275,7 +275,7 @@ A partire da Java 7, se si devono gestire diverse eccezioni nello stesso identic
 \begin{warningbox}
     Quando si usa il multi-catch con l'operatore | , la variabile dell'eccezione (\texttt{e}) è implicitamente \textbf{final}: non si può riassegnarla all'interno del blocco.
 
-    Un altro dettaglio tecnico importante è che il tipo di \texttt{e} nel multi-catch non è un "tipo unione" (anche quando l'IDE ci dice che è così). Il compilatore assegna a \texttt{e} il tipo della \textbf{superclasse comune più vicina} (\textit{LUD: least upper bound}) tra quelle elencate. In genere questo non è un problema ma, in caso contrario, probabilmente è meglio tornare a usare blocchi \texttt{catch} separati. Il codice risulterà molto più pulito e meno propenso a errori.
+    Un altro dettaglio tecnico importante è che il tipo di \texttt{e} nel multi-catch non è un "tipo unione" (anche quando l'IDE ci dice che è così). Il compilatore assegna a \texttt{e} il tipo della \textbf{superclasse comune più vicina} (\textit{LUB: least upper bound}) tra quelle elencate. In genere questo non è un problema ma, in caso contrario, probabilmente è meglio tornare a usare blocchi \texttt{catch} separati. Il codice risulterà molto più pulito e meno propenso a errori.
 \end{warningbox}
 
 Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia delle risorse (chiudere file, connessioni database, socket). La sua caratteristica unica è che viene eseguito \textbf{anche se} nel blocco \texttt{try} o \texttt{catch} era presente un'istruzione \texttt{return}.
@@ -283,10 +283,12 @@ Il blocco \texttt{finally} viene utilizzato quasi esclusivamente per la pulizia 
 L'unica situazione in cui \texttt{finally} potrebbe non essere eseguito è se la JVM si arresta bruscamente (es. \texttt{System.exit(0)}) o se si verifica un \texttt{Error} catastrofico dell'hardware.
 
 
-\begin{warningbox}
+\begin{danger}
 Sebbene il \texttt{finally} sia fondamentale per la chiusura delle risorse, bisogna stare attenti a un errore comune: inserire istruzioni che alterano il flusso di controllo (come \texttt{return} o \texttt{throw}) all'interno del \texttt{finally}.
 Se un blocco \texttt{finally} contiene un \texttt{return}, questo "sovrascriverà" qualsiasi valore di ritorno o eccezione lanciata nei blocchi \texttt{try} o \texttt{catch}. Analogamente per i \texttt{throw}.
-\end{warningbox}
+
+Nel mondo lavorativo questa è la causa numero uno delle eccezioni inghiottite (\textit{swallowed exceptions}). Se il \texttt{try} lancia una \texttt{NullPointerException} fatale, ma il \texttt{finally} esegue un banale \texttt{return false}, la JVM cancella l'eccezione come se non fosse mai esistita. Il chiamante riceverà \texttt{false} e il bug diventerà quasi impossibile da tracciare, perché non ci sarà alcuno stack trace nei log. È una pratica talmente pericolosa che molti analizzatori di codice statico (come SonarQube) bloccano la compilazione se rilevano un \texttt{return} nel \texttt{finally}.
+\end{danger}
 
 \subsection{La clausola \texttt{throws}: gestione delegata}
 
@@ -452,6 +454,15 @@ try (var in = new Scanner(Path.of("input.txt"))) {
 } // in.close() viene chiamato AUTOMATICAMENTE qui
 \end{lstlisting}
 
+\begin{lstlisting}[caption={Sintassi del try-with-resources: variante a partire da Java 9+}]
+// Valido da Java 9+ per risorse effectively final
+Scanner in = new Scanner(Path.of("input.txt"));
+try (in) {
+    while (in.hasNext())
+        System.out.println(in.next());
+} // in.close() viene chiamato automaticamente
+\end{lstlisting}
+
 \begin{tip}
 Puoi gestire più risorse contemporaneamente separandole con un punto e virgola:
 \texttt{try (var in = ...; var out = ...) \{ ... \}}. Verranno chiuse tutte in ordine inverso rispetto alla dichiarazione.
@@ -469,7 +480,7 @@ Un blocco \texttt{try-with-resources} può avere i propri blocchi \texttt{catch}
 \end{enumerate}
 Questo significa che i \texttt{catch} possono catturare anche le eccezioni avvenute durante la chiusura automatica delle risorse.
 
-\subsubsection*{Eccezioni Soppresse}
+\paragraph{Eccezioni Soppresse}
 Uno dei vantaggi principali del \texttt{try-with-resources} è come gestisce il conflitto tra eccezioni. Come abbiamo visto, nel \texttt{finally} classico un'eccezione durante la chiusura "nascondeva" quella principale.
 
 Anche quando usiamo il \texttt{try-with-resources}, può capitare un "conflitto di eccezioni": un errore durante l'esecuzione del codice (\textit{primary exception}) e uno o più errori durante la chiusura automatica delle risorse (\textit{suppressed exceptions}). Il costrutto però gestisce in modo automatico il conflitto. 
