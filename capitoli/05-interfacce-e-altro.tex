@@ -18,7 +18,7 @@ Un'interfaccia viene dichiarata con la parola chiave \texttt{interface}. Per sua
 Una classe "aderisce" al contratto dell'interfaccia usando la parola chiave \texttt{implements}. 
 
 \begin{itemize}
-    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.:i metodi di un'interfaccia devono essere implementati con visibilità non inferiore; essendo implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità).
+    \item La classe deve fornire un'implementazione concreta (\textit{override}) per \textbf{tutti} i metodi astratti dell'interfaccia, a meno che la classe stessa non sia dichiarata \texttt{abstract}. (N.B.: i metodi di un'interfaccia devono essere implementati con visibilità non inferiore; essendo implicitamente \texttt{public}, essi devono essere implementati con la stessa visibilità).
     \item \textbf{Ereditarietà Multipla}: A differenza delle classi, Java permette a una classe di implementare un numero arbitrario di interfacce, risolvendo il problema dell'ereditarietà multipla.
 \end{itemize}
 \vspace{\baselineskip}
@@ -200,7 +200,7 @@ I progettisti di Java (ispirandosi a C++) hanno scelto di non supportare l'eredi
 \end{itemize}
 Le interfacce offrono quasi tutti i benefici dell'ereditarietà multipla evitando però queste complicazioni, poiché non trasportano \textbf{stato} (variabili di istanza) ma solo \textbf{comportamento}.
 
-\subsubsection*{Guida alla scelta: Classe Astratta o Interfaccia?}
+\paragraph{Guida alla scelta: Classe Astratta o Interfaccia?}
 
 La scelta tra una classe astratta e un'interfaccia non è solo tecnica, ma concettuale. Possiamo riassumere i criteri di scelta in questo modo:
 
@@ -250,7 +250,7 @@ L'oggetto funge quindi da \textit{contenitore} (wrapper) per la funzione che vog
 
 Il pattern callback trova una sua tipica applicazione nella personalizzazione di algoritmi esistenti, come l'ordinamento.
 
-Consideriamo ad esempio la classe \texttt{String} che ha già un ordine naturale (alfabetico) definito tramite \texttt{Comparable}. Se vogliamo ordinare per lunghezza, non possiamo modificare la classe \texttt{String}. 
+Consideriamo ad esempio la classe \texttt{String} che ha già un ordine naturale (lessicografico) definito tramite \texttt{Comparable}. Se vogliamo ordinare per lunghezza, non possiamo modificare la classe \texttt{String}. 
 
 
 
@@ -347,7 +347,7 @@ In Java, la sintassi standard nel caso più generale ed esplicito rispecchia fed
     \texttt{(Tipo1 p1, Tipo2 p2, ..., TipoN pN) -> \{ // corpo della lambda \}}
 \end{center}
 
-Il blocco di codice racchiuso tra parentesi graffe \texttt{\{\}} può contenere più istruzioni. Se il corpo della lambda è costituito da una singola espressione, è possibile omettere le parentesi graffe e la parola chiave \texttt{return} (se presente), rendendo la sintassi ancora più compatta.
+Il blocco di codice racchiuso tra parentesi graffe \texttt{\{\}} può contenere più istruzioni. Se il corpo della lambda è costituito da una singola istruzione, è possibile omettere le parentesi graffe e la parola chiave \texttt{return} (se presente), rendendo la sintassi ancora più compatta.
 
 \begin{lstlisting}[language=Java, caption={Esempi di sintassi delle Lambda Expressions}]
 (String first, String second) ->
@@ -516,7 +516,7 @@ Ognuna di queste è di per sé un'interfaccia funzionale, ma anche "capostipite"
 
 \end{observation}
 
-\subsubsection{Esempio: Valutazione Eager vs. Lazy}
+\paragraph{Esempio: Valutazione Eager vs. Lazy}
 
 Le interfacce \texttt{Supplier<T>} sono spesso usate per permettere di passare da una valutazione immediata (\textbf{Eager Evaluation}) a una valutazione differita o "pigra" (\textbf{Lazy Evaluation}), come mostriamo nel seguente esempio. 
 
@@ -590,7 +590,7 @@ int[] numeriRef = int[]::new;
 Le lambda expression possono accedere alle variabili locali del blocco di codice in cui sono definite. Tuttavia, tali variabili devono essere \textbf{effectively final}.
 
 \begin{tip}[La regola dell'Effectively Final]
-Una variabile si dice \textit{effectively final} se non viene mai modificata dopo la sua inizializzazione. Se provi a modificare una variabile locale all'interno di una lambda, o se la modifichi fuori dopo che la lambda l'ha "catturata", il codice non compilera'.
+Una variabile si dice \textit{effectively final} se non viene mai modificata dopo la sua inizializzazione. Se provi a modificare una variabile locale all'interno di una lambda, o se la modifichi fuori dopo che la lambda l'ha "catturata", il codice non compilerà.
 \end{tip}
 
 \begin{lstlisting}[language=Java]
@@ -752,7 +752,7 @@ Se il metodo potesse modificare la variabile dopo che è stata catturata, si avr
 
 Immaginiamo che Java ci permettesse di modificare le variabili catturate. Ecco il caos che ne deriverebbe:
 
-\begin{lstlisting}[language=Java, caption={Perche' non possiamo modificare le variabili locali}]
+\begin{lstlisting}[language=Java, caption={Perché non possiamo modificare le variabili locali}]
 public void createLogger() {
     int level = 1; // Variabile locale
 
@@ -775,15 +775,15 @@ public void createLogger() {
 Usando una classe locale, se si vuole creare un solo oggetto di quella classe, si può evitare di darle un nome. In questo caso, si parla di \textbf{Classi Anonime}. La sintassi generale è la seguente:
 
 \begin{lstlisting}[language=Java, caption={Sintassi di una classe anonima}]
-new SuperTipo(parametri_costruttore_supertipo) {
+new SuperTipo(parametri_costruttore) {
     // campi e metodi della classe anonima
 };
 \end{lstlisting}
 
- \texttt{SuperTipo} può essere un'interfaccia o una classe:
- \begin{itemize}
-    \item Se \texttt{SuperTipo} è un'\textbf{interfaccia}, le parentesi devono essere ovviamente vuote.
-    \item Se \texttt{SuperTipo} è una \textbf{classe}, i parametri passati a \texttt{new SuperTipo(...)} vengono inoltrati al costruttore della classe madre: come ben sappiamo, se la superclasse non ha un costruttore di default, è necessario fornire esplicitamente i parametri richiesti; di fatto, questi parametri servono esclusivamente a questo scopo. Non è possibile fare altrimenti, perché la classe anonima non può definire un costruttore proprio (non avendo un nome, non può essere richiamato da nessuna parte).
+\texttt{SuperTipo} può essere un'interfaccia o una classe:
+\begin{itemize}
+    \item Se \texttt{SuperTipo} è un'\textbf{interfaccia}, la classe anonima la implementa (estendendo implicitamente \texttt{Object}). Le parentesi devono essere vuote, poiché si sta richiamando il costruttore senza argomenti di \texttt{Object}.
+    \item Se \texttt{SuperTipo} è una \textbf{classe}, la classe anonima ne diventa una sottoclasse. Poiché la classe anonima non ha nome, non è possibile definirne un costruttore esplicito; i parametri passati a \texttt{new SuperTipo(...)} vengono quindi usati per invocare il costruttore della superclasse. Di conseguenza, se la classe madre non possiede un costruttore vuoto (no-args), è obbligatorio fornire i parametri necessari per la sua inizializzazione.
 \end{itemize}
 \vspace{\baselineskip}
 Tecnicamente, un'anonima definita in un metodo è una \textit{local class} senza nome; tipicamente è proprio in questo contesto che vengono utilizzate. Tuttavia, è possibile dichiarare classi anonime anche a livello membro, o addirittura come argomenti di un metodo (anche se quest'ultimo caso è piuttosto raro). Vale anche la pena osservare che in ogni caso hanno le seguenti caratteristiche:
@@ -791,6 +791,7 @@ Tecnicamente, un'anonima definita in un metodo è una \textit{local class} senza
     \item \textbf{Cattura delle variabili}: Segue esattamente la stessa meccanica di "Variable Capture" descritta per le classi locali (necessità di variabili \textit{effectively final}).
     \item\textbf{Limite di Estensione}: Una classe anonima può fare solo una cosa: o estendere una classe (una sola) o implementare un'interfaccia (una sola). Non può fare entrambe le cose contemporaneamente, né implementare più interfacce.
 \end{itemize}
+
 
 \subsection{Classi Statiche}
 \label{sec: classi statiche}
@@ -876,7 +877,7 @@ Se l'istanza interna viene passata a un contesto a lungo termine (es. Thread, St
 \end{tip}
 
 \begin{warningbox}
-Le \textbf{classi anonime} sono le piu' pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.
+Le \textbf{classi anonime} sono le più pericolose, poiché è facile dimenticare che esse mantengono un riferimento all'oggetto circostante.
 \end{warningbox}
 
 \section{Approfondimento: le Chiusure (Closures)}
@@ -906,7 +907,8 @@ public class ChiusuraEsempio {
         String prefisso = "Benvenuto, "; // Variabile locale
         
         // Questa e' una CLOSURE:
-        // Il codice della lambda + le variabili 'prefisso' e 'nome'
+        // Il codice della lambda + le variabili 'prefisso'
+        // e 'nome'
         return () -> System.out.println(prefisso + nome);
     }
 }
