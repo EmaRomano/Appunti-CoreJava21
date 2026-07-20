@@ -413,7 +413,10 @@ La sicurezza della JVM non è tuttavia compromessa. La cancellazione dei tipi (\
 
 \section{Wildcard Types (Tipi Jolly)}
 
-Le \textit{wildcards} permettono di rendere flessibili i parametri di tipo, introducendo una forma di \textbf{covarianza} controllata. Supponiamo, ad esempio, di voler scrivere un metodo che stampa una coppia di \texttt{Employee}:
+Le \textit{wildcards} permettono di rendere flessibili i parametri di tipo, introducendo una forma di \textbf{covarianza} controllata.
+
+\subsection{La wildcard con vincolo superiore: \texttt{<? extends T>}}
+Supponiamo, ad esempio, di voler scrivere un metodo che stampa una coppia di \texttt{Employee}:
 \begin{lstlisting}[language=Java]
     public static void printBuddies(Pair<Employee> p){
         Employee first = p.getFirst();
@@ -434,9 +437,9 @@ Il tipo \texttt{Pair<? extends Employee>} indica una coppia il cui tipo parametr
 \end{center}
 Questo permette di scrivere metodi polimorfici che accettano collezioni di sottotipi diversi.
 
-\subsection{Usi consentiti}
+\paragraph{Usi consentiti}
 
-Le wildcard sono ammesse ovunque si stia dichiarando il tipo di una variabile. In particolare, si possono usare nei seguenti contesti:
+Le wildcard sono ammesse ovunque si stia dichiarando il tipo di una variabile all'interno di un tipo generico (classe, interfaccia o metodo che sia). In particolare, si possono usare nei seguenti contesti:
 \begin{itemize}
     \item parametri di un metodo (l'uso più comune):
     \begin{center}
@@ -453,30 +456,29 @@ Le wildcard sono ammesse ovunque si stia dichiarando il tipo di una variabile. I
     Questo uso non è considerato una buona pratica, perché costringi chi usa il metodo a gestire la wildcard, rendendogli la vita difficile
 \end{itemize}
 
-\medskip
-
+\paragraph{Limiti d'uso}
 È abbastanza intuitivo che l'uso di questa sintassi non è invece consentito laddove provochi ambiguità non risolvibile dal compilatore: 
 \begin{itemize}
-    \item definizione di classi/metodi: E' necessario utilizzare un identificatore (es. \texttt{T}, \texttt{E}, \texttt{K}).
-    \item Operatore \texttt{new}: L'allocazione di memoria richiede un tipo concreto.
+    \item definizione di classi/metodi: è necessario utilizzare un identificatore (es. \texttt{T}, \texttt{E}, \texttt{K}).
+    \item Operatore \texttt{new}: l'allocazione di memoria richiede un tipo concreto.
 \end{itemize}
+\smallskip
+Questi limiti, abbastanza ovvi, non sono però gli unici: ce n'è un altro importante e meno banale. Nel paragrafo precedente abbiamo esaminato i limiti dell'ereditarietà sui Generics, imposti per evitare contaminazioni di tipo. Le wildcards permettono questo tipo di contaminazione? La risposta è NO: l'utilizzo della wildcard \texttt{? extends T} impone che la struttura dati diventi, di fatto, in \textbf{sola lettura} per quanto riguarda il parametro generico. Questo vincolo non è un difetto di Java, ma una necessità logica per evitare errori a runtime (come la \texttt{ClassCastException}).
 
-\medskip
+Spesso si tende erroneamente a pensare che \texttt{? extends Employee} significhi "in questa struttura posso inserire qualsiasi sottotipo di \texttt{Employee}". In realtà, il significato corretto è: \textbf{"questa struttura dati è stata istanziata con un singolo tipo specifico, che però il compilatore in questo momento non conosce; l'unica cosa certa è che si tratta di un \texttt{Employee} o una sua qualunque sottoclasse"}.
 
-Nel paragrafo precedente abbiamo esaminato i limiti dell'ereditarietà sui Generics, imposti per evitare contaminazioni di tipo. Le wildcards permettono questo tipo di contaminazione? La risposta è NO: l'utilizzo della wildcard \texttt{? extends T} crea una struttura dati in \textbf{sola lettura} (o quasi). Questo garantisce che la struttura originale non venga "corrotta" con tipi incompatibili.
+Quando dichiariamo un riferimento \texttt{Pair<? extends Employee> p}, il simbolo \texttt{?} rappresenta un tipo \textbf{specifico ma ignoto} al compilatore. Questo significa che \texttt{p} potrebbe puntare, in memoria, a un \texttt{Pair<Manager>}, a un \texttt{Pair<Developer>}, oppure a un \texttt{Pair<Employee>}. A causa di questa incertezza sul tipo esatto, il compilatore applica regole ferree:
 
-Infatti, dato un riferimento \texttt{Pair<? extends Employee>}, il compilatore interpreta i metodi così:
 \begin{itemize}
-    \item \texttt{? extends Employee getFirst()}: \textbf{FUNZIONA}. Qualunque sia il tipo reale, è un sottotipo di \texttt{Employee}. L'assegnazione a una variabile \texttt{Employee} è sicura.
-    \item \texttt{void setFirst(? extends Employee)}: \textbf{ERRORE}. Il compilatore non può verificare se l'oggetto che stiamo passando sia compatibile con il tipo \textit{specifico} (ma ignoto) della coppia reale, quindi vieta la modifica.  
+    \item \textbf{Lettura (GET) - CONSENTITA}: Se chiamiamo un metodo che restituisce il tipo generico, come \texttt{getFirst()}, il compilatore non sa quale sia la classe esatta dell'oggetto restituito. Tuttavia, ha una garanzia matematica: qualunque essa sia, è sicuramente un \texttt{Employee} (o un suo discendente). Pertanto, leggere l'oggetto e assegnarlo a una variabile di tipo \texttt{Employee} è sempre sicuro.
+    \item \textbf{Scrittura (SET) - BLOCCATA}: Se proviamo a passare un oggetto a un metodo che richiede il tipo generico, come \texttt{setFirst(...)}, il compilatore blocca l'operazione. Il motivo è puramente difensivo: supponiamo che \texttt{p} punti in memoria a un \texttt{Pair<Developer>}. Se il compilatore ci permettesse di eseguire \texttt{p.setFirst(new Manager())}, andremmo a inserire un \texttt{Manager} in una struttura nata per contenere esclusivamente \texttt{Developer}. Poiché il compilatore conosce solo il "tetto massimo" (\texttt{Employee}) ma ignora il tipo esatto sottostante, per non rischiare corruzioni della memoria vieta l'inserimento di qualsiasi oggetto.
 \end{itemize}
 
 \begin{warningbox}[]
-Con \texttt{? extends T} puoi \textbf{leggere} oggetti e trattarli come \texttt{T}, ma non puoi \textbf{scrivere} nulla (tranne \texttt{null}). 
+In sintesi: con \texttt{? extends T} puoi \textbf{leggere} (perché sai con certezza che estrarrai un \texttt{T}), ma non puoi \textbf{scrivere} nulla (perché non sai quale sottotipo specifico di \texttt{T} la struttura stia realmente ospitando). L'unica eccezione in scrittura è \texttt{null}.
 \end{warningbox}
 
-
-\subsubsection*{Esempio}
+\paragraph{Esempio}
 Consideriamo la seguente gerarchia: \texttt{Manager} $\subset$ \texttt{Dipendente} $\subset$ \texttt{Persona}.
 
 \begin{lstlisting}[language=Java]
@@ -508,11 +510,11 @@ Di seguito l'esito della compilazione per diverse operazioni di lettura e scritt
 
 La wildcard \texttt{? super T} (Lower Bound) è lo strumento speculare a \texttt{extends}, ottimizzato per le operazioni di \textbf{scrittura}. Ad esempio, dato un riferimento \texttt{Pair<? super Manager>}, il compilatore ragiona così:
 \begin{itemize}
-    \item \textbf{In Scrittura}: Accetta \texttt{Manager} (o sottotipi come \texttt{Executive}). E' sicuro che il contenitore reale sia in grado di ospitarli, poiché è almeno un \texttt{Pair<Manager>} o un suo supertipo.
+    \item \textbf{In Scrittura}: Accetta \texttt{Manager} (o sottotipi come \texttt{Executive}). È sicuro che il contenitore reale sia in grado di ospitarli, poiché è almeno un \texttt{Pair<Manager>} o un suo supertipo.
     \item \textbf{In Lettura}: Non garantisce nulla sul tipo estratto. L'oggetto restituito deve essere trattato come un \texttt{Object}, poiché il contenitore potrebbe essere un \texttt{Pair<Object>}.
 \end{itemize}
 
-\subsection*{Esempio}
+\paragraph{Esempio}
 
 Consideriamo la gerarchia: \texttt{Manager} $\subset$ \texttt{Dipendente} $\subset$ \texttt{Persona}.
 
@@ -532,9 +534,9 @@ Persona unaPersona = new Persona("Zoe");
     \item \textbf{\texttt{Object o = jolly.getFirst();}} $\rightarrow$ \textbf{SI}. Sempre legale.
 \end{itemize}
 
-\begin{tip}
-    Mentre \texttt{? extends} limita la \textbf{scrittura}, \texttt{? super} limita drasticamente la \textbf{lettura}. Quest'ultima è utile quasi esclusivamente per i metodi che devono "ricevere" dati da elaborare o salvare.
-\end{tip}
+\begin{warningbox}[]
+Con \texttt{? super T} puoi \textbf{scrivere} (inserire) oggetti di tipo \texttt{T} o sue sottoclassi, perché sei certo che la struttura reale (che sia di tipo \texttt{T} o un suo supertipo) potrà sempre accoglierli. Al contrario, perdi la capacità di \textbf{leggere} il tipo in modo utile: ignorando quale superclasse specifica la struttura stia realmente ospitando, il compilatore ti garantirà unicamente l'estrazione di un generico \texttt{Object}.
+\end{warningbox}
 
 \subsection{Applicazioni in Supertipi Generici}
 \label{app super gen}
@@ -572,7 +574,7 @@ In questi casi occorre usare le wildcards e la sintassi corretta da usare è:
 \end{lstlisting}
 
 \begin{bestpractice}
-    Quando si definisce un metodo generico che richiede un vincolo su un'interfaccia a sua volta generica (come \texttt{Comparable} o \texttt{Comparator}), è sempre preferibile utilizzare la wildcard \texttt{? super T} per massimizzare la compatibilita' con le gerarchie di classi esistenti.
+    Quando si definisce un metodo generico che richiede un vincolo su un'interfaccia a sua volta generica (come \texttt{Comparable} o \texttt{Comparator}), è sempre preferibile utilizzare la wildcard \texttt{? super T} per massimizzare la compatibilità con le gerarchie di classi esistenti.
 \end{bestpractice}
 
 L'uso di \texttt{? super} è estremamente comune nelle interfacce funzionali di Java (come \texttt{Predicate}, \texttt{Function} o \texttt{Consumer}), poiché permette di riutilizzare logica generica su tipi specifici.
